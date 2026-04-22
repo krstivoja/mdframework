@@ -4,20 +4,20 @@
  * Sets up paths, autoloads, and instantiates Content/Index/Router.
  */
 
-require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/cms/vendor/autoload.php';
 
 // Simple PSR-4 autoloader for our lib/ classes (in case composer dump-autoload wasn't run)
 spl_autoload_register(function ($class) {
     if (str_starts_with($class, 'MD\\')) {
-        $path = __DIR__ . '/lib/' . str_replace('\\', '/', substr($class, 3)) . '.php';
+        $path = __DIR__ . '/cms/lib/' . str_replace('\\', '/', substr($class, 3)) . '.php';
         if (is_file($path)) require $path;
     }
 });
 
 $ROOT = __DIR__;
-$CONTENT_DIR = $ROOT . '/content';
-$CACHE_DIR = $ROOT . '/cache';
-$TEMPLATE_DIR = $ROOT . '/templates';
+$CONTENT_DIR = $ROOT . '/site/content';
+$CACHE_DIR = $ROOT . '/site/cache';
+$TEMPLATE_DIR = $ROOT . '/site/templates';
 
 $content = new MD\Content($CONTENT_DIR, $CACHE_DIR);
 $index = new MD\Index($CONTENT_DIR, $CACHE_DIR, $content);

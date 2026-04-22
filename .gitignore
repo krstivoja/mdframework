@@ -1,3 +1,5 @@
 .DS_Store
-node_modules/
+cms/node_modules/
+cms/vendor/
 .env
+public/admin/assets/
