@@ -145,3 +145,49 @@ body.login-page {
 .form-actions  { display: flex; gap: .75rem; align-items: center; }
 .form-actions .spacer { flex: 1; }
 .view-link     { font-size: 13px; color: #6b7280; }
+
+/* Settings */
+.settings-section { margin-bottom: 2rem; }
+.settings-heading  { font-size: 15px; font-weight: 600; margin-bottom: 1rem; padding-bottom: .5rem; border-bottom: 1px solid #e5e5e5; }
+
+/* Taxonomy items */
+.taxonomy-item   { background: #f9fafb; border: 1px solid #e5e5e5; border-radius: 6px; padding: 1rem; margin-bottom: .75rem; }
+.taxonomy-header { display: flex; gap: .5rem; align-items: center; margin-bottom: .75rem; }
+.taxonomy-meta   { display: flex; align-items: center; gap: .5rem; flex: 1; min-width: 0; }
+.taxonomy-slug   { font-family: monospace; font-size: 12px; color: #6b7280; background: #f3f4f6; border: 1px solid #e5e5e5; border-radius: 4px; padding: .15rem .45rem; white-space: nowrap; }
+.taxonomy-label  { flex: 1; }
+
+/* Toggle */
+.toggle-label       { display: flex; align-items: center; gap: .35rem; font-size: 13px; color: #374151; cursor: pointer; white-space: nowrap; }
+.toggle-label input { margin: 0; cursor: pointer; }
+
+/* Add taxonomy row */
+.add-taxonomy { display: flex; gap: .5rem; margin-top: 1rem; }
+.add-taxonomy .form-input { flex: 1; }
+
+/* Fields list */
+.tax-fields-list { margin-bottom: .5rem; }
+
+.tax-field { background: #fff; border: 1px solid #e5e5e5; border-radius: 5px; padding: .6rem .75rem; margin-bottom: .4rem; }
+
+.field-row-header { display: flex; align-items: center; gap: .5rem; }
+.field-def-name   { font-family: monospace; font-size: 12px; color: #374151; min-width: 80px; }
+.field-value      { flex: 1; }
+
+/* Array field chips */
+.field-items     { display: flex; flex-wrap: wrap; gap: .35rem; margin: .5rem 0 .4rem; min-height: 1rem; }
+.field-chip      { display: inline-flex; align-items: center; gap: .25rem; background: #e0e7ff; color: #3730a3; padding: .2rem .45rem; border-radius: 4px; font-size: 12px; font-weight: 500; }
+.field-item-add  { display: flex; gap: .4rem; }
+.field-item-add .form-input { flex: 1; }
+
+/* Add field row */
+.add-field-row     { display: flex; gap: .4rem; align-items: center; padding-top: .4rem; border-top: 1px dashed #e5e5e5; margin-top: .1rem; }
+.field-name-input  { flex: 1; }
+.field-type-select { width: auto; padding: .45rem .5rem; border: 1px solid #d1d5db; border-radius: 5px; font-size: 13px; background: #fff; }
+
+/* Badges */
+.badge-field { background: #ede9fe; color: #5b21b6; padding: .15rem .45rem; border-radius: 4px; font-size: 11px; font-weight: 600; }
+
+/* Icon button */
+.btn-icon       { background: none; border: none; cursor: pointer; color: #9ca3af; font-size: 16px; line-height: 1; padding: 0 .15rem; }
+.btn-icon:hover { color: #dc2626; }

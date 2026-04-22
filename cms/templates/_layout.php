@@ -13,6 +13,7 @@
   <a href="/admin/">Pages</a>
   <a href="/admin/new">New page</a>
   <span class="spacer"></span>
+  <a href="/admin/settings">Settings</a>
   <a href="/admin/logout">Log out</a>
 </nav>
 <div class="admin-wrap">

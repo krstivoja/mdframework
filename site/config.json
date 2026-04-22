@@ -1,0 +1,66 @@
+{
+    "site": {
+        "name": "My Site",
+        "base": "/"
+    },
+    "taxonomies": {
+        "categories": {
+            "label": "Categories",
+            "multiple": false,
+            "fields": [
+                {
+                    "name": "image",
+                    "type": "single",
+                    "value": ""
+                },
+                {
+                    "name": "description",
+                    "type": "single",
+                    "value": ""
+                },
+                {
+                    "name": "terms",
+                    "type": "array",
+                    "items": [
+                        "tech",
+                        "design",
+                        "tutorial"
+                    ]
+                }
+            ]
+        },
+        "tags": {
+            "label": "Tags",
+            "multiple": true,
+            "fields": [
+                {
+                    "name": "terms",
+                    "type": "array",
+                    "items": [
+                        "gsap",
+                        "php",
+                        "css"
+                    ]
+                }
+            ]
+        },
+        "marko": {
+            "label": "Marko",
+            "multiple": false,
+            "fields": [
+                {
+                    "name": "test",
+                    "type": "array",
+                    "items": [
+                        "blabal",
+                        "as;lkd;alsd",
+                        ";alskkdkdk",
+                        "dkdkdk",
+                        "dkkdkdk",
+                        "aaaa"
+                    ]
+                }
+            ]
+        }
+    }
+}

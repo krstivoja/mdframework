@@ -26,6 +26,7 @@ $CONTENT_DIR     = $appRoot . '/site/content';
 $UPLOADS_DIR     = __DIR__ . '/uploads';
 $TEMPLATE_DIR    = $cmsRoot . '/templates';
 $CACHE_DIR       = $appRoot . '/site/cache';
+$config          = new MD\Config($appRoot . '/site/config.json');
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -223,6 +224,54 @@ if ($action === 'new' || $action === 'edit') {
     }
 
     require $TEMPLATE_DIR . '/edit.php';
+    exit;
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+
+if ($action === 'settings') {
+    $error = null;
+    if ($method === 'POST') {
+        if (!csrf_verify()) {
+            $error = 'Invalid request — try again.';
+        } else {
+            $site = [
+                'name' => trim($_POST['site_name'] ?? ''),
+                'base' => '/' . trim(trim($_POST['site_base'] ?? ''), '/'),
+            ];
+            $raw = json_decode($_POST['taxonomies_json'] ?? '{}', true) ?? [];
+            $taxonomies = [];
+            foreach ($raw as $slug => $tax) {
+                $slug = preg_replace('/[^a-z0-9_-]/', '', strtolower($slug));
+                if (!$slug) continue;
+                $fields = [];
+                foreach ((array)($tax['fields'] ?? []) as $f) {
+                    $name = preg_replace('/[^a-z0-9_-]/', '', strtolower($f['name'] ?? ''));
+                    if (!$name) continue;
+                    $type = ($f['type'] ?? '') === 'array' ? 'array' : 'single';
+                    if ($type === 'array') {
+                        $items = array_values(array_filter(array_map('trim', (array)($f['items'] ?? []))));
+                        $fields[] = ['name' => $name, 'type' => 'array', 'items' => $items];
+                    } else {
+                        $fields[] = ['name' => $name, 'type' => 'single', 'value' => trim($f['value'] ?? '')];
+                    }
+                }
+                $taxonomies[$slug] = [
+                    'label'    => trim($tax['label'] ?? $slug),
+                    'multiple' => !empty($tax['multiple']),
+                    'fields'   => $fields,
+                ];
+            }
+            $config->save(['site' => $site, 'taxonomies' => $taxonomies]);
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+                header('Content-Type: application/json');
+                echo json_encode(['ok' => true]);
+                exit;
+            }
+            redirect('/admin/settings');
+        }
+    }
+    require $TEMPLATE_DIR . '/settings.php';
     exit;
 }
 
