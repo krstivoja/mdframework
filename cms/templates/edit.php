@@ -14,40 +14,40 @@ ob_start();
     <?= csrf_field() ?>
 
     <?php if ($is_new): ?>
-      <div style="margin-bottom:1rem">
-        <label for="path" style="font-size:13px;font-weight:500;display:block;margin-bottom:.3rem">
-          Path <span style="color:#6b7280;font-weight:400">(e.g. blog/my-post or pages/about)</span>
+      <div class="form-group">
+        <label for="path" class="form-label">
+          Path <span class="form-hint">(e.g. blog/my-post or pages/about)</span>
         </label>
         <input type="text" id="path" name="path"
                value="<?= e($relPath) ?>"
                placeholder="blog/my-post"
                pattern="[a-z0-9][a-z0-9/_-]*"
                required
-               style="width:100%;padding:.5rem .75rem;border:1px solid #d1d5db;border-radius:5px;font-family:monospace;font-size:13px">
+               class="form-input form-input-mono">
       </div>
     <?php else: ?>
       <input type="hidden" name="path" value="<?= e($relPath) ?>">
     <?php endif; ?>
 
-    <div style="margin-bottom:1rem">
-      <label for="title" style="font-size:13px;font-weight:500;display:block;margin-bottom:.3rem">Title</label>
+    <div class="form-group">
+      <label for="title" class="form-label">Title</label>
       <input type="text" id="title" name="title"
              value="<?= e($md_title) ?>"
              required
-             style="width:100%;padding:.5rem .75rem;border:1px solid #d1d5db;border-radius:5px;font-size:14px">
+             class="form-input">
     </div>
 
-    <div style="margin-bottom:1.25rem">
-      <label style="font-size:13px;font-weight:500;display:block;margin-bottom:.3rem">Content</label>
+    <div class="form-group-lg">
+      <label class="form-label">Content</label>
       <textarea id="body" name="body"><?= $md_body ?></textarea>
     </div>
 
-    <div style="display:flex;gap:.75rem;align-items:center">
+    <div class="form-actions">
       <button type="submit" class="btn btn-primary">Save</button>
       <a href="/admin/" class="btn btn-secondary">Cancel</a>
       <?php if (!$is_new): ?>
-        <span style="flex:1"></span>
-        <a href="/<?= e(ltrim($relPath, '/')) ?>" target="_blank" style="font-size:13px;color:#6b7280">View &rarr;</a>
+        <span class="spacer"></span>
+        <a href="/<?= e(ltrim($relPath, '/')) ?>" target="_blank" class="view-link">View &rarr;</a>
       <?php endif; ?>
     </div>
   </form>

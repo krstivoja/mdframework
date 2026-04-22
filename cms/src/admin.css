@@ -1,0 +1,147 @@
+/* Reset */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Base */
+body {
+  font-family: system-ui, sans-serif;
+  font-size: 15px;
+  background: #f5f5f5;
+  color: #111;
+}
+a { color: #2563eb; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Login layout */
+body.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+/* Admin bar */
+.admin-bar {
+  background: #111;
+  color: #fff;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  height: 48px;
+}
+.admin-bar strong { font-size: 16px; letter-spacing: -.3px; }
+.admin-bar a { color: #ccc; font-size: 13px; }
+.admin-bar a:hover { color: #fff; text-decoration: none; }
+.admin-bar .spacer { flex: 1; }
+
+/* Layout */
+.admin-wrap { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+
+/* Card */
+.admin-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 1.5rem; }
+.admin-card h1 { font-size: 20px; margin-bottom: 1.25rem; }
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: .45rem .9rem;
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  line-height: 1.4;
+}
+.btn-primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+.btn-primary:hover { background: #1d4ed8; text-decoration: none; }
+.btn-secondary { background: #fff; color: #374151; border-color: #d1d5db; }
+.btn-secondary:hover { background: #f9fafb; text-decoration: none; }
+.btn-danger { background: #dc2626; color: #fff; border-color: #dc2626; font-size: 12px; padding: .3rem .6rem; }
+.btn-danger:hover { background: #b91c1c; text-decoration: none; }
+.btn-float { float: right; }
+
+/* Alerts */
+.alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: .65rem 1rem;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+  font-size: 13px;
+}
+
+/* Login card */
+.login-card {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 360px;
+}
+.login-card h1 { font-size: 20px; margin-bottom: 1.5rem; text-align: center; }
+.login-card label { display: block; font-size: 13px; font-weight: 500; margin-bottom: .3rem; }
+.login-card input[type=text],
+.login-card input[type=password] {
+  display: block;
+  width: 100%;
+  padding: .5rem .75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  font-size: 14px;
+  margin-bottom: 1rem;
+}
+.login-card input:focus { outline: 2px solid #2563eb; border-color: #2563eb; }
+.login-card button {
+  width: 100%;
+  padding: .6rem;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.login-card button:hover { background: #1d4ed8; }
+.login-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: .6rem .9rem;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* Pages table */
+.pages-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.pages-table thead tr { border-bottom: 2px solid #e5e5e5; text-align: left; }
+.pages-table th { padding: .5rem .75rem; }
+.pages-table tbody tr { border-bottom: 1px solid #f0f0f0; }
+.pages-table td { padding: .5rem .75rem; }
+.pages-table .col-path { color: #6b7280; font-family: monospace; font-size: 12px; }
+.pages-table .col-folder { color: #6b7280; }
+.pages-table .col-actions { white-space: nowrap; text-align: right; }
+
+/* Badges */
+.badge { padding: .15rem .5rem; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.badge-draft { background: #fef9c3; color: #854d0e; }
+.badge-live  { background: #dcfce7; color: #166534; }
+
+/* Misc */
+.text-muted  { color: #6b7280; }
+.form-inline { display: inline; }
+
+/* Form */
+.form-group    { margin-bottom: 1rem; }
+.form-group-lg { margin-bottom: 1.25rem; }
+.form-label    { font-size: 13px; font-weight: 500; display: block; margin-bottom: .3rem; }
+.form-hint     { color: #6b7280; font-weight: 400; }
+.form-input    { width: 100%; padding: .5rem .75rem; border: 1px solid #d1d5db; border-radius: 5px; font-size: 14px; }
+.form-input-mono { font-family: monospace; font-size: 13px; }
+.form-actions  { display: flex; gap: .75rem; align-items: center; }
+.form-actions .spacer { flex: 1; }
+.view-link     { font-size: 13px; color: #6b7280; }

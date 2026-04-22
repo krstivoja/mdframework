@@ -12,18 +12,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= htmlspecialchars($page_title ?? 'Site') ?></title>
-    <style>
-        body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #222; }
-        a { color: #0066cc; }
-        nav { border-bottom: 1px solid #eee; padding-bottom: 1rem; margin-bottom: 2rem; }
-        nav a { margin-right: 1rem; }
-        .meta { color: #888; font-size: 0.9rem; margin-bottom: 1.5rem; }
-        .tag { display: inline-block; background: #f0f0f0; padding: 0.1rem 0.5rem; border-radius: 3px; font-size: 0.85rem; margin-right: 0.3rem; }
-        article + article { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #eee; }
-        .admin-front-bar { position: fixed; bottom: 1.25rem; right: 1.25rem; display: flex; gap: .5rem; z-index: 999; }
-        .admin-front-bar a { display: inline-block; padding: .4rem .85rem; border-radius: 5px; font-size: 13px; font-weight: 500; text-decoration: none; background: #111; color: #fff; opacity: .85; }
-        .admin-front-bar a:hover { opacity: 1; }
-    </style>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
     <nav>

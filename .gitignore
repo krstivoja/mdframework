@@ -1,5 +1,7 @@
 .DS_Store
+.env
+.phpunit.result.cache
 cms/node_modules/
 cms/vendor/
-.env
-public/admin/assets/
+public/cms/
+site/cache/
