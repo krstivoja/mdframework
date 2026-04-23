@@ -103,3 +103,12 @@ function render(string $template, array $vars = []): void
     extract($vars);
     require $GLOBALS['md_template_dir'] . '/' . $template . '.php';
 }
+
+/**
+ * Emit a 404 response rendered through the active theme's 404 template.
+ */
+function not_found(?string $url = null): void
+{
+    http_response_code(404);
+    render('404', ['url' => $url ?? ($_SERVER['REQUEST_URI'] ?? '/')]);
+}

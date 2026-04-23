@@ -16,31 +16,28 @@ switch ($route['type']) {
         $GLOBALS['admin_edit_path'] = $route['path'];
         $data = $content->load($route['path']);
         if ($data === null || !empty($data['meta']['draft'])) {
-            goto notfound;
+            not_found($url);
+            break;
         }
         $GLOBALS['admin_template_name'] = $route['type'];
         render($route['type'], [
-            'meta' => $data['meta'],
-            'html' => $data['html'],
+            'meta'  => $data['meta'],
+            'html'  => $data['html'],
             'route' => $route,
         ]);
         break;
 
     case 'archive':
-        // Load optional _index.md for archive customization
         $intro = $content->load($route['folder'] . '/_index');
         $items = $index->filter(['folder' => $route['folder']]);
         render('archive', [
             'folder' => $route['folder'],
-            'items' => $items,
-            'intro' => $intro,
+            'items'  => $items,
+            'intro'  => $intro,
         ]);
         break;
 
-    notfound:
-    case 'notfound':
     default:
-        http_response_code(404);
-        render('404', ['url' => $url]);
+        not_found($url);
         break;
 }

@@ -4,11 +4,11 @@ body {
   margin: 2rem auto;
   padding: 0 1rem;
   line-height: 1.6;
-  color: rgb(231, 231, 231);
-  background-color: #323232;
+  color: #353535;
+  background-color: #f1eddd;
 }
 
-a { color: #0066cc; }
+a { color: #7300ff; }
 
 img {
   max-width: 500px;

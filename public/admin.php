@@ -22,6 +22,7 @@ session_start();
 
 $ADMIN_USER      = MD\Env::get('ADMIN_USER', 'admin');
 $ADMIN_PASS_HASH = MD\Env::get('ADMIN_PASS_HASH', '');
+$ADMIN_PASS      = MD\Env::get('ADMIN_PASS', '');
 $CONTENT_DIR     = $appRoot . '/site/content';
 $UPLOADS_DIR     = __DIR__ . '/uploads';
 $TEMPLATE_DIR    = $cmsRoot . '/templates';
@@ -85,10 +86,25 @@ function json_response(array $data, int $code = 200): never
     exit;
 }
 
+function abort(int $code): never
+{
+    http_response_code($code);
+    exit;
+}
+
 function require_post_auth(): void
 {
     global $method;
     if ($method !== 'POST' || !csrf_verify()) json_response(['error' => 'Forbidden'], 403);
+}
+
+// ── Setup gate: refuse to serve admin if no credentials are configured ───────
+
+if ($ADMIN_PASS_HASH === '' && $ADMIN_PASS === '') {
+    http_response_code(503);
+    $envFile = $appRoot . '/.env';
+    require $TEMPLATE_DIR . '/setup-required.php';
+    exit;
 }
 
 // ── Routing ───────────────────────────────────────────────────────────────────
@@ -135,7 +151,7 @@ $paths       = new MD\PathResolver($CONTENT_DIR, $UPLOADS_DIR, $CACHE_DIR);
 $content_obj = new MD\Content($CONTENT_DIR, $CACHE_DIR);
 $cache       = new MD\CacheService($paths, $CONTENT_DIR, $CACHE_DIR);
 $repo        = new MD\ContentRepository($CONTENT_DIR, $cache, $content_obj);
-$media       = new MD\MediaService($UPLOADS_DIR, $paths);
+$media       = new MD\MediaService($UPLOADS_DIR, $paths, $config->get('uploads', []));
 $themes      = new MD\ThemeService($appRoot, $config);
 
 // ── Post types (content folders) ─────────────────────────────────────────────
@@ -229,7 +245,7 @@ if ($action === 'media') {
 // ── Delete ────────────────────────────────────────────────────────────────────
 
 if ($action === 'delete') {
-    if ($method !== 'POST' || !csrf_verify()) { http_response_code(403); exit; }
+    if ($method !== 'POST' || !csrf_verify()) abort(403);
     $relPath = trim($_POST['path'] ?? '', '/');
     $absPath = $paths->contentFile($relPath);
     if ($absPath) $repo->delete($relPath, $absPath);
@@ -357,7 +373,16 @@ if ($action === 'settings') {
                     'fields'     => $fields,
                 ];
             }
-            $config->save(['site' => $site, 'taxonomies' => $taxonomies]);
+            $uploads = [
+                'max_mb'     => max(1,   min(512,   (int)($_POST['upload_max_mb']     ?? 5))),
+                'max_width'  => max(0,   min(20000, (int)($_POST['upload_max_width']  ?? 0))),
+                'max_height' => max(0,   min(20000, (int)($_POST['upload_max_height'] ?? 0))),
+            ];
+            $config->save(array_merge($config->all(), [
+                'site'       => $site,
+                'taxonomies' => $taxonomies,
+                'uploads'    => $uploads,
+            ]));
             if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])) json_response(['ok' => true]);
             redirect('/admin/settings');
         }

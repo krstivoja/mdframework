@@ -9,6 +9,7 @@
             "multiple": false,
             "post_types": [
                 "blog",
+                "pages",
                 "tutorials"
             ],
             "fields": [
@@ -55,5 +56,10 @@
             ]
         }
     },
-    "active_theme": "default"
+    "active_theme": "default",
+    "uploads": {
+        "max_mb": 5,
+        "max_width": 0,
+        "max_height": 0
+    }
 }

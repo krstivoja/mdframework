@@ -1,0 +1,19 @@
+parameters:
+    level: 5
+    paths:
+        - bootstrap.php
+        - public
+        - cms/lib
+        - tests
+    excludePaths:
+        - cms/vendor
+        - cms/node_modules
+        - site
+    bootstrapFiles:
+        - cms/vendor/autoload.php
+    ignoreErrors:
+        # public/index.php uses $router/$content/$index defined in bootstrap.php
+        # via require — PHPStan can't trace them across the include boundary.
+        -
+            identifier: variable.undefined
+            path: public/index.php

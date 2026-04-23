@@ -47,6 +47,33 @@ ob_start();
     </section>
 
     <section class="settings-section">
+      <h2 class="settings-heading">Uploads</h2>
+      <div class="form-group">
+        <label class="form-label" for="upload_max_mb">Max file size</label>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <input type="number" id="upload_max_mb" name="upload_max_mb"
+                 class="form-input" style="width:90px" min="1" max="512"
+                 value="<?= e((string)(int)($cfg['uploads']['max_mb'] ?? 5)) ?>">
+          <span class="form-hint">MB</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Max image dimensions <span class="form-hint">(raster only · 0 = no limit)</span></label>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <input type="number" name="upload_max_width"
+                 class="form-input" style="width:90px" min="0" max="20000"
+                 value="<?= e((string)(int)($cfg['uploads']['max_width'] ?? 0)) ?>">
+          <span class="form-hint">W</span>
+          <span class="form-hint">×</span>
+          <input type="number" name="upload_max_height"
+                 class="form-input" style="width:90px" min="0" max="20000"
+                 value="<?= e((string)(int)($cfg['uploads']['max_height'] ?? 0)) ?>">
+          <span class="form-hint">H px</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="settings-section">
       <h2 class="settings-heading">Taxonomies</h2>
       <div id="taxonomies-list"></div>
       <div class="add-taxonomy">
