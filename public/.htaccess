@@ -2,11 +2,16 @@
 RewriteEngine On
 RewriteBase /
 
-# Admin routes → admin.php
+# Uploads: allow direct asset files, block directory views and PHP-like files
+RewriteRule ^uploads/.*\.(php[0-9]?|phtml|phar)$ - [F,L,NC]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^uploads(/.*)?/?$ - [F,L]
+
+# Admin routes -> admin.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^admin(/.*)?$ admin.php [L,QSA]
 
-# Frontend routes → index.php
+# Frontend routes -> index.php
 RewriteRule ^index\.php$ - [L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
