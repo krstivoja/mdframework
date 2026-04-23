@@ -311,3 +311,21 @@ body.login-page {
 .media-toast { position: fixed; bottom: 1.5rem; right: 1.5rem; padding: .55rem 1rem; border-radius: 6px; font-size: 13px; font-weight: 500; color: #fff; z-index: 99999; }
 .media-toast--success { background: #166534; }
 .media-toast--error   { background: #991b1b; }
+
+/* ── Update bar ──────────────────────────────────────────────────────────────── */
+.update-bar { display: flex; align-items: center; gap: 1rem; padding: .75rem 1rem; background: var(--bg); border-radius: var(--radius-sm); margin-bottom: 1.75rem; flex-wrap: wrap; }
+.update-version { font-size: 13px; color: var(--text-muted); }
+.update-status { font-size: 13px; display: flex; align-items: center; gap: .6rem; }
+.update-status--ok  { color: #166534; }
+.update-status--available { color: var(--text); font-weight: 500; }
+.update-status--err { color: var(--danger); }
+.btn-sm { padding: .25rem .65rem; font-size: 12px; }
+
+/* ── Starters ────────────────────────────────────────────────────────────────── */
+.starters-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+.starter-card { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; background: var(--surface); }
+.starter-preview { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: var(--bg); }
+.starter-preview--placeholder { display: flex; align-items: center; justify-content: center; background: var(--bg); }
+.starter-info { padding: .75rem; }
+.starter-name { font-weight: 600; font-size: 14px; margin-bottom: .25rem; }
+.starter-desc { font-size: 12px; color: var(--text-muted); margin-bottom: .75rem; }

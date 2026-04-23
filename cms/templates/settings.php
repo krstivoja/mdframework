@@ -3,11 +3,24 @@ $pageTitle  = 'Settings';
 $cfg        = $config->all();
 $site       = $cfg['site'] ?? [];
 $taxonomies = $cfg['taxonomies'] ?? [];
+$updater    = new MD\Updater($appRoot);
+$version    = $updater->currentVersion();
+$repoOk     = !str_starts_with($updater->repo(), 'your-');
 
 ob_start();
 ?>
 <div class="admin-card">
   <h1>Settings</h1>
+
+  <div class="update-bar">
+    <span class="update-version">MDFramework <strong>v<?= e($version) ?></strong></span>
+    <?php if ($repoOk): ?>
+      <button type="button" class="btn btn-secondary" id="update-check-btn">Check for updates</button>
+      <span id="update-status" class="update-status"></span>
+    <?php else: ?>
+      <span class="text-muted" style="font-size:13px">Set <code>repo</code> in <code>cms/manifest.json</code> to enable updates</span>
+    <?php endif; ?>
+  </div>
 
   <?php if (!empty($error)): ?>
     <div class="alert-error"><?= e($error) ?></div>
@@ -280,5 +293,64 @@ Object.entries(initial).forEach(([slug, tax]) => {
 
 }());
 </script>
+<?php if ($repoOk): ?>
+<script>
+(function () {
+  const btn    = document.getElementById('update-check-btn');
+  const status = document.getElementById('update-status');
+  const csrf   = document.querySelector('[name="csrf_token"]')?.value ?? '';
+  if (!btn) return;
+
+  btn.addEventListener('click', async function () {
+    btn.disabled = true;
+    status.textContent = 'Checking…';
+    status.className = 'update-status';
+    try {
+      const res  = await fetch('/admin/update-check');
+      const data = await res.json();
+      if (!data.has_update) {
+        status.textContent = 'You\'re up to date (' + data.current + ')';
+        status.className = 'update-status update-status--ok';
+        btn.disabled = false;
+        return;
+      }
+      const v = data.latest.version;
+      status.innerHTML = `<strong>v${v} available</strong>
+        <button class="btn btn-primary btn-sm" id="update-apply-btn" data-url="${data.latest.zip_url}">
+          Update now
+        </button>`;
+      status.className = 'update-status update-status--available';
+    } catch {
+      status.textContent = 'Check failed — try again';
+      status.className = 'update-status update-status--err';
+      btn.disabled = false;
+    }
+  });
+
+  document.addEventListener('click', async function (e) {
+    const applyBtn = e.target.closest('#update-apply-btn');
+    if (!applyBtn) return;
+    if (!confirm('This will update MDFramework core files. Your content and templates are safe. Continue?')) return;
+    applyBtn.disabled = true;
+    applyBtn.textContent = 'Updating…';
+    const fd = new FormData();
+    fd.append('zip_url', applyBtn.dataset.url);
+    fd.append('csrf_token', csrf);
+    try {
+      const res  = await fetch('/admin/update-apply', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Update failed');
+      status.innerHTML = `<span class="update-status--ok">Updated to v${data.version}!
+        Backup saved. <a href="#" onclick="location.reload()">Reload page</a></span>`;
+    } catch (err) {
+      status.textContent = err.message;
+      status.className = 'update-status update-status--err';
+      applyBtn.disabled = false;
+      applyBtn.textContent = 'Retry';
+    }
+  });
+}());
+</script>
+<?php endif; ?>
 <?php $content = ob_get_clean(); ?>
 <?php require __DIR__ . '/_layout.php'; ?>

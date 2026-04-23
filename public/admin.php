@@ -436,6 +436,63 @@ if ($action === 'settings') {
     exit;
 }
 
+// ── Update check (AJAX) ───────────────────────────────────────────────────────
+
+if ($action === 'update-check') {
+    header('Content-Type: application/json');
+    $updater = new MD\Updater($appRoot);
+    $latest  = $updater->checkLatest();
+    echo json_encode([
+        'current' => $updater->currentVersion(),
+        'latest'  => $latest,
+        'has_update' => $latest
+            ? version_compare($latest['version'], $updater->currentVersion(), '>')
+            : false,
+        'repo_configured' => !str_starts_with($updater->repo(), 'your-'),
+    ]);
+    exit;
+}
+
+// ── Update apply (AJAX POST) ──────────────────────────────────────────────────
+
+if ($action === 'update-apply') {
+    header('Content-Type: application/json');
+    if ($method !== 'POST' || !csrf_verify()) {
+        http_response_code(403); echo json_encode(['error' => 'Forbidden']); exit;
+    }
+    $zipUrl  = trim($_POST['zip_url'] ?? '');
+    if (!$zipUrl || !str_starts_with($zipUrl, 'https://')) {
+        http_response_code(400); echo json_encode(['error' => 'Invalid URL']); exit;
+    }
+    $updater    = new MD\Updater($appRoot);
+    $backupDir  = $appRoot . '/site/backups';
+    echo json_encode($updater->apply($zipUrl, $backupDir));
+    exit;
+}
+
+// ── Starters list ─────────────────────────────────────────────────────────────
+
+if ($action === 'starters') {
+    $starters_obj = new MD\Starters($appRoot);
+    $starters     = $starters_obj->list();
+    $has_site     = !$starters_obj->isFreshInstall();
+    require $TEMPLATE_DIR . '/starters.php';
+    exit;
+}
+
+// ── Starters apply (AJAX POST) ────────────────────────────────────────────────
+
+if ($action === 'starters-apply') {
+    header('Content-Type: application/json');
+    if ($method !== 'POST' || !csrf_verify()) {
+        http_response_code(403); echo json_encode(['error' => 'Forbidden']); exit;
+    }
+    $slug         = preg_replace('/[^a-z0-9_-]/', '', $_POST['slug'] ?? '');
+    $starters_obj = new MD\Starters($appRoot);
+    echo json_encode($starters_obj->apply($slug));
+    exit;
+}
+
 // ── Cache rebuild ─────────────────────────────────────────────────────────────
 
 if ($action === 'cache') {

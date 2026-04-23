@@ -1,0 +1,52 @@
+{
+    "site": {
+        "name": "My Site",
+        "base": "/"
+    },
+    "taxonomies": {
+        "categories": {
+            "label": "Categories",
+            "multiple": false,
+            "post_types": ["blog", "tutorials"],
+            "fields": [
+                {
+                    "name": "image",
+                    "type": "single",
+                    "value": ""
+                },
+                {
+                    "name": "description",
+                    "type": "single",
+                    "value": ""
+                },
+                {
+                    "name": "terms",
+                    "type": "array",
+                    "widget": "select",
+                    "items": [
+                        "tech",
+                        "design",
+                        "tutorial"
+                    ]
+                }
+            ]
+        },
+        "tags": {
+            "label": "Tags",
+            "multiple": true,
+            "post_types": ["blog", "tutorials"],
+            "fields": [
+                {
+                    "name": "terms",
+                    "type": "array",
+                    "widget": "checkbox",
+                    "items": [
+                        "gsap",
+                        "php",
+                        "css"
+                    ]
+                }
+            ]
+        }
+    }
+}

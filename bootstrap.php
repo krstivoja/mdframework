@@ -19,6 +19,9 @@ $CONTENT_DIR = $ROOT . '/site/content';
 $CACHE_DIR = $ROOT . '/site/cache';
 $TEMPLATE_DIR = $ROOT . '/site/templates';
 
+// Auto-install default starter on fresh install (no templates yet)
+(new MD\Starters($ROOT))->autoInstallDefault();
+
 $config = new MD\Config($ROOT . '/site/config.json');
 $GLOBALS['md_config'] = $config;
 

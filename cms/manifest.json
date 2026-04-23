@@ -1,0 +1,30 @@
+{
+  "repo": "your-username/mdframework",
+  "core": [
+    "bootstrap.php",
+    "public/.htaccess",
+    "public/admin.php",
+    "public/index.php",
+    "public/cms/admin.css",
+    "public/cms/editor.js",
+    "public/cms/inline-edit.js",
+    "public/cms/suneditor.min.css",
+    "public/cms/suneditor.min.js",
+    "cms/lib/Config.php",
+    "cms/lib/Content.php",
+    "cms/lib/Env.php",
+    "cms/lib/Index.php",
+    "cms/lib/Router.php",
+    "cms/lib/Updater.php",
+    "cms/lib/Starters.php",
+    "cms/templates/_layout.php",
+    "cms/templates/edit.php",
+    "cms/templates/login.php",
+    "cms/templates/media.php",
+    "cms/templates/pages.php",
+    "cms/templates/settings.php",
+    "cms/templates/starters.php",
+    "cms/manifest.json",
+    "cms/VERSION"
+  ]
+}
