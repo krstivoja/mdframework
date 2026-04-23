@@ -86,7 +86,8 @@ ob_start();
 
     <div class="form-group-lg">
       <label class="form-label">Content</label>
-      <textarea id="body" name="body"><?= $md_body ?></textarea>
+      <textarea id="body" name="body" style="display:none"><?= e($md_body ?? '') ?></textarea>
+      <textarea id="body-editor"><?= $md_body_html ?? '' ?></textarea>
     </div>
 
     <div class="form-actions">

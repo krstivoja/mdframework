@@ -58,6 +58,7 @@ class Content
 
         return [
             'meta' => $meta,
+            'body' => $body,
             'html' => $this->md->convert($body)->getContent(),
         ];
     }

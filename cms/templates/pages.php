@@ -47,13 +47,7 @@ ob_start();
             <?php if (!$active_folder): ?>
               <td class="col-folder"><?= e($page['folder']) ?></td>
             <?php endif; ?>
-            <td>
-              <?php if (!empty($page['draft'])): ?>
-                <span class="badge badge-draft">Draft</span>
-              <?php else: ?>
-                <span class="badge badge-live">Live</span>
-              <?php endif; ?>
-            </td>
+            <td><span class="badge badge-live">Live</span></td>
             <td class="col-actions">
               <a href="/admin/edit?path=<?= urlencode($page['path']) ?>" class="btn btn-secondary">Edit</a>
               &nbsp;

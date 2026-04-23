@@ -280,6 +280,12 @@ if ($action === 'delete') {
     $file    = realpath($CONTENT_DIR . '/' . $relPath . '.md');
     if ($file && str_starts_with($file, realpath($CONTENT_DIR) . '/') && is_file($file)) {
         unlink($file);
+        // Invalidate HTML cache for this page
+        $htmlCache = $CACHE_DIR . '/html/' . md5($relPath) . '.php';
+        if (is_file($htmlCache)) unlink($htmlCache);
+        // Invalidate index cache so deleted entry doesn't persist
+        $indexCache = $CACHE_DIR . '/index.php';
+        if (is_file($indexCache)) unlink($indexCache);
     }
     redirect('/admin/');
 }
@@ -355,7 +361,8 @@ if ($action === 'new' || $action === 'edit') {
             $parser       = new MD\Content($CONTENT_DIR, $CACHE_DIR);
             $parsed       = $parser->parse($file);
             $md_title     = $parsed['meta']['title'] ?? '';
-            $md_body      = $parsed['html'];
+            $md_body      = $parsed['body'];
+            $md_body_html = $parsed['html'];
             $current_meta = $parsed['meta'];
         }
     }

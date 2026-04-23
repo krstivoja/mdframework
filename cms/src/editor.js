@@ -1,9 +1,13 @@
-const textarea = document.getElementById('body');
-if (!textarea) throw new Error('Editor textarea not found');
+import TurndownService from 'turndown';
+const td = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced', bulletListMarker: '-' });
+
+const hiddenBody  = document.getElementById('body');
+const editorArea  = document.getElementById('body-editor');
+if (!hiddenBody || !editorArea) throw new Error('Editor elements not found');
 
 const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
-const editor = SUNEDITOR.create(textarea, {
+const editor = SUNEDITOR.create(editorArea, {
   plugins: SUNEDITOR.plugins,
   width: '100%',
   height: '520px',
@@ -44,13 +48,13 @@ function showToast(msg, type = 'success') {
   setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 2500);
 }
 
-const form = textarea.closest('form');
+const form = hiddenBody.closest('form');
 
 async function save() {
   const fc = editor.$.frameContext;
   const wasMarkdown = fc?.get('isMarkdownView');
   if (wasMarkdown) editor.$.viewer.markdownView(false);
-  textarea.value = editor.$.html.get();
+  hiddenBody.value = td.turndown(editor.$.html.get());
   if (wasMarkdown) editor.$.viewer.markdownView(true);
   const data = new FormData(form);
   try {
