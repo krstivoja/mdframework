@@ -51,12 +51,48 @@ if (!function_exists('csrf_token')) {
 }
 
 /**
- * Helper for templates: get all posts, optionally filtered.
+ * Query posts with filtering, ordering, and pagination.
+ *
+ * $args keys:
+ *   folder   string   — limit to a content folder (e.g. 'blog')
+ *   filter   array    — key/value pairs matched against meta fields
+ *   orderby  string   — field to sort by: 'date' (default), 'title', or any meta key
+ *   order    string   — 'desc' (default) or 'asc'
+ *   limit    int      — max number of posts to return (0 = all)
+ *   offset   int      — skip N posts (for pagination)
  */
-function posts(array $criteria = []): array
+function posts(array $args = []): array
 {
     $index = $GLOBALS['md_index'];
-    return $criteria ? $index->filter($criteria) : $index->get();
+
+    // Build filter criteria
+    $criteria = $args['filter'] ?? [];
+    if (!empty($args['folder'])) $criteria['folder'] = $args['folder'];
+
+    $posts = $criteria ? $index->filter($criteria) : $index->get();
+    $posts = array_values($posts);
+
+    // Sort
+    $orderby = $args['orderby'] ?? 'date';
+    $order   = strtolower($args['order'] ?? 'desc') === 'asc' ? 1 : -1;
+    usort($posts, function ($a, $b) use ($orderby, $order) {
+        $av = $a[$orderby] ?? $a['meta'][$orderby] ?? '';
+        $bv = $b[$orderby] ?? $b['meta'][$orderby] ?? '';
+        if ($orderby === 'date') {
+            $av = $av ? strtotime((string)$av) : 0;
+            $bv = $bv ? strtotime((string)$bv) : 0;
+        }
+        return ($av <=> $bv) * $order;
+    });
+
+    // Paginate
+    $offset = (int)($args['offset'] ?? 0);
+    $limit  = (int)($args['limit']  ?? 0);
+    if ($offset || $limit) {
+        $posts = array_slice($posts, $offset, $limit ?: null);
+    }
+
+    return $posts;
 }
 
 /**

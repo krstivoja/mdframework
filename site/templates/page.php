@@ -10,14 +10,21 @@ ob_start();
     // Pages can opt into post loops via front matter:
     //   loop:
     //     folder: blog
+    //     orderby: title   # date (default), title, or any meta key
+    //     order: asc       # desc (default) or asc
     //     limit: 5
+    //     offset: 0
     //     filter:
     //       featured: true
     if (!empty($meta['loop'])):
-        $criteria = $meta['loop']['filter'] ?? [];
-        if (!empty($meta['loop']['folder'])) $criteria['folder'] = $meta['loop']['folder'];
-        $loopPosts = posts($criteria);
-        if (!empty($meta['loop']['limit'])) $loopPosts = array_slice($loopPosts, 0, (int)$meta['loop']['limit']);
+        $loopPosts = posts([
+            'folder'  => $meta['loop']['folder']  ?? null,
+            'filter'  => $meta['loop']['filter']  ?? [],
+            'orderby' => $meta['loop']['orderby'] ?? 'date',
+            'order'   => $meta['loop']['order']   ?? 'desc',
+            'limit'   => (int)($meta['loop']['limit']  ?? 0),
+            'offset'  => (int)($meta['loop']['offset'] ?? 0),
+        ]);
     ?>
         <section>
             <h2><?= htmlspecialchars($meta['loop']['heading'] ?? 'Related posts') ?></h2>
