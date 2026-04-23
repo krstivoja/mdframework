@@ -312,6 +312,22 @@ body.login-page {
 .media-toast--success { background: #166534; }
 .media-toast--error   { background: #991b1b; }
 
+/* ── Themes ──────────────────────────────────────────────────────────────────── */
+.themes-section { margin-bottom: 2.5rem; }
+.themes-section-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-bottom: 1rem; }
+.themes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+.theme-card { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; background: var(--surface); }
+.theme-card--active { border-color: var(--active-bg); box-shadow: 0 0 0 1px var(--active-bg); }
+.theme-preview { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: var(--bg); }
+.theme-preview--placeholder { display: flex; align-items: center; justify-content: center; background: var(--bg); }
+.theme-info { padding: .75rem; }
+.theme-header { display: flex; align-items: center; gap: .5rem; margin-bottom: .35rem; flex-wrap: wrap; }
+.theme-name { font-weight: 600; font-size: 14px; }
+.theme-version { font-size: 11px; color: var(--text-muted); }
+.theme-badge { font-size: 11px; font-weight: 600; background: var(--active-bg); color: var(--active-fg); padding: .1rem .45rem; border-radius: 99px; margin-left: auto; }
+.theme-desc { font-size: 12px; color: var(--text-muted); margin-bottom: .75rem; }
+.theme-active-label { font-size: 12px; color: var(--text-muted); font-style: italic; }
+
 /* ── Update bar ──────────────────────────────────────────────────────────────── */
 .update-bar { display: flex; align-items: center; gap: 1rem; padding: .75rem 1rem; background: var(--bg); border-radius: var(--radius-sm); margin-bottom: 1.75rem; flex-wrap: wrap; }
 .update-version { font-size: 13px; color: var(--text-muted); }

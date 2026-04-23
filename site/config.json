@@ -7,7 +7,10 @@
         "categories": {
             "label": "Categories",
             "multiple": false,
-            "post_types": ["blog", "tutorials"],
+            "post_types": [
+                "blog",
+                "tutorials"
+            ],
             "fields": [
                 {
                     "name": "image",
@@ -34,7 +37,10 @@
         "tags": {
             "label": "Tags",
             "multiple": true,
-            "post_types": ["blog", "tutorials"],
+            "post_types": [
+                "blog",
+                "tutorials"
+            ],
             "fields": [
                 {
                     "name": "terms",
@@ -48,5 +54,6 @@
                 }
             ]
         }
-    }
+    },
+    "active_theme": "default"
 }

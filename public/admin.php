@@ -470,26 +470,47 @@ if ($action === 'update-apply') {
     exit;
 }
 
-// ── Starters list ─────────────────────────────────────────────────────────────
+// ── Themes list ───────────────────────────────────────────────────────────────
 
-if ($action === 'starters') {
-    $starters_obj = new MD\Starters($appRoot);
-    $starters     = $starters_obj->list();
-    $has_site     = !$starters_obj->isFreshInstall();
-    require $TEMPLATE_DIR . '/starters.php';
+if ($action === 'themes') {
+    $themes_obj   = new MD\Themes($appRoot, $config);
+    $themes_list  = $themes_obj->list();
+    $active_theme = $themes_obj->active();
+    $starters_dir = $cmsRoot . '/starters';
+    $starters_list = [];
+    foreach (glob($starters_dir . '/*/starter.json') ?: [] as $f) {
+        $slug = basename(dirname($f));
+        $meta = json_decode(file_get_contents($f), true) ?? [];
+        $starters_list[$slug] = array_merge(['name' => $slug, 'description' => ''], $meta, ['slug' => $slug]);
+    }
+    require $TEMPLATE_DIR . '/themes.php';
     exit;
 }
 
-// ── Starters apply (AJAX POST) ────────────────────────────────────────────────
+// ── Theme activate (AJAX POST) ────────────────────────────────────────────────
 
-if ($action === 'starters-apply') {
+if ($action === 'themes-activate') {
     header('Content-Type: application/json');
     if ($method !== 'POST' || !csrf_verify()) {
         http_response_code(403); echo json_encode(['error' => 'Forbidden']); exit;
     }
-    $slug         = preg_replace('/[^a-z0-9_-]/', '', $_POST['slug'] ?? '');
-    $starters_obj = new MD\Starters($appRoot);
-    echo json_encode($starters_obj->apply($slug));
+    $slug       = preg_replace('/[^a-z0-9_-]/', '', $_POST['slug'] ?? '');
+    $themes_obj = new MD\Themes($appRoot, $config);
+    echo json_encode($themes_obj->activate($slug));
+    exit;
+}
+
+// ── Theme install from starter (AJAX POST) ────────────────────────────────────
+
+if ($action === 'themes-install') {
+    header('Content-Type: application/json');
+    if ($method !== 'POST' || !csrf_verify()) {
+        http_response_code(403); echo json_encode(['error' => 'Forbidden']); exit;
+    }
+    $starter    = preg_replace('/[^a-z0-9_-]/', '', $_POST['starter'] ?? '');
+    $themeSlug  = preg_replace('/[^a-z0-9_-]/', '', $_POST['theme_slug'] ?? $starter);
+    $themes_obj = new MD\Themes($appRoot, $config);
+    echo json_encode($themes_obj->installFromStarter($starter, $themeSlug, $cmsRoot . '/starters'));
     exit;
 }
 

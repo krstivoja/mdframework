@@ -35,7 +35,6 @@ ob_start();
           <th>Title</th>
           <th>Path</th>
           <?php if (!$active_folder): ?><th>Type</th><?php endif; ?>
-          <th>Status</th>
           <th></th>
         </tr>
       </thead>
@@ -47,7 +46,7 @@ ob_start();
             <?php if (!$active_folder): ?>
               <td class="col-folder"><?= e($page['folder']) ?></td>
             <?php endif; ?>
-            <td><span class="badge badge-live">Live</span></td>
+
             <td class="col-actions">
               <a href="/admin/edit?path=<?= urlencode($page['path']) ?>" class="btn btn-secondary">Edit</a>
               &nbsp;

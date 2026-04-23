@@ -47,9 +47,9 @@
           <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="14" rx="2"/><circle cx="5.5" cy="5.5" r="1.5"/><path d="M1 11l4-4 3 3 2-2 5 5"/></svg>
           Media library
         </a>
-        <a href="/admin/starters" class="sidebar-link <?= ($action ?? '') === 'starters' ? 'is-active' : '' ?>">
+        <a href="/admin/themes" class="sidebar-link <?= ($action ?? '') === 'themes' ? 'is-active' : '' ?>">
           <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="9" rx="1"/><rect x="9" y="1" width="6" height="9" rx="1"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg>
-          Starters
+          Themes
         </a>
       </div>
     </nav>

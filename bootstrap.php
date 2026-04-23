@@ -19,11 +19,13 @@ $CONTENT_DIR = $ROOT . '/site/content';
 $CACHE_DIR = $ROOT . '/site/cache';
 $TEMPLATE_DIR = $ROOT . '/site/templates';
 
-// Auto-install default starter on fresh install (no templates yet)
-(new MD\Starters($ROOT))->autoInstallDefault();
-
 $config = new MD\Config($ROOT . '/site/config.json');
 $GLOBALS['md_config'] = $config;
+
+// Resolve active theme template directory
+$themes      = new MD\Themes($ROOT, $config);
+$TEMPLATE_DIR = $themes->templateDir();
+$GLOBALS['md_themes'] = $themes;
 
 $content = new MD\Content($CONTENT_DIR, $CACHE_DIR);
 $index = new MD\Index($CONTENT_DIR, $CACHE_DIR, $content);
