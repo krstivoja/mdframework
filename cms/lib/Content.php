@@ -14,7 +14,10 @@ class Content
     {
         $this->contentDir = rtrim($contentDir, '/');
         $this->cacheDir = rtrim($cacheDir, '/');
-        $this->md = new CommonMarkConverter(['html_input' => 'allow']);
+        $this->md = new CommonMarkConverter([
+            'html_input' => 'escape',
+            'allow_unsafe_links' => false,
+        ]);
     }
 
     /**
@@ -28,9 +31,10 @@ class Content
             return null;
         }
 
-        $cacheFile = $this->cacheDir . '/html/' . md5($relPath) . '.php';
+        $cacheFile = $this->cacheDir . '/html/' . md5($relPath) . '.json';
         if (is_file($cacheFile) && filemtime($cacheFile) >= filemtime($file)) {
-            return require $cacheFile;
+            $cached = json_decode(file_get_contents($cacheFile), true);
+            if (is_array($cached)) return $cached;
         }
 
         $parsed = $this->parse($file);
@@ -88,6 +92,8 @@ class Content
     {
         $dir = dirname($file);
         if (!is_dir($dir)) mkdir($dir, 0755, true);
-        file_put_contents($file, '<?php return ' . var_export($data, true) . ';');
+        $tmp = $file . '.tmp';
+        file_put_contents($tmp, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        rename($tmp, $file);
     }
 }

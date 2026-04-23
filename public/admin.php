@@ -258,6 +258,8 @@ if ($action === 'new' || $action === 'edit') {
                 $error = 'Path must be lowercase alphanumeric with hyphens/slashes (e.g. blog/my-post).';
             } elseif ($md_title === '') {
                 $error = 'Title is required.';
+            } elseif ($paths->resolveNewContentFile($relPath) === null) {
+                $error = 'Invalid path.';
             } else {
                 $existing = [];
                 if (!$is_new) {

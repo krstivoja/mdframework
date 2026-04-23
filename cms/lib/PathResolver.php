@@ -29,6 +29,29 @@ class PathResolver
         return $real;
     }
 
+    /**
+     * Resolve a target path for a new (not-yet-existing) content file, ensuring
+     * the nearest existing ancestor directory resolves inside the content dir.
+     * Returns the absolute target path, or null if the path is invalid/escapes.
+     */
+    public function resolveNewContentFile(string $relPath): ?string
+    {
+        if (!$this->isValidRelPath($relPath)) return null;
+        $baseDir = realpath($this->contentDir);
+        if (!$baseDir) return null;
+
+        $target = $this->contentDir . '/' . $relPath . '.md';
+        $dir    = dirname($target);
+        while (!is_dir($dir) && strlen($dir) > strlen($this->contentDir)) {
+            $dir = dirname($dir);
+        }
+        $realDir = realpath($dir);
+        if (!$realDir) return null;
+        if ($realDir !== $baseDir && !str_starts_with($realDir, $baseDir . '/')) return null;
+
+        return $target;
+    }
+
     /** Returns realpath of a media file, or null if invalid / outside media dir. */
     public function mediaFile(string $name): ?string
     {
@@ -53,11 +76,11 @@ class PathResolver
 
     public function htmlCacheFile(string $relPath): string
     {
-        return $this->cacheDir . '/html/' . md5($relPath) . '.php';
+        return $this->cacheDir . '/html/' . md5($relPath) . '.json';
     }
 
     public function indexCacheFile(): string
     {
-        return $this->cacheDir . '/index.php';
+        return $this->cacheDir . '/index.json';
     }
 }

@@ -30,7 +30,7 @@ class CacheService
     {
         $htmlDir = $this->cacheDir . '/html';
         if (is_dir($htmlDir)) {
-            foreach (glob($htmlDir . '/*.php') ?: [] as $f) unlink($f);
+            foreach (glob($htmlDir . '/*.{json,json.tmp,php}', GLOB_BRACE) ?: [] as $f) unlink($f);
         }
         $this->clearIndex();
 

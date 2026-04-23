@@ -19,11 +19,11 @@ class Index
      */
     public function get(bool $includeDrafts = false): array
     {
-        $indexFile = $this->cacheDir . '/index.php';
+        $indexFile = $this->cacheDir . '/index.json';
         if ($this->needsRebuild($indexFile)) {
             $this->build();
         }
-        $all = require $indexFile;
+        $all = json_decode(file_get_contents($indexFile), true) ?? [];
         if ($includeDrafts) return $all;
         return array_filter($all, fn($p) => empty($p['draft']));
     }
@@ -93,10 +93,9 @@ class Index
         });
 
         if (!is_dir($this->cacheDir)) mkdir($this->cacheDir, 0755, true);
-        file_put_contents(
-            $this->cacheDir . '/index.php',
-            '<?php return ' . var_export($posts, true) . ';'
-        );
+        $tmp = $this->cacheDir . '/index.json.tmp';
+        file_put_contents($tmp, json_encode($posts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        rename($tmp, $this->cacheDir . '/index.json');
     }
 
     /**
