@@ -92,10 +92,10 @@ class Index
             return $bd <=> $ad;
         });
 
-        if (!is_dir($this->cacheDir)) mkdir($this->cacheDir, 0755, true);
-        $tmp = $this->cacheDir . '/index.json.tmp';
-        file_put_contents($tmp, json_encode($posts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-        rename($tmp, $this->cacheDir . '/index.json');
+        Fs::atomicWrite(
+            $this->cacheDir . '/index.json',
+            json_encode($posts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        );
     }
 
     /**

@@ -6,12 +6,14 @@ class PathResolver
     private string $contentDir;
     private string $uploadsDir;
     private string $cacheDir;
+    private string $themesDir;
 
-    public function __construct(string $contentDir, string $uploadsDir, string $cacheDir)
+    public function __construct(string $contentDir, string $uploadsDir, string $cacheDir, string $themesDir = '')
     {
         $this->contentDir = rtrim($contentDir, '/');
         $this->uploadsDir = rtrim($uploadsDir, '/');
         $this->cacheDir   = rtrim($cacheDir, '/');
+        $this->themesDir  = rtrim($themesDir, '/');
     }
 
     public function isValidRelPath(string $relPath): bool

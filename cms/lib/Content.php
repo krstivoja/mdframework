@@ -90,10 +90,6 @@ class Content
 
     private function writeCache(string $file, array $data): void
     {
-        $dir = dirname($file);
-        if (!is_dir($dir)) mkdir($dir, 0755, true);
-        $tmp = $file . '.tmp';
-        file_put_contents($tmp, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-        rename($tmp, $file);
+        Fs::atomicWrite($file, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 }

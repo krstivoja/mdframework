@@ -100,7 +100,7 @@ function posts(array $args = []): array
  */
 function render(string $template, array $vars = []): void
 {
-    extract($vars);
+    extract($vars, EXTR_SKIP);
     require $GLOBALS['md_template_dir'] . '/' . $template . '.php';
 }
 
