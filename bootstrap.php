@@ -14,16 +14,14 @@ spl_autoload_register(function ($class) {
     }
 });
 
-$ROOT = __DIR__;
+$ROOT        = __DIR__;
 $CONTENT_DIR = $ROOT . '/site/content';
-$CACHE_DIR = $ROOT . '/site/cache';
-$TEMPLATE_DIR = $ROOT . '/site/templates';
+$CACHE_DIR   = $ROOT . '/site/cache';
 
 $config = new MD\Config($ROOT . '/site/config.json');
 $GLOBALS['md_config'] = $config;
 
-// Resolve active theme template directory
-$themes      = new MD\Themes($ROOT, $config);
+$themes       = new MD\Themes($ROOT, $config);
 $TEMPLATE_DIR = $themes->templateDir();
 $GLOBALS['md_themes'] = $themes;
 

@@ -36,12 +36,7 @@ class Themes
 
     public function templateDir(): string
     {
-        $dir = $this->themesDir . '/' . $this->active() . '/templates';
-        // Fallback to legacy site/templates if theme not migrated yet
-        if (!is_dir($dir)) {
-            $dir = dirname($this->themesDir) . '/templates';
-        }
-        return $dir;
+        return $this->themesDir . '/' . $this->active() . '/templates';
     }
 
     public function activate(string $slug): array
