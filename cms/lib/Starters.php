@@ -33,8 +33,8 @@ class Starters
         if (is_dir($src . '/templates')) {
             $this->copyDir($src . '/templates', $this->siteDir . '/templates');
         }
-        if (is_dir($src . '/css')) {
-            $this->copyDir($src . '/css', $this->publicDir . '/css');
+        if (is_dir($src . '/assets')) {
+            $this->copyDir($src . '/assets', $this->publicDir . '/assets');
         }
         // Only copy example config if no config exists yet
         if (is_file($src . '/config.example.json') && !is_file($this->siteDir . '/config.json')) {

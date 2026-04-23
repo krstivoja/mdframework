@@ -1,6 +1,18 @@
 import TurndownService from 'turndown';
 const td = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced', bulletListMarker: '-' });
 
+// Preserve block-level HTML elements that have attributes (class, id, data-*, style)
+// as raw HTML in the Markdown output — Markdown has no way to represent these.
+td.addRule('html-blocks', {
+  filter(node) {
+    const blocks = ['DIV', 'SECTION', 'ARTICLE', 'ASIDE', 'FIGURE', 'FIGCAPTION', 'HEADER', 'FOOTER', 'DETAILS', 'SUMMARY'];
+    return blocks.includes(node.nodeName) && node.hasAttributes();
+  },
+  replacement(_content, node) {
+    return '\n\n' + node.outerHTML + '\n\n';
+  },
+});
+
 const hiddenBody  = document.getElementById('body');
 const editorArea  = document.getElementById('body-editor');
 if (!hiddenBody || !editorArea) throw new Error('Editor elements not found');
@@ -19,6 +31,11 @@ const editor = SUNEDITOR.create(editorArea, {
     ['link', 'image', 'table'],
     ['codeView', 'markdownView', 'fullScreen'],
   ],
+  // Allow custom block elements and their attributes to pass through unsanitized
+  addTagsWhitelist: 'div|section|article|aside|figure|figcaption|header|footer|details|summary|span',
+  attributesWhitelist: {
+    all: 'class|id|style|data-.+|aria-.+',
+  },
   imageUploadHandler(xmlHttp, info, core) {
     const fd = new FormData();
     fd.append('image', info.file);

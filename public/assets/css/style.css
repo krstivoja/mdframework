@@ -10,6 +10,12 @@ body {
 
 a { color: #0066cc; }
 
+img {
+  max-width: 500px;
+  width: 100%;
+  height: auto;
+}
+
 nav {
   border-bottom: 1px solid #eee;
   padding-bottom: 1rem;

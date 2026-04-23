@@ -78,6 +78,7 @@
       img.classList.add('ie-wrapped');
       const wrap = document.createElement('span');
       wrap.className = 'ie-img-wrap';
+      wrap.setAttribute('contenteditable', 'false');
       img.parentNode.insertBefore(wrap, img);
       wrap.appendChild(img);
       const btn = document.createElement('button');
@@ -147,11 +148,28 @@
   }
 
   // ── Save ──────────────────────────────────────────────────────────────────────
+  function cleanBody(bodyEl) {
+    const clone = bodyEl.cloneNode(true);
+    // Remove injected ie-img-wrap — restore plain <img> tags
+    clone.querySelectorAll('.ie-img-wrap').forEach(wrap => {
+      const img = wrap.querySelector('img');
+      if (img) {
+        img.classList.remove('ie-wrapped');
+        wrap.replaceWith(img);
+      } else {
+        wrap.remove();
+      }
+    });
+    // Remove any other inline-edit injected elements
+    clone.querySelectorAll('.ie-img-btn, .ie-toolbar, .admin-front-bar').forEach(el => el.remove());
+    return clone.innerHTML;
+  }
+
   async function save() {
     const titleEl = document.querySelector('[data-ie="title"]');
     const bodyEl  = document.querySelector('[data-ie="body"]');
     const title   = titleEl ? titleEl.innerText.trim() : '';
-    const body    = bodyEl  ? bodyEl.innerHTML : '';
+    const body    = bodyEl  ? cleanBody(bodyEl) : '';
 
     const fd = new FormData();
     fd.append('csrf_token', csrf);

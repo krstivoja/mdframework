@@ -2,16 +2,24 @@
 title: 'Hello World'
 ---
 
-<h1>Hello World</h1>
-<p><strong>Tasdasdhis is the</strong> first blog post. Its URL is <code>/blog/hello-world</code> .</p>
-<p>Front matter defines:</p>
-<ul>
-<li><code>title</code>— shddown in the post header and index</li>
-<li><code>date</code>— used for sorting</li>
-<li><code>categories</code>/<code>tags</code>— for taxonomies and filtering</li>
-<li><code>featured</code>— a custom field you can filter on</li>
-<li><code>excerpt</code>— shown in the archive list</li>
-</ul>
-<p>You can add <strong>any</strong> custom field you want. They all land in <code>$meta</code> and in the index.</p>
-<h2>bla bla asdasdsa</h2>
-<h2>test</h2>
+# Hello World
+
+**Tasdasdhis is the** first blog post. Its URL is `/blog/hello-world` .
+
+Front matter defines:
+
+-   `title`— shddown in the post header and index
+-   `date`— used for sorting
+-   `categories`/`tags`— for taxonomies and filtering
+-   `featured`— a custom field you can filter on
+-   `excerpt`— shown in the archive list
+
+You can add **any** custom field you want. They all land in `$meta` and in the index.
+
+## bla bla asdasdsa
+
+**Custom HTML block** with any markup you need.
+
+**Custom HTML block** with any markup you need.
+
+## test
