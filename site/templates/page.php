@@ -3,8 +3,8 @@ $page_title = $meta['title'] ?? 'Page';
 ob_start();
 ?>
 <article>
-    <h1><?= htmlspecialchars($meta['title'] ?? '') ?></h1>
-    <?= $html ?>
+    <h1 data-ie="title"><?= htmlspecialchars($meta['title'] ?? '') ?></h1>
+    <div data-ie="body"><?= $html ?></div>
 
     <?php
     // Pages can opt into post loops via front matter:

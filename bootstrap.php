@@ -34,6 +34,20 @@ $GLOBALS['md_template_dir'] = $TEMPLATE_DIR;
 $GLOBALS['md_content_dir'] = $CONTENT_DIR;
 
 /**
+ * CSRF token — generates and stores a token in the session.
+ * Defined here (guarded) so it's available in both admin and frontend contexts.
+ */
+if (!function_exists('csrf_token')) {
+    function csrf_token(): string
+    {
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        return $_SESSION['csrf_token'];
+    }
+}
+
+/**
  * Helper for templates: get all posts, optionally filtered.
  */
 function posts(array $criteria = []): array

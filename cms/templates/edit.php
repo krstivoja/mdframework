@@ -37,6 +37,53 @@ ob_start();
              class="form-input">
     </div>
 
+    <?php foreach ($applicable_taxonomies as $taxSlug => $tax):
+        $terms  = [];
+        $widget = 'select';
+        foreach ($tax['fields'] as $f) {
+            if ($f['type'] === 'array') {
+                $terms  = array_merge($terms, $f['items'] ?? []);
+                $widget = $f['widget'] ?? 'select';
+            }
+        }
+        if (empty($terms)) continue;
+        $currentVal = $current_meta[$taxSlug] ?? null;
+    ?>
+      <div class="form-group">
+        <label class="form-label"><?= e($tax['label']) ?></label>
+        <?php if ($widget === 'checkbox'): ?>
+          <div class="tax-checkboxes">
+            <?php foreach ($terms as $term): ?>
+              <?php $checked = is_array($currentVal) ? in_array($term, $currentVal, true) : $currentVal === $term; ?>
+              <label class="toggle-label">
+                <input type="checkbox" name="tax_<?= e($taxSlug) ?>[]" value="<?= e($term) ?>" <?= $checked ? 'checked' : '' ?>>
+                <span><?= e($term) ?></span>
+              </label>
+            <?php endforeach; ?>
+          </div>
+        <?php elseif ($widget === 'radio'): ?>
+          <div class="tax-checkboxes">
+            <label class="toggle-label">
+              <input type="radio" name="tax_<?= e($taxSlug) ?>" value=""> <span class="text-muted">None</span>
+            </label>
+            <?php foreach ($terms as $term): ?>
+              <label class="toggle-label">
+                <input type="radio" name="tax_<?= e($taxSlug) ?>" value="<?= e($term) ?>" <?= $currentVal === $term ? 'checked' : '' ?>>
+                <span><?= e($term) ?></span>
+              </label>
+            <?php endforeach; ?>
+          </div>
+        <?php else: ?>
+          <select name="tax_<?= e($taxSlug) ?>" class="form-input">
+            <option value="">— none —</option>
+            <?php foreach ($terms as $term): ?>
+              <option value="<?= e($term) ?>" <?= $currentVal === $term ? 'selected' : '' ?>><?= e($term) ?></option>
+            <?php endforeach; ?>
+          </select>
+        <?php endif; ?>
+      </div>
+    <?php endforeach; ?>
+
     <div class="form-group-lg">
       <label class="form-label">Content</label>
       <textarea id="body" name="body"><?= $md_body ?></textarea>

@@ -123,6 +123,16 @@ if ($action === 'logout') {
 
 require_auth();
 
+// ── Post types (content folders) ─────────────────────────────────────────────
+
+$post_types = [];
+if (is_dir($CONTENT_DIR)) {
+    foreach (array_diff(scandir($CONTENT_DIR), ['.', '..']) as $entry) {
+        if (is_dir($CONTENT_DIR . '/' . $entry)) $post_types[] = $entry;
+    }
+}
+$active_folder = null;
+
 // ── Image upload (AJAX) ───────────────────────────────────────────────────────
 
 if ($action === 'upload') {
@@ -139,27 +149,123 @@ if ($action === 'upload') {
         echo json_encode(['errorMessage' => 'No file or upload error']);
         exit;
     }
-    $allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    $type    = mime_content_type($upload['tmp_name']);
-    if (!in_array($type, $allowed, true)) {
+    $extMap = [
+        'jpg' => 'jpg', 'jpeg' => 'jpg', 'png' => 'png', 'gif' => 'gif',
+        'webp' => 'webp', 'svg' => 'svg', 'pdf' => 'pdf', 'zip' => 'zip',
+    ];
+    $origExt = strtolower(pathinfo($upload['name'], PATHINFO_EXTENSION));
+    if (!isset($extMap[$origExt])) {
         http_response_code(400);
-        echo json_encode(['errorMessage' => 'File type not allowed']);
+        echo json_encode(['errorMessage' => 'File type not allowed: ' . $origExt]);
         exit;
     }
-    $ext  = match ($type) {
-        'image/jpeg' => 'jpg',
-        'image/png'  => 'png',
-        'image/gif'  => 'gif',
-        'image/webp' => 'webp',
-    };
+    $ext = $extMap[$origExt];
     $name = bin2hex(random_bytes(12)) . '.' . $ext;
-    if (!is_dir($UPLOADS_DIR)) mkdir($UPLOADS_DIR, 0755, true);
-    if (!move_uploaded_file($upload['tmp_name'], $UPLOADS_DIR . '/' . $name)) {
+
+    // Determine subfolder: per-page path or global media
+    $raw_page_path = trim($_POST['page_path'] ?? '', '/');
+    if ($raw_page_path !== '' && preg_match('#^[a-z0-9][a-z0-9/_-]*$#', $raw_page_path)) {
+        $sub_dir = $UPLOADS_DIR . '/' . $raw_page_path;
+        $url_prefix = '/uploads/' . $raw_page_path . '/';
+    } else {
+        $sub_dir    = $UPLOADS_DIR . '/media';
+        $url_prefix = '/uploads/media/';
+    }
+
+    if (!is_dir($sub_dir)) mkdir($sub_dir, 0755, true);
+    if (!move_uploaded_file($upload['tmp_name'], $sub_dir . '/' . $name)) {
         http_response_code(500);
         echo json_encode(['errorMessage' => 'Upload failed']);
         exit;
     }
-    echo json_encode(['result' => [['url' => '/uploads/' . $name, 'name' => $name, 'size' => $upload['size']]]]);
+    echo json_encode(['result' => [['url' => $url_prefix . $name, 'name' => $name, 'size' => $upload['size']]]]);
+    exit;
+}
+
+// ── Inline save (AJAX) ────────────────────────────────────────────────────────
+
+if ($action === 'inline-save') {
+    header('Content-Type: application/json');
+    if ($method !== 'POST' || !csrf_verify()) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Forbidden']);
+        exit;
+    }
+    $relPath = trim($_POST['page_path'] ?? '', '/');
+    if (!preg_match('#^[a-z0-9][a-z0-9/_-]*$#', $relPath)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid path']);
+        exit;
+    }
+    $file = realpath($CONTENT_DIR . '/' . $relPath . '.md');
+    if (!$file || !str_starts_with($file, realpath($CONTENT_DIR) . '/') || !is_file($file)) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Page not found']);
+        exit;
+    }
+    $parser       = new MD\Content($CONTENT_DIR, $CACHE_DIR);
+    $existing_meta = $parser->parseMeta($file);
+    if (!empty($_POST['title'])) {
+        $existing_meta['title'] = trim($_POST['title']);
+    }
+    $yaml    = \Symfony\Component\Yaml\Yaml::dump($existing_meta, 2, 2);
+    $body    = $_POST['body'] ?? '';
+    $md_file = "---\n" . $yaml . "---\n\n" . $body;
+    file_put_contents($file, $md_file);
+
+    // Clear HTML cache for this page
+    $cacheFile = $CACHE_DIR . '/html/' . md5($relPath) . '.php';
+    if (is_file($cacheFile)) unlink($cacheFile);
+
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
+// ── Media delete (AJAX) ───────────────────────────────────────────────────────
+
+if ($action === 'media-delete') {
+    header('Content-Type: application/json');
+    if ($method !== 'POST' || !csrf_verify()) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Forbidden']);
+        exit;
+    }
+    $name      = basename($_POST['name'] ?? '');
+    $mediaDir  = realpath($UPLOADS_DIR . '/media');
+    $target    = $mediaDir ? $mediaDir . '/' . $name : null;
+    if (!$target || !$mediaDir || !str_starts_with($target, $mediaDir . '/') || !is_file($target)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'File not found']);
+        exit;
+    }
+    unlink($target);
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
+// ── Media library ─────────────────────────────────────────────────────────────
+
+if ($action === 'media') {
+    $mediaDir   = $UPLOADS_DIR . '/media';
+    $mediaFiles = [];
+    if (is_dir($mediaDir)) {
+        $allowed_exts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf', 'zip'];
+        foreach (array_diff(scandir($mediaDir), ['.', '..']) as $file) {
+            $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+            if (!in_array($ext, $allowed_exts, true)) continue;
+            $full = $mediaDir . '/' . $file;
+            $mediaFiles[] = [
+                'name'  => $file,
+                'url'   => '/uploads/media/' . $file,
+                'size'  => filesize($full),
+                'mtime' => filemtime($full),
+            ];
+        }
+        usort($mediaFiles, fn($a, $b) => $b['mtime'] - $a['mtime']);
+    }
+    $active_folder = null;
+    $action = 'media';
+    require $TEMPLATE_DIR . '/media.php';
     exit;
 }
 
@@ -181,11 +287,12 @@ if ($action === 'delete') {
 // ── New / Edit ────────────────────────────────────────────────────────────────
 
 if ($action === 'new' || $action === 'edit') {
-    $error    = null;
-    $relPath  = trim($_GET['path'] ?? '', '/');
-    $md_title = '';
-    $md_body  = '';
-    $is_new   = ($action === 'new');
+    $error        = null;
+    $relPath      = trim($_GET['path'] ?? '', '/');
+    $md_title     = '';
+    $md_body      = '';
+    $current_meta = [];
+    $is_new       = ($action === 'new');
 
     if ($method === 'POST') {
         if (!csrf_verify()) {
@@ -203,8 +310,37 @@ if ($action === 'new' || $action === 'edit') {
                 $file = $CONTENT_DIR . '/' . $relPath . '.md';
                 $dir  = dirname($file);
                 if (!is_dir($dir)) mkdir($dir, 0755, true);
-                $content = "---\ntitle: " . str_replace(["\r", "\n"], '', $md_title) . "\n---\n\n" . $md_body;
-                file_put_contents($file, $content);
+
+                // Preserve existing meta fields (date, draft, etc.)
+                $existing_meta = [];
+                if (!$is_new && is_file($file)) {
+                    $existing_meta = (new MD\Content($CONTENT_DIR, $CACHE_DIR))->parseMeta($file);
+                }
+                $meta = array_merge($existing_meta, ['title' => $md_title]);
+
+                // Taxonomy values
+                $page_folder = explode('/', $relPath)[0];
+                foreach ($config->get('taxonomies', []) as $taxSlug => $tax) {
+                    $pt = $tax['post_types'] ?? [];
+                    if (!empty($pt) && !in_array($page_folder, $pt, true)) continue;
+                    $widget = 'select';
+                    foreach ($tax['fields'] ?? [] as $f) {
+                        if ($f['type'] === 'array') { $widget = $f['widget'] ?? 'select'; break; }
+                    }
+                    $val = $_POST['tax_' . $taxSlug] ?? null;
+                    if ($widget === 'checkbox') {
+                        $items = array_values(array_filter(array_map('trim', (array)($val ?? []))));
+                        if ($items) $meta[$taxSlug] = $items; else unset($meta[$taxSlug]);
+                    } else {
+                        $v = trim((string)($val ?? ''));
+                        if ($v !== '') $meta[$taxSlug] = $v; else unset($meta[$taxSlug]);
+                    }
+                }
+
+                $yaml    = \Symfony\Component\Yaml\Yaml::dump($meta, 2, 2);
+                $md_file = "---\n" . $yaml . "---\n\n" . $md_body;
+                file_put_contents($file, $md_file);
+
                 if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
                     header('Content-Type: application/json');
                     echo json_encode(['ok' => true]);
@@ -216,10 +352,21 @@ if ($action === 'new' || $action === 'edit') {
     } elseif (!$is_new && $relPath !== '') {
         $file = realpath($CONTENT_DIR . '/' . $relPath . '.md');
         if ($file && str_starts_with($file, realpath($CONTENT_DIR) . '/') && is_file($file)) {
-            $parser   = new MD\Content($CONTENT_DIR, $CACHE_DIR);
-            $parsed   = $parser->parse($file);
-            $md_title = $parsed['meta']['title'] ?? '';
-            $md_body  = $parsed['html'];
+            $parser       = new MD\Content($CONTENT_DIR, $CACHE_DIR);
+            $parsed       = $parser->parse($file);
+            $md_title     = $parsed['meta']['title'] ?? '';
+            $md_body      = $parsed['html'];
+            $current_meta = $parsed['meta'];
+        }
+    }
+
+    // Applicable taxonomies for this page's folder
+    $page_folder           = $relPath ? explode('/', $relPath)[0] : null;
+    $applicable_taxonomies = [];
+    foreach ($config->get('taxonomies', []) as $taxSlug => $tax) {
+        $pt = $tax['post_types'] ?? [];
+        if (empty($pt) || ($page_folder && in_array($page_folder, $pt, true))) {
+            $applicable_taxonomies[$taxSlug] = $tax;
         }
     }
 
@@ -250,16 +397,23 @@ if ($action === 'settings') {
                     if (!$name) continue;
                     $type = ($f['type'] ?? '') === 'array' ? 'array' : 'single';
                     if ($type === 'array') {
-                        $items = array_values(array_filter(array_map('trim', (array)($f['items'] ?? []))));
-                        $fields[] = ['name' => $name, 'type' => 'array', 'items' => $items];
+                        $validWidgets = ['select', 'checkbox', 'radio'];
+                        $widget = in_array($f['widget'] ?? '', $validWidgets, true) ? $f['widget'] : 'select';
+                        $items  = array_values(array_filter(array_map('trim', (array)($f['items'] ?? []))));
+                        $fields[] = ['name' => $name, 'type' => 'array', 'widget' => $widget, 'items' => $items];
                     } else {
                         $fields[] = ['name' => $name, 'type' => 'single', 'value' => trim($f['value'] ?? '')];
                     }
                 }
+                $post_types_raw = array_values(array_filter(array_map(
+                    fn($pt) => preg_replace('/[^a-z0-9_-]/', '', strtolower($pt)),
+                    (array)($tax['post_types'] ?? [])
+                )));
                 $taxonomies[$slug] = [
-                    'label'    => trim($tax['label'] ?? $slug),
-                    'multiple' => !empty($tax['multiple']),
-                    'fields'   => $fields,
+                    'label'      => trim($tax['label'] ?? $slug),
+                    'multiple'   => !empty($tax['multiple']),
+                    'post_types' => $post_types_raw,
+                    'fields'     => $fields,
                 ];
             }
             $config->save(['site' => $site, 'taxonomies' => $taxonomies]);
@@ -275,10 +429,53 @@ if ($action === 'settings') {
     exit;
 }
 
+// ── Cache rebuild ─────────────────────────────────────────────────────────────
+
+if ($action === 'cache') {
+    header('Content-Type: application/json');
+    if ($method !== 'POST' || !csrf_verify()) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Forbidden']);
+        exit;
+    }
+
+    // Clear html cache files
+    $htmlCacheDir = $CACHE_DIR . '/html';
+    if (is_dir($htmlCacheDir)) {
+        foreach (glob($htmlCacheDir . '/*.php') as $f) unlink($f);
+    }
+    // Clear index cache
+    $indexCache = $CACHE_DIR . '/index.php';
+    if (is_file($indexCache)) unlink($indexCache);
+
+    // Rebuild index + warm every page
+    $content_obj = new MD\Content($CONTENT_DIR, $CACHE_DIR);
+    $index_obj   = new MD\Index($CONTENT_DIR, $CACHE_DIR, $content_obj);
+    $index_obj->build();
+    $pages = $index_obj->get(includeDrafts: true);
+
+    $count = 0;
+    foreach ($pages as $page) {
+        $content_obj->load($page['path']);
+        $count++;
+    }
+
+    echo json_encode(['ok' => true, 'count' => $count]);
+    exit;
+}
+
 // ── Pages list (default) ──────────────────────────────────────────────────────
 
-$content_obj = new MD\Content($CONTENT_DIR, $CACHE_DIR);
-$index_obj   = new MD\Index($CONTENT_DIR, $CACHE_DIR, $content_obj);
-$pages       = $index_obj->get(includeDrafts: true);
+$content_obj   = new MD\Content($CONTENT_DIR, $CACHE_DIR);
+$index_obj     = new MD\Index($CONTENT_DIR, $CACHE_DIR, $content_obj);
+$all_pages     = $index_obj->get(includeDrafts: true);
+$active_folder = $_GET['folder'] ?? null;
+
+if ($active_folder && in_array($active_folder, $post_types, true)) {
+    $pages = array_filter($all_pages, fn($p) => $p['folder'] === $active_folder);
+} else {
+    $active_folder = null;
+    $pages = $all_pages;
+}
 
 require $TEMPLATE_DIR . '/pages.php';

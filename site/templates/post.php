@@ -3,7 +3,7 @@ $page_title = $meta['title'] ?? 'Post';
 ob_start();
 ?>
 <article>
-    <h1><?= htmlspecialchars($meta['title'] ?? '') ?></h1>
+    <h1 data-ie="title"><?= htmlspecialchars($meta['title'] ?? '') ?></h1>
     <div class="meta">
         <?php if (!empty($meta['date'])): ?>
             <time><?= htmlspecialchars((string)$meta['date']) ?></time>
@@ -12,7 +12,7 @@ ob_start();
             <span class="tag"><?= htmlspecialchars($cat) ?></span>
         <?php endforeach; ?>
     </div>
-    <?= $html ?>
+    <div data-ie="body"><?= $html ?></div>
 </article>
 <?php
 $content_body = ob_get_clean();

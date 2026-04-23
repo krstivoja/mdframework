@@ -52,7 +52,8 @@ ob_start();
 <script>
 (function () {
 
-const initial = <?= json_encode($taxonomies, JSON_UNESCAPED_UNICODE) ?>;
+const initial    = <?= json_encode($taxonomies, JSON_UNESCAPED_UNICODE) ?>;
+const POST_TYPES = <?= json_encode($post_types ?? [], JSON_UNESCAPED_UNICODE) ?>;
 
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -80,6 +81,18 @@ function renderTaxonomy(slug, tax) {
       </label>
       <button type="button" class="btn btn-danger tax-delete">Delete</button>
     </div>
+    ${POST_TYPES.length ? `
+    <div class="tax-post-types">
+      <div class="tax-fields-heading">Show on</div>
+      <div class="tax-post-types-list">
+        ${POST_TYPES.map(pt => `
+          <label class="toggle-label">
+            <input type="checkbox" class="tax-post-type" value="${esc(pt)}"
+              ${(tax.post_types || []).includes(pt) ? 'checked' : ''}>
+            <span>${esc(pt)}</span>
+          </label>`).join('')}
+      </div>
+    </div>` : ''}
     <div class="tax-fields-list"></div>
     <div class="add-field-row">
       <input type="text" class="form-input form-input-mono field-name-input" placeholder="field name">
@@ -103,10 +116,16 @@ function renderField(f) {
   row.dataset.type = f.type;
 
   if (f.type === 'array') {
+    const w = f.widget || 'select';
     row.innerHTML = `
       <div class="field-row-header">
         <span class="field-def-name">${esc(f.name)}</span>
         <span class="badge badge-field">array</span>
+        <select class="form-input field-widget-select">
+          <option value="select"   ${w==='select'   ? 'selected':''}>select</option>
+          <option value="checkbox" ${w==='checkbox' ? 'selected':''}>checkbox</option>
+          <option value="radio"    ${w==='radio'    ? 'selected':''}>radio</option>
+        </select>
         <button type="button" class="field-delete btn-icon" aria-label="Remove field">×</button>
       </div>
       <div class="field-items"></div>
@@ -150,13 +169,15 @@ function collectTaxonomies() {
       const name = fieldEl.dataset.name;
       const type = fieldEl.dataset.type;
       if (type === 'array') {
-        const items = [...fieldEl.querySelectorAll('.field-chip')].map(c => c.dataset.value).filter(Boolean);
-        fields.push({ name, type, items });
+        const widget = fieldEl.querySelector('.field-widget-select')?.value || 'select';
+        const items  = [...fieldEl.querySelectorAll('.field-chip')].map(c => c.dataset.value).filter(Boolean);
+        fields.push({ name, type, widget, items });
       } else {
         fields.push({ name, type, value: fieldEl.querySelector('.field-value').value.trim() });
       }
     });
-    result[slug] = { label, multiple, fields };
+    const post_types = [...el.querySelectorAll('.tax-post-type:checked')].map(cb => cb.value);
+    result[slug] = { label, multiple, post_types, fields };
   });
   return result;
 }
