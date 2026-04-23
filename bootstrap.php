@@ -21,7 +21,7 @@ $CACHE_DIR   = $ROOT . '/site/cache';
 $config = new MD\Config($ROOT . '/site/config.json');
 $GLOBALS['md_config'] = $config;
 
-$themes       = new MD\Themes($ROOT, $config);
+$themes       = new MD\ThemeService($ROOT, $config);
 $TEMPLATE_DIR = $themes->templateDir();
 $GLOBALS['md_themes'] = $themes;
 

@@ -18,7 +18,7 @@
     array (
       'title' => 'Hello World',
     ),
-    'mtime' => 1776930853,
+    'mtime' => 1776958622,
   ),
   'blog/ultralight-php' => 
   array (
@@ -81,7 +81,7 @@
     'folder' => 'pages',
     'path' => 'pages/index',
     'url' => '/index',
-    'title' => 'Welcome Pascal',
+    'title' => 'Welcome',
     'date' => NULL,
     'categories' => 
     array (
@@ -92,7 +92,7 @@
     'draft' => false,
     'meta' => 
     array (
-      'title' => 'Welcome Pascal',
+      'title' => 'Welcome',
       'loop' => 
       array (
         'folder' => 'blog',
@@ -100,7 +100,7 @@
         'heading' => 'Recent posts',
       ),
     ),
-    'mtime' => 1776931456,
+    'mtime' => 1776959006,
   ),
   'pages/about' => 
   array (

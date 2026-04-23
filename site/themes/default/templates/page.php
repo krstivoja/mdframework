@@ -27,7 +27,7 @@ ob_start();
         ]);
     ?>
         <section>
-            <h2><?= htmlspecialchars($meta['loop']['heading'] ?? 'Related posts') ?></h2>
+            <h2 data-ie="loop_heading"><?= htmlspecialchars($meta['loop_heading'] ?? $meta['loop']['heading'] ?? 'Recent posts') ?></h2>
             <ul>
                 <?php foreach ($loopPosts as $p): ?>
                     <li>
@@ -41,6 +41,12 @@ ob_start();
         </section>
     <?php endif; ?>
 </article>
+
+<section data-ie="true">
+    <h2>Marko</h2>
+    <p>want to test editing experience!</p>
+</section>
+
 <?php
 $content_body = ob_get_clean();
 require __DIR__ . '/_layout.php';

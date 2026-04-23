@@ -28,7 +28,7 @@ $TEMPLATE_DIR    = $cmsRoot . '/templates';
 $CACHE_DIR       = $appRoot . '/site/cache';
 $config          = new MD\Config($appRoot . '/site/config.json');
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Auth helpers ──────────────────────────────────────────────────────────────
 
 function csrf_token(): string
 {
@@ -41,9 +41,7 @@ function csrf_token(): string
 function csrf_verify(): bool
 {
     if (empty($_SESSION['csrf_token'])) return false;
-    $token = $_POST['csrf_token']
-        ?? $_SERVER['HTTP_X_CSRF_TOKEN']
-        ?? '';
+    $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
     return hash_equals($_SESSION['csrf_token'], $token);
 }
 
@@ -76,12 +74,24 @@ $is_logged_in = !empty($_SESSION['admin_user']);
 function require_auth(): void
 {
     global $is_logged_in;
-    if (!$is_logged_in) {
-        redirect('/admin/login');
-    }
+    if (!$is_logged_in) redirect('/admin/login');
 }
 
-// ── Routing ──────────────────────────────────────────────────────────────────
+function json_response(array $data, int $code = 200): never
+{
+    http_response_code($code);
+    header('Content-Type: application/json');
+    echo json_encode($data);
+    exit;
+}
+
+function require_post_auth(): void
+{
+    global $method;
+    if ($method !== 'POST' || !csrf_verify()) json_response(['error' => 'Forbidden'], 403);
+}
+
+// ── Routing ───────────────────────────────────────────────────────────────────
 
 $uri    = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $action = trim(preg_replace('#^/admin/?#', '', $uri), '/') ?: 'pages';
@@ -106,12 +116,10 @@ if ($action === 'login') {
             $error = 'Invalid credentials.';
         }
     }
-    csrf_token(); // seed token before rendering
+    csrf_token();
     require $TEMPLATE_DIR . '/login.php';
     exit;
 }
-
-// ── Logout ────────────────────────────────────────────────────────────────────
 
 if ($action === 'logout') {
     $_SESSION = [];
@@ -119,9 +127,16 @@ if ($action === 'logout') {
     redirect('/admin/login');
 }
 
-// ── All other actions require auth ────────────────────────────────────────────
-
 require_auth();
+
+// ── Services ──────────────────────────────────────────────────────────────────
+
+$paths       = new MD\PathResolver($CONTENT_DIR, $UPLOADS_DIR, $CACHE_DIR);
+$content_obj = new MD\Content($CONTENT_DIR, $CACHE_DIR);
+$cache       = new MD\CacheService($paths, $CONTENT_DIR, $CACHE_DIR);
+$repo        = new MD\ContentRepository($CONTENT_DIR, $cache, $content_obj);
+$media       = new MD\MediaService($UPLOADS_DIR, $paths);
+$themes      = new MD\ThemeService($appRoot, $config);
 
 // ── Post types (content folders) ─────────────────────────────────────────────
 
@@ -133,138 +148,80 @@ if (is_dir($CONTENT_DIR)) {
 }
 $active_folder = null;
 
-// ── Image upload (AJAX) ───────────────────────────────────────────────────────
+// ── Upload (AJAX) ─────────────────────────────────────────────────────────────
 
 if ($action === 'upload') {
-    header('Content-Type: application/json');
-    if ($method !== 'POST' || !csrf_verify()) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Forbidden']);
-        exit;
-    }
-    $file_key = array_key_first($_FILES) ?? '';
-    $upload   = $_FILES[$file_key] ?? null;
-    if (!$upload || $upload['error'] !== UPLOAD_ERR_OK) {
-        http_response_code(400);
-        echo json_encode(['errorMessage' => 'No file or upload error']);
-        exit;
-    }
-    $extMap = [
-        'jpg' => 'jpg', 'jpeg' => 'jpg', 'png' => 'png', 'gif' => 'gif',
-        'webp' => 'webp', 'svg' => 'svg', 'pdf' => 'pdf', 'zip' => 'zip',
-    ];
-    $origExt = strtolower(pathinfo($upload['name'], PATHINFO_EXTENSION));
-    if (!isset($extMap[$origExt])) {
-        http_response_code(400);
-        echo json_encode(['errorMessage' => 'File type not allowed: ' . $origExt]);
-        exit;
-    }
-    $ext = $extMap[$origExt];
-    $name = bin2hex(random_bytes(12)) . '.' . $ext;
+    require_post_auth();
+    $fileKey = array_key_first($_FILES) ?? '';
+    $file    = $_FILES[$fileKey] ?? null;
+    if (!$file) json_response(['errorMessage' => 'No file'], 400);
 
-    // Determine subfolder: per-page path or global media
-    $raw_page_path = trim($_POST['page_path'] ?? '', '/');
-    if ($raw_page_path !== '' && preg_match('#^[a-z0-9][a-z0-9/_-]*$#', $raw_page_path)) {
-        $sub_dir = $UPLOADS_DIR . '/' . $raw_page_path;
-        $url_prefix = '/uploads/' . $raw_page_path . '/';
-    } else {
-        $sub_dir    = $UPLOADS_DIR . '/media';
-        $url_prefix = '/uploads/media/';
-    }
-
-    if (!is_dir($sub_dir)) mkdir($sub_dir, 0755, true);
-    if (!move_uploaded_file($upload['tmp_name'], $sub_dir . '/' . $name)) {
-        http_response_code(500);
-        echo json_encode(['errorMessage' => 'Upload failed']);
-        exit;
-    }
-    echo json_encode(['result' => [['url' => $url_prefix . $name, 'name' => $name, 'size' => $upload['size']]]]);
-    exit;
+    $result = $media->upload($file, $_POST['page_path'] ?? '');
+    if (!empty($result['error'])) json_response(['errorMessage' => $result['error']], $result['code']);
+    json_response(['result' => [['url' => $result['url'], 'name' => $result['name'], 'size' => $result['size']]]]);
 }
 
 // ── Inline save (AJAX) ────────────────────────────────────────────────────────
 
 if ($action === 'inline-save') {
-    header('Content-Type: application/json');
-    if ($method !== 'POST' || !csrf_verify()) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Forbidden']);
-        exit;
-    }
+    require_post_auth();
     $relPath = trim($_POST['page_path'] ?? '', '/');
-    if (!preg_match('#^[a-z0-9][a-z0-9/_-]*$#', $relPath)) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Invalid path']);
-        exit;
-    }
-    $file = realpath($CONTENT_DIR . '/' . $relPath . '.md');
-    if (!$file || !str_starts_with($file, realpath($CONTENT_DIR) . '/') || !is_file($file)) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Page not found']);
-        exit;
-    }
-    $parser       = new MD\Content($CONTENT_DIR, $CACHE_DIR);
-    $existing_meta = $parser->parseMeta($file);
-    if (!empty($_POST['title'])) {
-        $existing_meta['title'] = trim($_POST['title']);
-    }
-    $yaml    = \Symfony\Component\Yaml\Yaml::dump($existing_meta, 2, 2);
-    $body    = $_POST['body'] ?? '';
-    $md_file = "---\n" . $yaml . "---\n\n" . $body;
-    file_put_contents($file, $md_file);
+    $absPath = $paths->contentFile($relPath);
+    if (!$absPath) json_response(['error' => 'Page not found'], 404);
 
-    // Clear HTML cache for this page
-    $cacheFile = $CACHE_DIR . '/html/' . md5($relPath) . '.php';
-    if (is_file($cacheFile)) unlink($cacheFile);
-
-    echo json_encode(['ok' => true]);
-    exit;
+    $existing = $repo->parseMeta($absPath);
+    $fields   = $_POST['ie'] ?? [];
+    $body     = '';
+    foreach ($fields as $key => $value) {
+        if ($key === 'body') $body = $value;
+        else $existing[$key] = trim($value);
+    }
+    $repo->save($relPath, $existing, $body);
+    json_response(['ok' => true]);
 }
 
 // ── Media delete (AJAX) ───────────────────────────────────────────────────────
 
 if ($action === 'media-delete') {
-    header('Content-Type: application/json');
-    if ($method !== 'POST' || !csrf_verify()) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Forbidden']);
-        exit;
+    require_post_auth();
+    $name = basename($_POST['name'] ?? '');
+    if (!$media->delete($name)) json_response(['error' => 'File not found'], 400);
+    json_response(['ok' => true]);
+}
+
+// ── Template save (AJAX) ──────────────────────────────────────────────────────
+
+if ($action === 'template-save') {
+    require_post_auth();
+    $templateName = preg_replace('/[^a-z0-9_-]/', '', $_POST['template'] ?? '');
+    if (!$templateName) json_response(['error' => 'Missing template name'], 400);
+
+    $templateFile = $themes->templateDir() . '/' . $templateName . '.php';
+    $realTemplate = realpath($templateFile);
+    $themesDir    = realpath($appRoot . '/site/themes');
+    if (!$realTemplate || !$themesDir || !str_starts_with($realTemplate, $themesDir . '/')) {
+        json_response(['error' => 'Template not found'], 403);
     }
-    $name      = basename($_POST['name'] ?? '');
-    $mediaDir  = realpath($UPLOADS_DIR . '/media');
-    $target    = $mediaDir ? $mediaDir . '/' . $name : null;
-    if (!$target || !$mediaDir || !str_starts_with($target, $mediaDir . '/') || !is_file($target)) {
-        http_response_code(400);
-        echo json_encode(['error' => 'File not found']);
-        exit;
+    $replacements = json_decode($_POST['replacements'] ?? '[]', true);
+    if (!is_array($replacements)) json_response(['error' => 'Invalid replacements'], 400);
+
+    $contents = file_get_contents($realTemplate);
+    foreach ($replacements as $r) {
+        $orig        = $r['orig']        ?? '';
+        $replacement = $r['replacement'] ?? '';
+        if ($orig === '' || $orig === $replacement) continue;
+        $contents = str_replace($orig, $replacement, $contents);
     }
-    unlink($target);
-    echo json_encode(['ok' => true]);
-    exit;
+    file_put_contents($realTemplate, $contents);
+    json_response(['ok' => true]);
 }
 
 // ── Media library ─────────────────────────────────────────────────────────────
 
 if ($action === 'media') {
-    $mediaDir   = $UPLOADS_DIR . '/media';
-    $mediaFiles = [];
-    if (is_dir($mediaDir)) {
-        $allowed_exts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf', 'zip'];
-        foreach (array_diff(scandir($mediaDir), ['.', '..']) as $file) {
-            $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-            if (!in_array($ext, $allowed_exts, true)) continue;
-            $full = $mediaDir . '/' . $file;
-            $mediaFiles[] = [
-                'name'  => $file,
-                'url'   => '/uploads/media/' . $file,
-                'size'  => filesize($full),
-                'mtime' => filemtime($full),
-            ];
-        }
-        usort($mediaFiles, fn($a, $b) => $b['mtime'] - $a['mtime']);
-    }
+    $mediaFiles    = $media->list();
     $active_folder = null;
-    $action = 'media';
+    $action        = 'media';
     require $TEMPLATE_DIR . '/media.php';
     exit;
 }
@@ -272,21 +229,10 @@ if ($action === 'media') {
 // ── Delete ────────────────────────────────────────────────────────────────────
 
 if ($action === 'delete') {
-    if ($method !== 'POST' || !csrf_verify()) {
-        http_response_code(403);
-        exit;
-    }
+    if ($method !== 'POST' || !csrf_verify()) { http_response_code(403); exit; }
     $relPath = trim($_POST['path'] ?? '', '/');
-    $file    = realpath($CONTENT_DIR . '/' . $relPath . '.md');
-    if ($file && str_starts_with($file, realpath($CONTENT_DIR) . '/') && is_file($file)) {
-        unlink($file);
-        // Invalidate HTML cache for this page
-        $htmlCache = $CACHE_DIR . '/html/' . md5($relPath) . '.php';
-        if (is_file($htmlCache)) unlink($htmlCache);
-        // Invalidate index cache so deleted entry doesn't persist
-        $indexCache = $CACHE_DIR . '/index.php';
-        if (is_file($indexCache)) unlink($indexCache);
-    }
+    $absPath = $paths->contentFile($relPath);
+    if ($absPath) $repo->delete($relPath, $absPath);
     redirect('/admin/');
 }
 
@@ -308,23 +254,18 @@ if ($action === 'new' || $action === 'edit') {
             $md_title = trim($_POST['title'] ?? '');
             $md_body  = $_POST['body'] ?? '';
 
-            if (!preg_match('#^[a-z0-9][a-z0-9/_-]*$#', $relPath)) {
+            if (!$paths->isValidRelPath($relPath)) {
                 $error = 'Path must be lowercase alphanumeric with hyphens/slashes (e.g. blog/my-post).';
             } elseif ($md_title === '') {
                 $error = 'Title is required.';
             } else {
-                $file = $CONTENT_DIR . '/' . $relPath . '.md';
-                $dir  = dirname($file);
-                if (!is_dir($dir)) mkdir($dir, 0755, true);
-
-                // Preserve existing meta fields (date, draft, etc.)
-                $existing_meta = [];
-                if (!$is_new && is_file($file)) {
-                    $existing_meta = (new MD\Content($CONTENT_DIR, $CACHE_DIR))->parseMeta($file);
+                $existing = [];
+                if (!$is_new) {
+                    $absPath = $paths->contentFile($relPath);
+                    if ($absPath) $existing = $repo->parseMeta($absPath);
                 }
-                $meta = array_merge($existing_meta, ['title' => $md_title]);
+                $meta = array_merge($existing, ['title' => $md_title]);
 
-                // Taxonomy values
                 $page_folder = explode('/', $relPath)[0];
                 foreach ($config->get('taxonomies', []) as $taxSlug => $tax) {
                     $pt = $tax['post_types'] ?? [];
@@ -343,23 +284,15 @@ if ($action === 'new' || $action === 'edit') {
                     }
                 }
 
-                $yaml    = \Symfony\Component\Yaml\Yaml::dump($meta, 2, 2);
-                $md_file = "---\n" . $yaml . "---\n\n" . $md_body;
-                file_put_contents($file, $md_file);
-
-                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
-                    header('Content-Type: application/json');
-                    echo json_encode(['ok' => true]);
-                    exit;
-                }
+                $repo->save($relPath, $meta, $md_body);
+                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])) json_response(['ok' => true]);
                 redirect('/admin/');
             }
         }
     } elseif (!$is_new && $relPath !== '') {
-        $file = realpath($CONTENT_DIR . '/' . $relPath . '.md');
-        if ($file && str_starts_with($file, realpath($CONTENT_DIR) . '/') && is_file($file)) {
-            $parser       = new MD\Content($CONTENT_DIR, $CACHE_DIR);
-            $parsed       = $parser->parse($file);
+        $absPath = $paths->contentFile($relPath);
+        if ($absPath) {
+            $parsed       = $repo->parse($absPath);
             $md_title     = $parsed['meta']['title'] ?? '';
             $md_body      = $parsed['body'];
             $md_body_html = $parsed['html'];
@@ -367,7 +300,6 @@ if ($action === 'new' || $action === 'edit') {
         }
     }
 
-    // Applicable taxonomies for this page's folder
     $page_folder           = $relPath ? explode('/', $relPath)[0] : null;
     $applicable_taxonomies = [];
     foreach ($config->get('taxonomies', []) as $taxSlug => $tax) {
@@ -393,7 +325,7 @@ if ($action === 'settings') {
                 'name' => trim($_POST['site_name'] ?? ''),
                 'base' => '/' . trim(trim($_POST['site_base'] ?? ''), '/'),
             ];
-            $raw = json_decode($_POST['taxonomies_json'] ?? '{}', true) ?? [];
+            $raw        = json_decode($_POST['taxonomies_json'] ?? '{}', true) ?? [];
             $taxonomies = [];
             foreach ($raw as $slug => $tax) {
                 $slug = preg_replace('/[^a-z0-9_-]/', '', strtolower($slug));
@@ -405,8 +337,8 @@ if ($action === 'settings') {
                     $type = ($f['type'] ?? '') === 'array' ? 'array' : 'single';
                     if ($type === 'array') {
                         $validWidgets = ['select', 'checkbox', 'radio'];
-                        $widget = in_array($f['widget'] ?? '', $validWidgets, true) ? $f['widget'] : 'select';
-                        $items  = array_values(array_filter(array_map('trim', (array)($f['items'] ?? []))));
+                        $widget   = in_array($f['widget'] ?? '', $validWidgets, true) ? $f['widget'] : 'select';
+                        $items    = array_values(array_filter(array_map('trim', (array)($f['items'] ?? []))));
                         $fields[] = ['name' => $name, 'type' => 'array', 'widget' => $widget, 'items' => $items];
                     } else {
                         $fields[] = ['name' => $name, 'type' => 'single', 'value' => trim($f['value'] ?? '')];
@@ -424,11 +356,7 @@ if ($action === 'settings') {
                 ];
             }
             $config->save(['site' => $site, 'taxonomies' => $taxonomies]);
-            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
-                header('Content-Type: application/json');
-                echo json_encode(['ok' => true]);
-                exit;
-            }
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])) json_response(['ok' => true]);
             redirect('/admin/settings');
         }
     }
@@ -439,43 +367,31 @@ if ($action === 'settings') {
 // ── Update check (AJAX) ───────────────────────────────────────────────────────
 
 if ($action === 'update-check') {
-    header('Content-Type: application/json');
     $updater = new MD\Updater($appRoot);
     $latest  = $updater->checkLatest();
-    echo json_encode([
-        'current' => $updater->currentVersion(),
-        'latest'  => $latest,
-        'has_update' => $latest
-            ? version_compare($latest['version'], $updater->currentVersion(), '>')
-            : false,
+    json_response([
+        'current'         => $updater->currentVersion(),
+        'latest'          => $latest,
+        'has_update'      => $latest ? version_compare($latest['version'], $updater->currentVersion(), '>') : false,
         'repo_configured' => !str_starts_with($updater->repo(), 'your-'),
     ]);
-    exit;
 }
 
 // ── Update apply (AJAX POST) ──────────────────────────────────────────────────
 
 if ($action === 'update-apply') {
-    header('Content-Type: application/json');
-    if ($method !== 'POST' || !csrf_verify()) {
-        http_response_code(403); echo json_encode(['error' => 'Forbidden']); exit;
-    }
-    $zipUrl  = trim($_POST['zip_url'] ?? '');
-    if (!$zipUrl || !str_starts_with($zipUrl, 'https://')) {
-        http_response_code(400); echo json_encode(['error' => 'Invalid URL']); exit;
-    }
-    $updater    = new MD\Updater($appRoot);
-    $backupDir  = $appRoot . '/site/backups';
-    echo json_encode($updater->apply($zipUrl, $backupDir));
-    exit;
+    require_post_auth();
+    $zipUrl = trim($_POST['zip_url'] ?? '');
+    if (!$zipUrl || !str_starts_with($zipUrl, 'https://')) json_response(['error' => 'Invalid URL'], 400);
+    $updater = new MD\Updater($appRoot);
+    json_response($updater->apply($zipUrl, $appRoot . '/site/backups'));
 }
 
-// ── Themes list ───────────────────────────────────────────────────────────────
+// ── Themes ────────────────────────────────────────────────────────────────────
 
 if ($action === 'themes') {
-    $themes_obj   = new MD\Themes($appRoot, $config);
-    $themes_list  = $themes_obj->list();
-    $active_theme = $themes_obj->active();
+    $themes_list  = $themes->list();
+    $active_theme = $themes->active();
     $starters_dir = $cmsRoot . '/starters';
     $starters_list = [];
     foreach (glob($starters_dir . '/*/starter.json') ?: [] as $f) {
@@ -487,71 +403,28 @@ if ($action === 'themes') {
     exit;
 }
 
-// ── Theme activate (AJAX POST) ────────────────────────────────────────────────
-
 if ($action === 'themes-activate') {
-    header('Content-Type: application/json');
-    if ($method !== 'POST' || !csrf_verify()) {
-        http_response_code(403); echo json_encode(['error' => 'Forbidden']); exit;
-    }
-    $slug       = preg_replace('/[^a-z0-9_-]/', '', $_POST['slug'] ?? '');
-    $themes_obj = new MD\Themes($appRoot, $config);
-    echo json_encode($themes_obj->activate($slug));
-    exit;
+    require_post_auth();
+    $slug = preg_replace('/[^a-z0-9_-]/', '', $_POST['slug'] ?? '');
+    json_response($themes->activate($slug));
 }
-
-// ── Theme install from starter (AJAX POST) ────────────────────────────────────
 
 if ($action === 'themes-install') {
-    header('Content-Type: application/json');
-    if ($method !== 'POST' || !csrf_verify()) {
-        http_response_code(403); echo json_encode(['error' => 'Forbidden']); exit;
-    }
-    $starter    = preg_replace('/[^a-z0-9_-]/', '', $_POST['starter'] ?? '');
-    $themeSlug  = preg_replace('/[^a-z0-9_-]/', '', $_POST['theme_slug'] ?? $starter);
-    $themes_obj = new MD\Themes($appRoot, $config);
-    echo json_encode($themes_obj->installFromStarter($starter, $themeSlug, $cmsRoot . '/starters'));
-    exit;
+    require_post_auth();
+    $starter   = preg_replace('/[^a-z0-9_-]/', '', $_POST['starter'] ?? '');
+    $themeSlug = preg_replace('/[^a-z0-9_-]/', '', $_POST['theme_slug'] ?? $starter);
+    json_response($themes->installFromStarter($starter, $themeSlug, $cmsRoot . '/starters'));
 }
 
-// ── Cache rebuild ─────────────────────────────────────────────────────────────
+// ── Cache rebuild (AJAX POST) ─────────────────────────────────────────────────
 
 if ($action === 'cache') {
-    header('Content-Type: application/json');
-    if ($method !== 'POST' || !csrf_verify()) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Forbidden']);
-        exit;
-    }
-
-    // Clear html cache files
-    $htmlCacheDir = $CACHE_DIR . '/html';
-    if (is_dir($htmlCacheDir)) {
-        foreach (glob($htmlCacheDir . '/*.php') as $f) unlink($f);
-    }
-    // Clear index cache
-    $indexCache = $CACHE_DIR . '/index.php';
-    if (is_file($indexCache)) unlink($indexCache);
-
-    // Rebuild index + warm every page
-    $content_obj = new MD\Content($CONTENT_DIR, $CACHE_DIR);
-    $index_obj   = new MD\Index($CONTENT_DIR, $CACHE_DIR, $content_obj);
-    $index_obj->build();
-    $pages = $index_obj->get(includeDrafts: true);
-
-    $count = 0;
-    foreach ($pages as $page) {
-        $content_obj->load($page['path']);
-        $count++;
-    }
-
-    echo json_encode(['ok' => true, 'count' => $count]);
-    exit;
+    require_post_auth();
+    json_response($cache->rebuild());
 }
 
 // ── Pages list (default) ──────────────────────────────────────────────────────
 
-$content_obj   = new MD\Content($CONTENT_DIR, $CACHE_DIR);
 $index_obj     = new MD\Index($CONTENT_DIR, $CACHE_DIR, $content_obj);
 $all_pages     = $index_obj->get(includeDrafts: true);
 $active_folder = $_GET['folder'] ?? null;
@@ -560,7 +433,7 @@ if ($active_folder && in_array($active_folder, $post_types, true)) {
     $pages = array_filter($all_pages, fn($p) => $p['folder'] === $active_folder);
 } else {
     $active_folder = null;
-    $pages = $all_pages;
+    $pages         = $all_pages;
 }
 
 require $TEMPLATE_DIR . '/pages.php';

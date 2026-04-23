@@ -41,16 +41,18 @@
   document.head.appendChild(style);
 
   // ── State ────────────────────────────────────────────────────────────────────
-  const csrfEl   = document.getElementById('ie-csrf');
-  const pathEl   = document.getElementById('ie-path');
-  const toolbar  = document.getElementById('ie-toolbar');
-  const toggleBtn = document.getElementById('ie-toggle');
-  const saveBtn  = document.getElementById('ie-save');
+  const csrfEl      = document.getElementById('ie-csrf');
+  const pathEl      = document.getElementById('ie-path');
+  const templateEl  = document.getElementById('ie-template');
+  const toolbar     = document.getElementById('ie-toolbar');
+  const toggleBtn   = document.getElementById('ie-toggle');
+  const saveBtn     = document.getElementById('ie-save');
 
   if (!csrfEl || !pathEl || !toolbar || !toggleBtn || !saveBtn) return;
 
-  const csrf     = csrfEl.value;
-  const pagePath = pathEl.value;
+  const csrf         = csrfEl.value;
+  const pagePath     = pathEl.value;
+  const templateName = templateEl ? templateEl.value : '';
   let editing    = false;
   let toastTimer = null;
 
@@ -129,6 +131,10 @@
   // ── Enter / exit edit mode ────────────────────────────────────────────────────
   function enterEdit() {
     editing = true;
+    // Snapshot outerHTML for template-editable elements before any DOM changes
+    document.querySelectorAll('[data-ie="true"]').forEach(el => {
+      el.dataset.ieOrigOuter = el.outerHTML;
+    });
     document.querySelectorAll('[data-ie]').forEach(el => {
       el.setAttribute('contenteditable', 'true');
     });
@@ -141,6 +147,9 @@
     editing = false;
     document.querySelectorAll('[data-ie]').forEach(el => {
       el.removeAttribute('contenteditable');
+    });
+    document.querySelectorAll('[data-ie="true"]').forEach(el => {
+      delete el.dataset.ieOrigOuter;
     });
     unwrapImages();
     toggleBtn.textContent = 'Edit page';
@@ -165,23 +174,62 @@
     return clone.innerHTML;
   }
 
+  function buildTemplateReplacements() {
+    const replacements = [];
+    document.querySelectorAll('[data-ie="true"]').forEach(el => {
+      const origOuter = el.dataset.ieOrigOuter;
+      if (!origOuter) return;
+      const clone = el.cloneNode(true);
+      clone.removeAttribute('contenteditable');
+      clone.removeAttribute('data-ie-orig-outer');
+      clone.querySelectorAll('.ie-img-wrap').forEach(wrap => {
+        const img = wrap.querySelector('img');
+        if (img) { img.classList.remove('ie-wrapped'); wrap.replaceWith(img); }
+        else wrap.remove();
+      });
+      clone.querySelectorAll('.ie-img-btn').forEach(b => b.remove());
+      const newOuter = clone.outerHTML;
+      if (origOuter !== newOuter) {
+        replacements.push({ orig: origOuter, replacement: newOuter });
+      }
+    });
+    return replacements;
+  }
+
   async function save() {
-    const titleEl = document.querySelector('[data-ie="title"]');
-    const bodyEl  = document.querySelector('[data-ie="body"]');
-    const title   = titleEl ? titleEl.innerText.trim() : '';
-    const body    = bodyEl  ? cleanBody(bodyEl) : '';
-
-    const fd = new FormData();
-    fd.append('csrf_token', csrf);
-    fd.append('page_path', pagePath);
-    if (title) fd.append('title', title);
-    fd.append('body', body);
-
     saveBtn.disabled = true;
     try {
+      // Save front-matter / body fields
+      const fd = new FormData();
+      fd.append('csrf_token', csrf);
+      fd.append('page_path', pagePath);
+
+      document.querySelectorAll('[data-ie]').forEach(el => {
+        const key = el.dataset.ie;
+        if (key === 'true') return; // handled separately
+        if (key === 'body') {
+          fd.append('ie[body]', cleanBody(el));
+        } else {
+          fd.append('ie[' + key + ']', el.innerText.trim());
+        }
+      });
+
       const res  = await fetch('/admin/inline-save', { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error('Save failed');
+
+      // Save template edits if any
+      const replacements = buildTemplateReplacements();
+      if (replacements.length && templateName) {
+        const tfd = new FormData();
+        tfd.append('csrf_token', csrf);
+        tfd.append('template', templateName);
+        tfd.append('replacements', JSON.stringify(replacements));
+        const tres  = await fetch('/admin/template-save', { method: 'POST', body: tfd });
+        const tdata = await tres.json();
+        if (!tres.ok || !tdata.ok) throw new Error('Template save failed');
+      }
+
       showToast('Saved!', true);
       exitEdit();
     } catch (err) {

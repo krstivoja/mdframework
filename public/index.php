@@ -18,6 +18,7 @@ switch ($route['type']) {
         if ($data === null || !empty($data['meta']['draft'])) {
             goto notfound;
         }
+        $GLOBALS['admin_template_name'] = $route['type'];
         render($route['type'], [
             'meta' => $data['meta'],
             'html' => $data['html'],

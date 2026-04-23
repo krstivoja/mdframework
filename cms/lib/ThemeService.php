@@ -1,7 +1,7 @@
 <?php
 namespace MD;
 
-class Themes
+class ThemeService
 {
     private string $themesDir;
     private string $publicDir;
@@ -45,15 +45,10 @@ class Themes
         if (!is_dir($themeDir . '/templates')) {
             return ['ok' => false, 'error' => 'Theme not found or missing templates/'];
         }
-
-        // Update active theme in config
         $cfg = $this->config->all();
         $cfg['active_theme'] = $slug;
         $this->config->save($cfg);
-
-        // Re-point public/assets symlink to new theme's assets
         $this->relinkAssets($slug);
-
         return ['ok' => true];
     }
 
@@ -67,12 +62,10 @@ class Themes
 
         $this->copyDir($src, $dst);
 
-        // Rename config.example.json if present
         if (is_file($dst . '/config.example.json') && !is_file(dirname($this->themesDir) . '/config.json')) {
             copy($dst . '/config.example.json', dirname($this->themesDir) . '/config.json');
         }
 
-        // Write theme.json if not already there
         if (!is_file($dst . '/theme.json')) {
             file_put_contents($dst . '/theme.json', json_encode([
                 'name'        => ucfirst($themeSlug),
