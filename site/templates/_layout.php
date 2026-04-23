@@ -23,9 +23,6 @@
     <?= $content_body ?>
 
     <?php if (!empty($GLOBALS['admin_logged_in'])): ?>
-    <div class="admin-front-bar">
-        <a href="/admin/">Admin</a>
-    </div>
     <?php if (!empty($GLOBALS['admin_edit_path'])): ?>
     <input type="hidden" id="ie-csrf" value="<?= htmlspecialchars(csrf_token(), ENT_QUOTES) ?>">
     <input type="hidden" id="ie-path" value="<?= htmlspecialchars($GLOBALS['admin_edit_path'], ENT_QUOTES) ?>">
@@ -35,6 +32,10 @@
         <a href="/admin/" class="ie-btn">Admin &#x2197;</a>
     </div>
     <script src="/cms/inline-edit.js"></script>
+    <?php else: ?>
+    <div class="admin-front-bar">
+        <a href="/admin/">Admin</a>
+    </div>
     <?php endif; ?>
     <?php endif; ?>
 </body>

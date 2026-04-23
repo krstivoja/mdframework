@@ -1,19 +1,11 @@
 ---
 title: Home
 layout: default
-nav_order: 1
 ---
 
 # MD Framework
-{: .fs-9 }
 
 Ultralight flat-file CMS built in PHP. No database. Content is Markdown files on disk; the admin is a browser UI at `/admin`.
-{: .fs-6 .fw-300 }
-
-[Get started](#installation){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[View on GitHub](https://github.com/krstivoja/mdframework){: .btn .fs-5 .mb-4 .mb-md-0 }
-
----
 
 ## Requirements
 
@@ -30,7 +22,7 @@ composer install
 cp .env.example .env
 ```
 
-Edit `.env` and set your admin credentials (see [Admin]({% link admin.md %}) for details).
+Edit `.env` and set your admin credentials (see [Admin]({{ '/admin' | relative_url }}) for details).
 
 ## Directory structure
 
@@ -74,8 +66,9 @@ app/
 
 ## Next steps
 
-- [Content]({% link content.md %}) — front matter, routing, filtering
-- [Templates]({% link templates.md %}) — layout pattern and variables
-- [Caching]({% link caching.md %})
-- [Admin]({% link admin.md %}) — editor, uploads, auth
-- [Extending]({% link extending.md %}) — collections, custom templates
+- [Content]({{ '/content' | relative_url }}) — front matter, routing, filtering
+- [Templates]({{ '/templates' | relative_url }}) — layout pattern and variables
+- [Caching]({{ '/caching' | relative_url }})
+- [Admin]({{ '/admin' | relative_url }}) — editor, uploads, auth
+- [Extending]({{ '/extending' | relative_url }}) — collections, custom templates
+- [Changelog]({{ '/changelog' | relative_url }})

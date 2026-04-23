@@ -1,13 +1,11 @@
 ---
 title: Admin
 layout: default
-nav_order: 5
 ---
 
 # Admin
-{: .no_toc }
 
-1. TOC
+* TOC
 {:toc}
 
 Visit `/admin/` in a browser. Default credentials: `admin` / `admin`.

@@ -1,13 +1,11 @@
 ---
 title: Content
 layout: default
-nav_order: 2
 ---
 
 # Content
-{: .no_toc }
 
-1. TOC
+* TOC
 {:toc}
 
 ## Front matter

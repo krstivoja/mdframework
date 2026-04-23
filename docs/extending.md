@@ -1,7 +1,6 @@
 ---
 title: Extending
 layout: default
-nav_order: 6
 ---
 
 # Extending
