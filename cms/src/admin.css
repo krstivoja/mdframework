@@ -1,103 +1,20 @@
 /* ─────────────────────────────────────────────────────────────────────────────
  * MD Framework admin — shadcn-flavored black & white design system.
  *
- * Rules this file follows (keep them when editing):
+ * Tokens, reset, base typography, and :focus-visible come from tokens.css
+ * (mirrored from app/dsystem/colors_and_type.css — the canonical design
+ * system). Only admin-component rules live in this file.
+ *
+ * Rules this file follows:
  *   1. Variants override color only. Sizes live on .btn-sm / .btn-lg etc.
- *   2. Every focusable element uses :focus-visible + the ring utility.
- *   3. No raw hex outside the :root token block. Always reach for a token.
- *   4. Class names are stable — PHP templates depend on them.
+ *   2. No raw hex — always reach for a token from tokens.css.
+ *   3. Class names are stable — PHP templates depend on them.
  * ───────────────────────────────────────────────────────────────────────────── */
 
-/* ── Reset ──────────────────────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+@import url('../../dsystem/colors_and_type.css');
 
-/* ── Tokens ─────────────────────────────────────────────────────────────────── */
-:root {
-  /* Zinc neutral scale (shadcn black & white). */
-  --zinc-50:  #fafafa;
-  --zinc-100: #f4f4f5;
-  --zinc-200: #e4e4e7;
-  --zinc-300: #d4d4d8;
-  --zinc-400: #a1a1aa;
-  --zinc-500: #71717a;
-  --zinc-600: #52525b;
-  --zinc-700: #3f3f46;
-  --zinc-800: #27272a;
-  --zinc-900: #18181b;
-  --zinc-950: #09090b;
-
-  /* Semantic aliases — only these should appear in component rules. */
-  --bg:           var(--zinc-50);
-  --surface:      #ffffff;
-  --surface-2:    var(--zinc-100);     /* Secondary / hover fill */
-  --border:       var(--zinc-200);
-  --border-light: var(--zinc-100);
-  --text:         var(--zinc-950);
-  --text-2:       var(--zinc-700);
-  --text-muted:   var(--zinc-500);
-
-  /* Primary = black (shadcn "primary" in the B&W palette). */
-  --primary:      var(--zinc-950);
-  --primary-fg:   #ffffff;
-  --primary-hover:var(--zinc-800);
-
-  /* Semantic accents — kept muted to preserve the B&W feel. */
-  --danger:         #dc2626;
-  --danger-hover:   #b91c1c;
-  --danger-fg:      #ffffff;
-  --danger-soft-bg: #fef2f2;
-  --danger-soft-br: #fecaca;
-  --success:        #15803d;
-  --success-soft-bg:#dcfce7;
-  --warning-soft-bg:#fef3c7;
-  --warning-soft-fg:#854d0e;
-
-  /* Radii — inputs/buttons use md, cards use lg. */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-
-  /* Spacing scale (matches Tailwind spacing-1..8). */
-  --space-1: .25rem;
-  --space-2: .5rem;
-  --space-3: .75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-
-  /* Heights — keep buttons and form inputs aligned. */
-  --h-control:    36px;
-  --h-control-sm: 32px;
-  --h-control-lg: 40px;
-
-  /* Elevation. */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, .07), 0 2px 4px -2px rgba(0, 0, 0, .05);
-  --shadow-lg: 0 16px 40px rgba(0, 0, 0, .12);
-
-  /* Focus ring (shadcn: ring-2 offset-2). */
-  --ring:        var(--zinc-950);
-  --ring-offset: var(--surface);
-}
-
-/* ── Base ───────────────────────────────────────────────────────────────────── */
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
-  font-size: 14px;
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
 a { color: inherit; text-decoration: none; }
 a:hover { text-decoration: none; }
-
-:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-  border-radius: var(--radius-md);
-}
 
 /* ── Login ──────────────────────────────────────────────────────────────────── */
 body.login-page {

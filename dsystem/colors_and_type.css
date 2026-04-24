@@ -1,0 +1,162 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+ * MD Framework — Admin Design System: Colors & Type
+ *
+ * Canonical token layer for the admin UI. Imported by cms/src/admin.css at
+ * build time (esbuild inlines it — no runtime path dependency).
+ *
+ * Public / client theme tokens are NOT here — every theme owns its brand.
+ *
+ * Import order:
+ *   @import url('../../dsystem/colors_and_type.css');
+ *
+ * Rules: no raw hex outside :root, no component-level color overrides.
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Zinc scale (shadcn black & white palette) ────────────────────────── */
+  --zinc-50:  #fafafa;
+  --zinc-100: #f4f4f5;
+  --zinc-200: #e4e4e7;
+  --zinc-300: #d4d4d8;
+  --zinc-400: #a1a1aa;
+  --zinc-500: #71717a;
+  --zinc-600: #52525b;
+  --zinc-700: #3f3f46;
+  --zinc-800: #27272a;
+  --zinc-900: #18181b;
+  --zinc-950: #09090b;
+
+  /* ── Admin surface semantics ──────────────────────────────────────────── */
+  --bg:           var(--zinc-50);
+  --surface:      #ffffff;
+  --surface-2:    var(--zinc-100);
+  --border:       var(--zinc-200);
+  --border-light: var(--zinc-100);
+  --text:         var(--zinc-950);
+  --text-2:       var(--zinc-700);
+  --text-muted:   var(--zinc-500);
+
+  --primary:       var(--zinc-950);
+  --primary-fg:    #ffffff;
+  --primary-hover: var(--zinc-800);
+
+  --danger:         #dc2626;
+  --danger-hover:   #b91c1c;
+  --danger-fg:      #ffffff;
+  --danger-soft-bg: #fef2f2;
+  --danger-soft-br: #fecaca;
+  --success:        #15803d;
+  --success-soft-bg:#dcfce7;
+  --warning-soft-bg:#fef3c7;
+  --warning-soft-fg:#854d0e;
+
+  /* ── Radii ────────────────────────────────────────────────────────────── */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* ── Spacing (4px grid, tailwind-flavored) ────────────────────────────── */
+  --space-1: .25rem;
+  --space-2: .5rem;
+  --space-3: .75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  /* ── Control heights ──────────────────────────────────────────────────── */
+  --h-control:    36px;
+  --h-control-sm: 32px;
+  --h-control-lg: 40px;
+
+  /* ── Shadows ──────────────────────────────────────────────────────────── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, .07), 0 2px 4px -2px rgba(0, 0, 0, .05);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, .12);
+
+  /* ── Focus ring ───────────────────────────────────────────────────────── */
+  --ring:        var(--zinc-950);
+  --ring-offset: var(--surface);
+  --ring-shadow: 0 0 0 3px rgba(9, 9, 11, .12);
+
+  /* ── Type stacks (pure system fonts) ──────────────────────────────────── */
+  --font-sans: -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+
+  /* ── Type scale ───────────────────────────────────────────────────────── */
+  --fs-micro: 11px;   /* uppercase micro labels, badges */
+  --fs-xs:    12px;   /* hints, small meta */
+  --fs-sm:    13px;   /* controls, default button/input label */
+  --fs-base:  14px;   /* body */
+  --fs-md:    16px;   /* h2 in admin cards */
+  --fs-lg:    18px;   /* h1 on login card */
+  --fs-xl:    20px;   /* h1 on admin card */
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-md);
+}
+
+/* ── Admin type utilities ─────────────────────────────────────────────────── */
+.ds-h1 {
+  font-size: var(--fs-xl); font-weight: 600; letter-spacing: -.015em;
+  color: var(--text); line-height: 1.25;
+}
+.ds-h2 {
+  font-size: var(--fs-md); font-weight: 600; letter-spacing: -.01em;
+  color: var(--text); line-height: 1.3;
+}
+.ds-h3 {
+  font-size: var(--fs-base); font-weight: 600; letter-spacing: -.005em;
+  color: var(--text);
+}
+.ds-label {
+  font-size: var(--fs-sm); font-weight: 500; color: var(--text);
+}
+.ds-p {
+  font-size: var(--fs-sm); color: var(--text-2); line-height: 1.5;
+}
+.ds-hint {
+  font-size: var(--fs-xs); color: var(--text-muted); font-weight: 400;
+}
+.ds-micro {
+  font-size: var(--fs-micro); font-weight: 600; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--text-muted);
+}
+.ds-micro-tight {
+  font-size: var(--fs-micro); font-weight: 600; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--text-muted);
+}
+.ds-code {
+  font-family: var(--font-mono); font-size: var(--fs-xs);
+  color: var(--text-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+}
+.ds-kbd {
+  font-family: var(--font-mono); font-size: var(--fs-micro);
+  background: var(--surface); border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  padding: 2px 6px; color: var(--text-2);
+}
+.ds-mono {
+  font-family: var(--font-mono); font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
