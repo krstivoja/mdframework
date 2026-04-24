@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace MD;
 
 /**
@@ -26,14 +29,22 @@ class Fs
 
         $tmp = $path . '.' . bin2hex(random_bytes(4)) . '.tmp';
         $fp  = @fopen($tmp, 'wb');
-        if ($fp === false) return false;
+        if ($fp === false) {
+            return false;
+        }
 
         try {
-            if (!flock($fp, LOCK_EX)) return false;
-            if (fwrite($fp, $contents) !== strlen($contents)) return false;
+            if (!flock($fp, LOCK_EX)) {
+                return false;
+            }
+            if (fwrite($fp, $contents) !== strlen($contents)) {
+                return false;
+            }
             fflush($fp);
             // fsync is advisory; ignore failure on filesystems that don't support it.
-            if (function_exists('fsync')) @fsync($fp);
+            if (function_exists('fsync')) {
+                @fsync($fp);
+            }
             flock($fp, LOCK_UN);
         } finally {
             fclose($fp);

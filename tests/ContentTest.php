@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 use MD\Content;
 use PHPUnit\Framework\TestCase;
@@ -20,7 +22,9 @@ class ContentTest extends TestCase
     protected function tearDown(): void
     {
         $this->rrmdir($this->contentDir);
-        if (is_dir($this->cacheDir)) $this->rrmdir($this->cacheDir);
+        if (is_dir($this->cacheDir)) {
+            $this->rrmdir($this->cacheDir);
+        }
     }
 
     private function rrmdir(string $dir): void
@@ -77,6 +81,56 @@ class ContentTest extends TestCase
         $data = $this->content->load('pages/changing');
         $this->assertSame('New', $data['meta']['title']);
         $this->assertStringContainsString('New body', $data['html']);
+    }
+
+    public function testMalformedYamlDegradesGracefully(): void
+    {
+        $this->write('pages/bad.md', "---\ntitle: [unclosed\n---\n\nBody text\n");
+        $data = $this->content->load('pages/bad');
+        $this->assertIsArray($data);
+        $this->assertSame([], $data['meta']);
+        $this->assertStringContainsString('Body text', $data['html']);
+    }
+
+    public function testParseMetaReturnsNullOnMalformedYaml(): void
+    {
+        $this->write('blog/broken.md', "---\ntitle: [unclosed\n---\n\nBody\n");
+        $meta = $this->content->parseMeta($this->contentDir . '/blog/broken.md');
+        $this->assertNull($meta, 'parseMeta signals malformed YAML with null so Index can skip the file');
+    }
+
+    public function testIntegerTimestampDateNormalizedOnLoad(): void
+    {
+        $this->write('blog/dated.md', "---\ntitle: Dated\ndate: 2024-01-01\n---\n\nBody\n");
+        $data = $this->content->load('blog/dated');
+        $this->assertSame('2024-01-01', $data['meta']['date']);
+    }
+
+    public function testMissingClosingFrontMatterFence(): void
+    {
+        // No closing '---' — treat whole file as body, no meta.
+        $this->write('pages/no-close.md', "---\ntitle: Oops\n\nBody continues forever\n");
+        $data = $this->content->load('pages/no-close');
+        $this->assertSame([], $data['meta']);
+        $this->assertStringContainsString('Body continues forever', $data['html']);
+    }
+
+    public function testEmptyFrontMatter(): void
+    {
+        $this->write('pages/empty-fm.md', "---\n---\n\nJust body\n");
+        $data = $this->content->load('pages/empty-fm');
+        $this->assertSame([], $data['meta']);
+        $this->assertStringContainsString('Just body', $data['html']);
+    }
+
+    public function testBomPrefixedFileSkipsFrontMatter(): void
+    {
+        // A UTF-8 BOM before the --- fence prevents detection — we treat the file as bodyless front matter.
+        // Verify we don't crash and the content still renders.
+        $this->write('pages/bom.md', "\xEF\xBB\xBF---\ntitle: BOM\n---\n\nHello\n");
+        $data = $this->content->load('pages/bom');
+        $this->assertIsArray($data['meta']);
+        $this->assertStringContainsString('Hello', $data['html']);
     }
 
     public function testParseMetaOnlyReadsYaml(): void

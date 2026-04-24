@@ -1,6 +1,6 @@
 <?php
 $page_title = ucfirst($folder);
-ob_start();
+require __DIR__ . '/_header.php';
 ?>
 <h1><?= htmlspecialchars(ucfirst($folder)) ?></h1>
 
@@ -28,6 +28,4 @@ ob_start();
         </article>
     <?php endforeach; ?>
 <?php endif; ?>
-<?php
-$content_body = ob_get_clean();
-require __DIR__ . '/_layout.php';
+<?php require __DIR__ . '/_footer.php'; ?>

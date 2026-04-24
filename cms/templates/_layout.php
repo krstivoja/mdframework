@@ -55,6 +55,10 @@
     </nav>
 
     <div class="sidebar-footer">
+      <a href="/admin/backup" class="sidebar-footer-link <?= str_starts_with($action ?? '', 'backup') ? 'is-active' : '' ?>">
+        <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v4H2V3z"/><path d="M2 7h12v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7z"/><path d="M8 9v3M6 10.5l2 2 2-2"/></svg>
+        Backup
+      </a>
       <a href="/admin/settings" class="sidebar-footer-link <?= ($action ?? '') === 'settings' ? 'is-active' : '' ?>">
         <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>
         Settings

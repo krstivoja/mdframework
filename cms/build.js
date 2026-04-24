@@ -8,7 +8,7 @@ for (const file of ['suneditor.min.js', 'suneditor.min.css']) {
 }
 
 const config = {
-  entryPoints: ['src/editor.js', 'src/admin.css', 'src/inline-edit.js'],
+  entryPoints: ['src/editor.js', 'src/admin.css', 'src/pages.js', 'src/settings.js', 'src/themes.js'],
   bundle: true,
   outdir: '../public/cms',
   minify: !watch,

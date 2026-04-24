@@ -26,8 +26,14 @@ require __DIR__ . '/_layout.php';
 | `$html` | `page.php`, `post.php` |
 | `$route` | `page.php`, `post.php` |
 | `$folder` | `archive.php` |
-| `$items` | `archive.php` |
+| `$items` | `archive.php` (already sliced to the current page) |
 | `$intro` | `archive.php` (from `_index.md`, may be null) |
+| `$page` | `archive.php` (current page number, 1-indexed) |
+| `$total_pages` | `archive.php` |
+| `$per_page` | `archive.php`, `taxonomy.php` |
+| `$taxonomy` | `taxonomy.php` (`"tags"` or `"categories"`) |
+| `$term` | `taxonomy.php` (the URL slug) |
+| `$label` | `taxonomy.php` (original term from front matter — use for the page title) |
 | `$url` | `404.php` |
 
 ## Global helpers

@@ -1,16 +1,25 @@
 <?php
-$pageTitle = $is_new ? 'New Page' : 'Edit: ' . ($md_title ?: $relPath);
+$pageTitle   = $is_new ? 'New Page' : 'Edit: ' . ($md_title ?: $relPath);
+$isDraft     = !empty($current_meta['draft']);
 
 ob_start();
 ?>
 <div class="admin-card">
-  <h1><?= $is_new ? 'New Page' : 'Edit Page' ?></h1>
+  <h1>
+    <?= $is_new ? 'New Page' : 'Edit Page' ?>
+    <?php if (!$is_new): ?>
+      <span class="badge <?= $isDraft ? 'badge-draft' : 'badge-live' ?>" id="status-badge">
+        <?= $isDraft ? 'Draft' : 'Published' ?>
+      </span>
+    <?php endif; ?>
+  </h1>
 
   <?php if (!empty($error)): ?>
     <div class="alert-error"><?= e($error) ?></div>
   <?php endif; ?>
 
-  <form method="POST" action="/admin/<?= $is_new ? 'new' : 'edit' ?><?= !$is_new ? '?path=' . urlencode($relPath) : '' ?>">
+  <form method="POST" action="/admin/<?= $is_new ? 'new' : 'edit' ?><?= !$is_new ? '?path=' . urlencode($relPath) : '' ?>"
+        data-page-path="<?= e($relPath) ?>">
     <?= csrf_field() ?>
 
     <?php if ($is_new): ?>
@@ -22,8 +31,9 @@ ob_start();
                value="<?= e($relPath) ?>"
                placeholder="blog/my-post"
                pattern="[a-z0-9][a-z0-9/_-]*"
-               required
+               required autocomplete="off"
                class="form-input form-input-mono">
+        <div class="field-hint-err" id="path-error" hidden>Path must be lowercase letters, numbers, hyphens, and slashes.</div>
       </div>
     <?php else: ?>
       <input type="hidden" name="path" value="<?= e($relPath) ?>">
@@ -35,6 +45,7 @@ ob_start();
              value="<?= e($md_title) ?>"
              required
              class="form-input">
+      <div class="field-hint-err" id="title-error" hidden>Title is required.</div>
     </div>
 
     <?php foreach ($applicable_taxonomies as $taxSlug => $tax):
@@ -90,16 +101,59 @@ ob_start();
       <textarea id="body-editor"><?= $md_body_html ?? '' ?></textarea>
     </div>
 
+    <details class="form-section-seo">
+      <summary class="form-section-seo-title">SEO</summary>
+      <div class="form-group">
+        <label for="meta_description" class="form-label">Description <span class="form-hint">(meta description)</span></label>
+        <textarea id="meta_description" name="meta_description" rows="2"
+                  class="form-input"><?= e($current_meta['description'] ?? '') ?></textarea>
+      </div>
+      <div class="form-group">
+        <label for="meta_canonical" class="form-label">Canonical URL <span class="form-hint">(override)</span></label>
+        <input type="url" id="meta_canonical" name="meta_canonical" class="form-input form-input-mono"
+               placeholder="https://example.com/page" value="<?= e($current_meta['canonical'] ?? '') ?>">
+      </div>
+      <div class="form-group">
+        <label for="meta_og_image" class="form-label">OG Image URL</label>
+        <input type="url" id="meta_og_image" name="meta_og_image" class="form-input form-input-mono"
+               placeholder="https://example.com/image.jpg" value="<?= e($current_meta['og_image'] ?? '') ?>">
+      </div>
+    </details>
+
     <div class="form-actions">
-      <button type="submit" class="btn btn-primary">Save</button>
+      <button type="submit" class="btn btn-primary" id="save-btn">Save</button>
       <a href="/admin/" class="btn btn-secondary">Cancel</a>
+
+      <span class="spacer"></span>
+
+      <label class="form-inline-label" for="status-select">Status</label>
+      <select name="status" id="status-select" class="form-input form-input-sm">
+        <option value="published" <?= $isDraft ? '' : 'selected' ?>>Published</option>
+        <option value="draft" <?= $isDraft ? 'selected' : '' ?>>Draft</option>
+      </select>
+
       <?php if (!$is_new): ?>
-        <span class="spacer"></span>
         <a href="/<?= e(ltrim($relPath, '/')) ?>" target="_blank" class="view-link">View &rarr;</a>
       <?php endif; ?>
     </div>
   </form>
 </div>
+
+<!-- Image picker modal -->
+<div id="img-picker" class="img-picker" hidden>
+  <div class="img-picker-backdrop"></div>
+  <div class="img-picker-dialog">
+    <div class="img-picker-head">
+      <strong>Insert image</strong>
+      <input type="search" id="img-picker-search" class="form-input img-picker-search" placeholder="Filter…">
+      <button type="button" id="img-picker-close" class="btn-icon" aria-label="Close">×</button>
+    </div>
+    <div id="img-picker-grid" class="img-picker-grid">
+      <p class="img-picker-empty">Loading…</p>
+    </div>
+  </div>
+</div>
+
 <?php $content = ob_get_clean(); ?>
 
 <?php ob_start(); ?>

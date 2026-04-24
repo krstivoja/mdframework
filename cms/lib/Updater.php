@@ -1,11 +1,15 @@
 <?php
+
+declare(strict_types=1);
+
 namespace MD;
 
 class Updater
 {
     private string $appRoot;
     private string $versionFile;
-    private array  $manifest;
+    /** @var array<string, mixed> */
+    private array $manifest;
 
     public function __construct(string $appRoot)
     {
@@ -27,26 +31,33 @@ class Updater
         return $this->manifest['repo'] ?? '';
     }
 
+    /** @return array<string, string>|null */
     public function checkLatest(): ?array
     {
         $repo = $this->repo();
-        if (!$repo || str_starts_with($repo, 'your-')) return null;
+        if (!$repo || str_starts_with($repo, 'your-')) {
+            return null;
+        }
 
-        $ctx  = stream_context_create(['http' => [
+        $ctx = stream_context_create(['http' => [
             'header'  => "User-Agent: MDFramework\r\n",
             'timeout' => 6,
         ]]);
         $json = @file_get_contents("https://api.github.com/repos/{$repo}/releases/latest", false, $ctx);
-        if (!$json) return null;
+        if (!$json) {
+            return null;
+        }
 
         $data = json_decode($json, true);
-        if (empty($data['tag_name'])) return null;
+        if (empty($data['tag_name'])) {
+            return null;
+        }
 
         return [
             'version'   => ltrim($data['tag_name'], 'v'),
             'tag'       => $data['tag_name'],
-            'notes'     => $data['body'] ?? '',
-            'zip_url'   => $data['zipball_url'] ?? '',
+            'notes'     => $data['body']         ?? '',
+            'zip_url'   => $data['zipball_url']  ?? '',
             'published' => $data['published_at'] ?? '',
         ];
     }
@@ -54,10 +65,13 @@ class Updater
     public function isUpdateAvailable(): bool
     {
         $latest = $this->checkLatest();
-        if (!$latest) return false;
+        if (!$latest) {
+            return false;
+        }
         return version_compare($latest['version'], $this->currentVersion(), '>');
     }
 
+    /** @return array<string, mixed> */
     public function apply(string $zipUrl, string $backupDir): array
     {
         // Download ZIP to temp file
@@ -68,7 +82,9 @@ class Updater
             'follow_location' => true,
         ]]);
         $data = @file_get_contents($zipUrl, false, $ctx);
-        if (!$data) return ['ok' => false, 'error' => 'Download failed'];
+        if (!$data) {
+            return ['ok' => false, 'error' => 'Download failed'];
+        }
         file_put_contents($tmpZip, $data);
 
         $zip = new \ZipArchive();
@@ -93,16 +109,22 @@ class Updater
         $coreFiles      = $newManifest['core'] ?? $this->manifest['core'] ?? [];
         $newVersion     = '';
         $versionRaw     = $zip->getFromName($prefix . 'cms/VERSION');
-        if ($versionRaw) $newVersion = trim($versionRaw);
+        if ($versionRaw) {
+            $newVersion = trim($versionRaw);
+        }
 
         // Back up current core before overwriting
-        if (!is_dir($backupDir)) mkdir($backupDir, 0755, true);
+        if (!is_dir($backupDir)) {
+            mkdir($backupDir, 0755, true);
+        }
         $backupFile = $backupDir . '/pre-update-v' . $this->currentVersion() . '-' . date('YmdHis') . '.zip';
-        $bak = new \ZipArchive();
+        $bak        = new \ZipArchive();
         if ($bak->open($backupFile, \ZipArchive::CREATE) === true) {
             foreach ($coreFiles as $rel) {
                 $full = $this->appRoot . '/' . $rel;
-                if (is_file($full)) $bak->addFile($full, $rel);
+                if (is_file($full)) {
+                    $bak->addFile($full, $rel);
+                }
             }
             $bak->close();
         }
@@ -111,10 +133,14 @@ class Updater
         foreach ($coreFiles as $rel) {
             $entry   = $prefix . $rel;
             $content = $zip->getFromName($entry);
-            if ($content === false) continue;
+            if ($content === false) {
+                continue;
+            }
             $dest = $this->appRoot . '/' . $rel;
             $dir  = dirname($dest);
-            if (!is_dir($dir)) mkdir($dir, 0755, true);
+            if (!is_dir($dir)) {
+                mkdir($dir, 0755, true);
+            }
             file_put_contents($dest, $content);
         }
 
@@ -131,7 +157,9 @@ class Updater
     {
         $dir     = $this->appRoot . '/cms/migrations';
         $applied = $dir . '/.applied';
-        if (!is_dir($dir)) return;
+        if (!is_dir($dir)) {
+            return;
+        }
 
         $done    = is_file($applied) ? array_filter(explode("\n", file_get_contents($applied))) : [];
         $scripts = glob($dir . '/*.php') ?: [];
@@ -139,7 +167,9 @@ class Updater
 
         foreach ($scripts as $script) {
             $name = basename($script);
-            if (in_array($name, $done, true)) continue;
+            if (in_array($name, $done, true)) {
+                continue;
+            }
             require $script;
             $done[] = $name;
         }

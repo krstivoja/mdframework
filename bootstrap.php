@@ -61,6 +61,10 @@ if (!function_exists('csrf_token')) {
  *   limit    int      — max number of posts to return (0 = all)
  *   offset   int      — skip N posts (for pagination)
  */
+/**
+ * @param  array<string, mixed> $args
+ * @return array<int, array<string, mixed>>
+ */
 function posts(array $args = []): array
 {
     $index = $GLOBALS['md_index'];
@@ -98,6 +102,7 @@ function posts(array $args = []): array
 /**
  * Helper: render a template with variables.
  */
+/** @param array<string, mixed> $vars */
 function render(string $template, array $vars = []): void
 {
     extract($vars, EXTR_SKIP);

@@ -20,13 +20,14 @@ ob_start();
   <div class="media-grid" id="media-grid">
     <?php foreach ($mediaFiles as $item): ?>
       <?php
-        $ext_lc = strtolower(pathinfo($item['name'], PATHINFO_EXTENSION));
-        $is_img = in_array($ext_lc, ['jpg','jpeg','png','gif','webp','svg'], true);
-        $icon   = match($ext_lc) { 'pdf' => '📄', 'zip' => '🗜', default => '📁' };
+        $ext_lc  = strtolower(pathinfo($item['name'], PATHINFO_EXTENSION));
+        $is_img  = in_array($ext_lc, ['jpg','jpeg','png','gif','webp','svg'], true);
+        $icon    = match($ext_lc) { 'pdf' => '📄', 'zip' => '🗜', default => '📁' };
+        $thumbSrc = $is_img ? ($item['thumb_url'] ?? $item['url']) : null;
       ?>
       <div class="media-item" data-name="<?= e($item['name']) ?>">
         <?php if ($is_img): ?>
-          <img class="media-thumb" src="<?= e($item['url']) ?>" alt="<?= e($item['name']) ?>" loading="lazy">
+          <img class="media-thumb" src="<?= e($thumbSrc) ?>" alt="<?= e($item['alt'] ?? $item['name']) ?>" loading="lazy">
         <?php else: ?>
           <div class="media-thumb media-thumb-file"><?= $icon ?><span><?= e(strtoupper($ext_lc)) ?></span></div>
         <?php endif; ?>
@@ -35,7 +36,16 @@ ob_start();
           <div class="media-size"><?= e(number_format($item['size'] / 1024, 1)) ?> KB</div>
           <div class="media-actions">
             <button type="button" class="btn btn-secondary media-copy-btn" data-url="<?= e($item['url']) ?>">Copy URL</button>
+            <button type="button" class="btn btn-secondary media-meta-btn">Edit</button>
             <button type="button" class="btn btn-danger media-delete-btn" data-name="<?= e($item['name']) ?>">Delete</button>
+          </div>
+          <div class="media-meta-form" hidden>
+            <input type="text" class="form-input media-alt-inp" placeholder="Alt text"
+                   value="<?= e($item['alt'] ?? '') ?>">
+            <input type="text" class="form-input media-caption-inp" placeholder="Caption"
+                   value="<?= e($item['caption'] ?? '') ?>">
+            <button type="button" class="btn btn-primary btn-sm media-meta-save">Save</button>
+            <button type="button" class="btn btn-secondary btn-sm media-meta-cancel">Cancel</button>
           </div>
         </div>
       </div>
@@ -66,15 +76,16 @@ ob_start();
   }
 
   function buildCard(item) {
-    const exts = ['jpg','jpeg','png','gif','webp','svg'];
+    const imgExts = ['jpg','jpeg','png','gif','webp','svg'];
     const ext  = item.name.split('.').pop().toLowerCase();
-    const isImg = exts.includes(ext);
+    const isImg = imgExts.includes(ext);
     const icons = { pdf: '📄', zip: '🗜' };
+    const thumbSrc = isImg ? (item.thumb_url || item.url) : null;
     const div = document.createElement('div');
     div.className = 'media-item';
     div.dataset.name = item.name;
     div.innerHTML = isImg
-      ? `<img class="media-thumb" src="${item.url}" alt="${item.name}" loading="lazy">`
+      ? `<img class="media-thumb" src="${thumbSrc}" alt="${item.name}" loading="lazy">`
       : `<div class="media-thumb media-thumb-file">${icons[ext] || '📁'}<span>${ext.toUpperCase()}</span></div>`;
     div.innerHTML += `
       <div class="media-info">
@@ -82,7 +93,14 @@ ob_start();
         <div class="media-size">${(item.size / 1024).toFixed(1)} KB</div>
         <div class="media-actions">
           <button type="button" class="btn btn-secondary media-copy-btn" data-url="${item.url}">Copy URL</button>
+          <button type="button" class="btn btn-secondary media-meta-btn">Edit</button>
           <button type="button" class="btn btn-danger media-delete-btn" data-name="${item.name}">Delete</button>
+        </div>
+        <div class="media-meta-form" hidden>
+          <input type="text" class="form-input media-alt-inp" placeholder="Alt text" value="">
+          <input type="text" class="form-input media-caption-inp" placeholder="Caption" value="">
+          <button type="button" class="btn btn-primary btn-sm media-meta-save">Save</button>
+          <button type="button" class="btn btn-secondary btn-sm media-meta-cancel">Cancel</button>
         </div>
       </div>`;
     return div;
@@ -128,13 +146,11 @@ ob_start();
     fileInput.value = '';
   }
 
-  // Browse button
   dropzone.querySelector('.media-dropzone-browse').addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', function () {
     if (this.files.length) uploadFiles(Array.from(this.files));
   });
 
-  // Drag and drop
   dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('media-dropzone--over'); });
   dropzone.addEventListener('dragleave', e => { if (!dropzone.contains(e.relatedTarget)) dropzone.classList.remove('media-dropzone--over'); });
   dropzone.addEventListener('drop', e => {
@@ -144,30 +160,78 @@ ob_start();
     if (files.length) uploadFiles(files);
   });
 
-  // Copy URL
-  document.addEventListener('click', function (e) {
-    const btn = e.target.closest('.media-copy-btn');
-    if (!btn) return;
-    navigator.clipboard.writeText(btn.dataset.url).then(() => {
-      const orig = btn.textContent;
-      btn.textContent = 'Copied!';
-      setTimeout(() => { btn.textContent = orig; }, 1500);
-    });
-  });
-
-  // Delete
   document.addEventListener('click', async function (e) {
-    const btn = e.target.closest('.media-delete-btn');
-    if (!btn) return;
-    if (!confirm('Delete "' + btn.dataset.name + '"?')) return;
+
+    // Copy URL
+    const copyBtn = e.target.closest('.media-copy-btn');
+    if (copyBtn) {
+      navigator.clipboard.writeText(copyBtn.dataset.url).then(() => {
+        const orig = copyBtn.textContent;
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => { copyBtn.textContent = orig; }, 1500);
+      });
+      return;
+    }
+
+    // Toggle metadata form
+    const metaBtn = e.target.closest('.media-meta-btn');
+    if (metaBtn) {
+      const info = metaBtn.closest('.media-info');
+      const form = info.querySelector('.media-meta-form');
+      form.hidden = !form.hidden;
+      if (!form.hidden) form.querySelector('.media-alt-inp').focus();
+      return;
+    }
+
+    // Cancel metadata edit
+    if (e.target.closest('.media-meta-cancel')) {
+      e.target.closest('.media-meta-form').hidden = true;
+      return;
+    }
+
+    // Save metadata
+    const saveBtn = e.target.closest('.media-meta-save');
+    if (saveBtn) {
+      const item = saveBtn.closest('.media-item');
+      const form = saveBtn.closest('.media-meta-form');
+      const name = item.dataset.name;
+      const alt  = form.querySelector('.media-alt-inp').value;
+      const cap  = form.querySelector('.media-caption-inp').value;
+
+      saveBtn.disabled = true;
+      const fd = new FormData();
+      fd.append('csrf_token', csrf);
+      fd.append('name',    name);
+      fd.append('alt',     alt);
+      fd.append('caption', cap);
+      try {
+        const res  = await fetch('/admin/media-update', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Save failed');
+        form.hidden = true;
+        // Update img alt attribute if present
+        const img = item.querySelector('img.media-thumb');
+        if (img && alt) img.alt = alt;
+        showToast('Saved', true);
+      } catch (err) {
+        showToast(err.message, false);
+      }
+      saveBtn.disabled = false;
+      return;
+    }
+
+    // Delete
+    const delBtn = e.target.closest('.media-delete-btn');
+    if (!delBtn) return;
+    if (!confirm('Delete "' + delBtn.dataset.name + '"?')) return;
     const fd = new FormData();
-    fd.append('name', btn.dataset.name);
+    fd.append('name', delBtn.dataset.name);
     fd.append('csrf_token', csrf);
     try {
       const res  = await fetch('/admin/media-delete', { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error('Delete failed');
-      btn.closest('.media-item').remove();
+      delBtn.closest('.media-item').remove();
       showToast('Deleted.', true);
     } catch (err) {
       showToast(err.message, false);

@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace MD;
 
 class PathResolver
@@ -24,10 +27,14 @@ class PathResolver
     /** Returns realpath of the .md file, or null if outside content dir or missing. */
     public function contentFile(string $relPath): ?string
     {
-        if (!$this->isValidRelPath($relPath)) return null;
+        if (!$this->isValidRelPath($relPath)) {
+            return null;
+        }
         $real    = realpath($this->contentDir . '/' . $relPath . '.md');
         $baseDir = realpath($this->contentDir);
-        if (!$real || !$baseDir || !str_starts_with($real, $baseDir . '/')) return null;
+        if (!$real || !$baseDir || !str_starts_with($real, $baseDir . '/')) {
+            return null;
+        }
         return $real;
     }
 
@@ -38,9 +45,13 @@ class PathResolver
      */
     public function resolveNewContentFile(string $relPath): ?string
     {
-        if (!$this->isValidRelPath($relPath)) return null;
+        if (!$this->isValidRelPath($relPath)) {
+            return null;
+        }
         $baseDir = realpath($this->contentDir);
-        if (!$baseDir) return null;
+        if (!$baseDir) {
+            return null;
+        }
 
         $target = $this->contentDir . '/' . $relPath . '.md';
         $dir    = dirname($target);
@@ -48,8 +59,12 @@ class PathResolver
             $dir = dirname($dir);
         }
         $realDir = realpath($dir);
-        if (!$realDir) return null;
-        if ($realDir !== $baseDir && !str_starts_with($realDir, $baseDir . '/')) return null;
+        if (!$realDir) {
+            return null;
+        }
+        if ($realDir !== $baseDir && !str_starts_with($realDir, $baseDir . '/')) {
+            return null;
+        }
 
         return $target;
     }
@@ -58,15 +73,25 @@ class PathResolver
     public function mediaFile(string $name): ?string
     {
         $mediaDir = realpath($this->uploadsDir . '/media');
-        if (!$mediaDir) return null;
+        if (!$mediaDir) {
+            return null;
+        }
         $target = $mediaDir . '/' . basename($name);
-        if (!is_file($target)) return null;
+        if (!is_file($target)) {
+            return null;
+        }
         $real = realpath($target);
-        if (!$real || !str_starts_with($real, $mediaDir . '/')) return null;
+        if (!$real || !str_starts_with($real, $mediaDir . '/')) {
+            return null;
+        }
         return $target;
     }
 
-    /** Returns [dir, prefix] for the upload sub-directory (per-page or global media). */
+    /**
+     * Returns [dir, prefix] for the upload sub-directory (per-page or global media).
+     *
+     * @return array{dir: string, prefix: string}
+     */
     public function uploadsSubDir(string $pagePath): array
     {
         $raw = trim($pagePath, '/');
@@ -74,6 +99,30 @@ class PathResolver
             return ['dir' => $this->uploadsDir . '/' . $raw, 'prefix' => '/uploads/' . $raw . '/'];
         }
         return ['dir' => $this->uploadsDir . '/media', 'prefix' => '/uploads/media/'];
+    }
+
+    /**
+     * Resolve a theme template file path, ensuring it stays inside the themes dir.
+     * Returns the absolute path or null if invalid/escaping.
+     */
+    public function themeTemplate(string $activeTheme, string $name): ?string
+    {
+        if ($this->themesDir === '') {
+            return null;
+        }
+        if (!preg_match('/^[a-z0-9_-]+$/', $activeTheme)) {
+            return null;
+        }
+        if (!preg_match('/^[a-z0-9_-]+$/', $name)) {
+            return null;
+        }
+        $path = $this->themesDir . '/' . $activeTheme . '/templates/' . $name . '.php';
+        $real = realpath($path);
+        $base = realpath($this->themesDir);
+        if (!$real || !$base || !str_starts_with($real, $base . '/')) {
+            return null;
+        }
+        return $real;
     }
 
     public function htmlCacheFile(string $relPath): string

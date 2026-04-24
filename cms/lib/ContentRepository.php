@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace MD;
 
 use Symfony\Component\Yaml\Yaml;
@@ -16,16 +19,19 @@ class ContentRepository
         $this->content    = $content;
     }
 
+    /** @return array<string, mixed> */
     public function parseMeta(string $absPath): array
     {
         return $this->content->parseMeta($absPath);
     }
 
+    /** @return array<string, mixed> */
     public function parse(string $absPath): array
     {
         return $this->content->parse($absPath);
     }
 
+    /** @param array<string, mixed> $meta */
     public function save(string $relPath, array $meta, string $body): void
     {
         $file     = $this->contentDir . '/' . $relPath . '.md';

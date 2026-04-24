@@ -1,10 +1,10 @@
 <?php
 $page_title = $meta['title'] ?? 'Page';
-ob_start();
+require __DIR__ . '/_header.php';
 ?>
 <article>
-    <h1 data-ie="title"><?= htmlspecialchars($meta['title'] ?? '') ?></h1>
-    <div data-ie="body"><?= $html ?></div>
+    <h1><?= htmlspecialchars($meta['title'] ?? '') ?></h1>
+    <div><?= $html ?></div>
 
     <?php
     // Pages can opt into post loops via front matter:
@@ -27,7 +27,7 @@ ob_start();
         ]);
     ?>
         <section>
-            <h2 data-ie="loop_heading"><?= htmlspecialchars($meta['loop_heading'] ?? $meta['loop']['heading'] ?? 'Recent posts') ?></h2>
+            <h2><?= htmlspecialchars($meta['loop_heading'] ?? $meta['loop']['heading'] ?? 'Recent posts') ?></h2>
             <ul>
                 <?php foreach ($loopPosts as $p): ?>
                     <li>
@@ -41,12 +41,4 @@ ob_start();
         </section>
     <?php endif; ?>
 </article>
-
-<section data-ie="true">
-    <h2>Marko</h2>
-    <p>want to test editing experience!</p>
-</section>
-
-<?php
-$content_body = ob_get_clean();
-require __DIR__ . '/_layout.php';
+<?php require __DIR__ . '/_footer.php'; ?>

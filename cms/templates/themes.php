@@ -81,11 +81,15 @@ ob_start();
             <?php if (!empty($starter['description'])): ?>
               <p class="theme-desc"><?= e($starter['description']) ?></p>
             <?php endif; ?>
-            <div style="display:flex;gap:.5rem;align-items:center">
+            <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
               <input type="text" class="input starter-slug-input" placeholder="theme-name"
                      value="<?= e($slug) ?>" style="width:130px;font-size:12px">
               <button type="button" class="btn btn-secondary theme-install-btn" data-starter="<?= e($slug) ?>">
                 Install
+              </button>
+              <button type="button" class="btn btn-secondary theme-replace-btn" data-starter="<?= e($slug) ?>"
+                      title="Overwrite the active theme&#39;s templates/ with this starter">
+                Replace templates
               </button>
             </div>
           </div>
@@ -96,69 +100,7 @@ ob_start();
   <?php endif; ?>
 </div>
 
-<div id="themes-toast" class="media-toast" hidden></div>
-
-<script>
-(function () {
-  const csrf  = document.getElementById('themes-csrf').value;
-  const toast = document.getElementById('themes-toast');
-
-  function showToast(msg, ok) {
-    toast.textContent = msg;
-    toast.className = 'media-toast media-toast--' + (ok ? 'success' : 'error');
-    toast.hidden = false;
-    setTimeout(() => { toast.hidden = true; }, 3000);
-  }
-
-  // Activate
-  document.addEventListener('click', async function (e) {
-    const btn = e.target.closest('.theme-activate-btn');
-    if (!btn) return;
-    btn.disabled = true;
-    btn.textContent = 'Activating…';
-    const fd = new FormData();
-    fd.append('slug', btn.dataset.slug);
-    fd.append('csrf_token', csrf);
-    try {
-      const res  = await fetch('/admin/themes-activate', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || 'Failed');
-      showToast('Theme activated!', true);
-      setTimeout(() => location.reload(), 800);
-    } catch (err) {
-      showToast(err.message, false);
-      btn.disabled = false;
-      btn.textContent = 'Activate';
-    }
-  });
-
-  // Install from starter
-  document.addEventListener('click', async function (e) {
-    const btn = e.target.closest('.theme-install-btn');
-    if (!btn) return;
-    const slugInput = btn.closest('.theme-info').querySelector('.starter-slug-input');
-    const themeSlug = slugInput.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
-    if (!themeSlug) { showToast('Enter a theme name', false); return; }
-    btn.disabled = true;
-    btn.textContent = 'Installing…';
-    const fd = new FormData();
-    fd.append('starter', btn.dataset.starter);
-    fd.append('theme_slug', themeSlug);
-    fd.append('csrf_token', csrf);
-    try {
-      const res  = await fetch('/admin/themes-install', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || 'Failed');
-      showToast('Theme installed! Activate it above.', true);
-      setTimeout(() => location.reload(), 1000);
-    } catch (err) {
-      showToast(err.message, false);
-      btn.disabled = false;
-      btn.textContent = 'Install';
-    }
-  });
-}());
-</script>
 <?php
-$content = ob_get_clean();
+$content     = ob_get_clean();
+$extraFooter = '<script src="/cms/themes.js"></script>';
 require __DIR__ . '/_layout.php';

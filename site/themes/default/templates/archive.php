@@ -1,6 +1,6 @@
 <?php
 $page_title = ucfirst($folder);
-ob_start();
+require __DIR__ . '/_header.php';
 ?>
 <h1><?= htmlspecialchars(ucfirst($folder)) ?></h1>
 
@@ -19,7 +19,7 @@ ob_start();
                     <time><?= htmlspecialchars((string)$p['date']) ?></time>
                 <?php endif; ?>
                 <?php foreach ($p['categories'] as $cat): ?>
-                    <span class="tag"><?= htmlspecialchars($cat) ?></span>
+                    <a class="tag" href="/categories/<?= htmlspecialchars(MD\Index::slugify($cat)) ?>"><?= htmlspecialchars($cat) ?></a>
                 <?php endforeach; ?>
             </div>
             <?php if (!empty($p['meta']['excerpt'])): ?>
@@ -27,7 +27,17 @@ ob_start();
             <?php endif; ?>
         </article>
     <?php endforeach; ?>
+
+    <?php if (($total_pages ?? 1) > 1): ?>
+        <nav class="pagination">
+            <?php if ($page > 1): ?>
+                <a href="<?= $page === 2 ? '/' . htmlspecialchars($folder) : '/' . htmlspecialchars($folder) . '/page/' . ($page - 1) ?>">&larr; Prev</a>
+            <?php endif; ?>
+            <span>Page <?= $page ?> of <?= $total_pages ?></span>
+            <?php if ($page < $total_pages): ?>
+                <a href="/<?= htmlspecialchars($folder) ?>/page/<?= $page + 1 ?>">Next &rarr;</a>
+            <?php endif; ?>
+        </nav>
+    <?php endif; ?>
 <?php endif; ?>
-<?php
-$content_body = ob_get_clean();
-require __DIR__ . '/_layout.php';
+<?php require __DIR__ . '/_footer.php'; ?>

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 use MD\Env;
 use PHPUnit\Framework\TestCase;
@@ -19,7 +21,9 @@ class EnvTest extends TestCase
 
     protected function tearDown(): void
     {
-        if (is_file($this->tmp)) unlink($this->tmp);
+        if (is_file($this->tmp)) {
+            unlink($this->tmp);
+        }
     }
 
     private function write(string $content): void
