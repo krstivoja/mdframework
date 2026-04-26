@@ -1,6 +1,6 @@
 {
     "site": {
-        "name": "My Site",
+        "name": "My Site Marko",
         "base": "/"
     },
     "taxonomies": {
@@ -9,8 +9,7 @@
             "multiple": false,
             "post_types": [
                 "blog",
-                "pages",
-                "tutorials"
+                "pages"
             ],
             "fields": [
                 {

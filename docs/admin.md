@@ -27,12 +27,84 @@ ADMIN_PASS_HASH=$2y$12$...
 
 ## Admin features
 
-- **Pages list** — all content files, with live/draft status
-- **Editor** — EasyMDE (split-screen Markdown/preview, autosave)
-- **Image uploads** — drag-and-drop or toolbar button; files saved to `public/uploads/`
+- **Pages list** — all content files, with live/draft status and folder filter
+- **Editor** — SunEditor v3 (WYSIWYG, with code/markdown view); HTML is converted to Markdown on save via Turndown
+- **Image uploads** — toolbar button; files saved to `public/uploads/`
 - **Create / edit / delete** any `.md` file
-- CSRF-protected on all state-changing requests
-- Session cookie scoped to `/admin` only
+- **Media library** — shared `public/uploads/media/` pool with previews, alt/caption sidecars
+- **Settings** — site name, base path, taxonomies, upload limits
+- **Themes** — list installed themes, activate one, install from starter
+- **Backup** — download/restore Full / Content / Settings ZIP archives
+- CSRF-protected on all state-changing requests (`X-CSRF-Token` header)
+- Session cookie auth — `HttpOnly`, `SameSite=Lax`
+
+## Architecture
+
+The admin is a React single-page application served from a thin PHP shell.
+
+| Layer | Stack |
+|-------|-------|
+| SPA shell | `app/public/admin.php` → `app/cms/templates/spa.php` (static HTML + Vite tags) |
+| Frontend | React 18, React Router 6, TanStack Query, Tailwind CSS v4, Vite 5 |
+| Editor | SunEditor v3 (mounted directly via ref), Turndown (HTML→Markdown) |
+| Backend API | `MD\Api\Router` dispatches `/admin/api/*` to controllers under `app/cms/lib/Api/` |
+| Data | Plain `.md` files under `app/site/content/`, JSON config at `app/site/config.json`, media on disk |
+
+The PHP layer's only jobs are:
+1. Serve the SPA shell on any `/admin/*` GET (React handles routing client-side)
+2. Dispatch JSON requests at `/admin/api/*` to controllers
+3. Manage the session cookie and CSRF token
+
+There are no PHP-rendered admin templates apart from `setup-required.php` (shown only when no admin password is configured).
+
+## JSON API
+
+All endpoints accept and return JSON. Mutating requests must include the CSRF token from `GET /me` in an `X-CSRF-Token` header.
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| `GET`  | `/admin/api/me` | Current user + CSRF token (public) |
+| `POST` | `/admin/api/login` | Sign in (public) |
+| `POST` | `/admin/api/logout` | Sign out |
+| `GET`  | `/admin/api/pages` | List pages and folders |
+| `GET`  | `/admin/api/pages/{path}` | Get one page (`meta`, `body`, `html`) |
+| `POST` | `/admin/api/pages` | Create a page |
+| `PUT`  | `/admin/api/pages/{path}` | Update a page |
+| `DELETE` | `/admin/api/pages/{path}` | Delete a page |
+| `GET`  | `/admin/api/media[?page_path=…]` | List media (optionally including a page's attachments) |
+| `POST` | `/admin/api/media` | Upload (multipart `file` + optional `page_path`) |
+| `PATCH` | `/admin/api/media/{name}` | Update alt/caption sidecar |
+| `DELETE` | `/admin/api/media/{name}` | Delete a media file |
+| `GET`  | `/admin/api/settings` | Read site config |
+| `PUT`  | `/admin/api/settings` | Save site/uploads/taxonomies |
+| `GET`  | `/admin/api/themes` | Installed themes, active slug, available starters |
+| `POST` | `/admin/api/themes/activate` | Activate by slug |
+| `POST` | `/admin/api/themes/install` | Install a starter |
+| `POST` | `/admin/api/themes/replace` | Replace templates from a starter |
+| `GET`  | `/admin/api/backup` | Estimated archive sizes |
+| `POST` | `/admin/api/backup/download` | Download a `.zip` (returns binary) |
+| `POST` | `/admin/api/backup/restore` | Restore from uploaded `.zip` (multipart) |
+| `GET`  | `/admin/api/search?q=…` | Full-text search across pages |
+| `GET`  | `/admin/api/update` | Check for a new release |
+| `POST` | `/admin/api/update` | Apply an update |
+
+## Development workflow
+
+```bash
+cd app/cms
+npm install
+npm run dev    # Vite dev server on :5173 with HMR
+```
+
+Then load `http://<your-host>/admin/` in a browser. The PHP shell auto-detects the dev server (via the `app/cms/.vite-hot` file Vite writes on listen) and injects script tags pointing to `localhost:5173`. React Fast Refresh + Tailwind hot-reload work without reload.
+
+```bash
+npm run build  # Outputs hashed assets + manifest to app/public/cms/dist/
+```
+
+In production (no dev server), PHP reads `app/public/cms/dist/.vite/manifest.json` and emits the hashed `<script>`/`<link>` tags.
+
+If a stale `.vite-hot` file ever points to a dead dev server (e.g. after an ungraceful Vite shutdown), delete it: `rm app/cms/.vite-hot`. The PHP shell will fall back to the production manifest.
 
 ## Path format for new pages
 

@@ -24,6 +24,17 @@ cp .env.example .env
 
 Edit `.env` and set your admin credentials (see [Admin]({{ '/admin' | relative_url }}) for details).
 
+The admin UI is a React app built with Vite. To work on it locally:
+
+```bash
+cd cms
+npm install
+npm run dev    # HMR on localhost:5173 — visit /admin/ on your PHP host
+npm run build  # production assets to public/cms/dist/
+```
+
+Production deployments need the prebuilt `public/cms/dist/` directory present; either run `npm run build` before deploy or commit the built assets.
+
 ## Directory structure
 
 ```
