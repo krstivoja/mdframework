@@ -1,0 +1,40 @@
+{{ partial('header', { page_title: meta.title|default('Post'), meta: meta }) }}
+
+<article class="post wrap">
+  <header class="post-header">
+    {% if meta.categories|default([])|length %}
+      <div class="post-cats">
+        {% for cat in meta.categories|slice(0,2) %}
+          <a class="tag" href="{{ slug_url(cat, 'categories') }}">{{ cat }}</a>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <h1>{{ meta.title|default('') }}</h1>
+
+    <div class="post-meta">
+      {% if meta.author %}<span>By {{ meta.author }}</span><span class="dot">·</span>{% endif %}
+      {% if meta.date %}<time>{{ meta.date|date('M j, Y') }}</time>{% endif %}
+      {% if meta.reading_time %}<span class="dot">·</span><span>{{ meta.reading_time }} min read</span>{% endif %}
+    </div>
+  </header>
+
+  {% if meta.image or meta.cover %}
+    <figure class="post-cover">
+      <img src="{{ meta.image|default(meta.cover) }}" alt="{{ meta.title|default('') }}">
+      {% if meta.cover_caption %}<figcaption>{{ meta.cover_caption }}</figcaption>{% endif %}
+    </figure>
+  {% endif %}
+
+  <div class="content">{{ html|raw }}</div>
+
+  {% if meta.tags|default([])|length %}
+    <footer class="post-tags">
+      {% for t in meta.tags %}
+        <a class="tag" href="{{ slug_url(t, 'tags') }}">#{{ t }}</a>
+      {% endfor %}
+    </footer>
+  {% endif %}
+</article>
+
+{{ partial('footer') }}

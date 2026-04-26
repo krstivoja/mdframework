@@ -18,19 +18,26 @@ export default function TaxonomyField({ slug, tax, value, onChange }) {
   );
 }
 
-// Visual shell shared by every tax field — small card-within-a-card with a
-// label header. Keeps each field visually distinct in the editor sidebar.
+// Visual shell shared by every tax field — bare label header + control. Sits
+// between sibling fields with a 1px divider added by the parent (PageFields
+// uses `divide-y` so the lines come for free).
 function FieldShell({ label, slug, hint, children }) {
+  // Only show the front-matter key on the right when it's actually a
+  // different word from the label — otherwise it's just visual noise
+  // ("Categories  CATEGORIES").
+  const showSlug = slug && slug.toLowerCase() !== (label || '').toLowerCase();
   return (
-    <div className="rounded-md border border-zinc-200 bg-zinc-50/40 p-3">
-      <div className="mb-2 flex items-baseline justify-between gap-2">
+    <div className="space-y-2">
+      <div className="flex items-baseline justify-between gap-2">
         <span className="text-[13px] font-semibold text-zinc-900">{label}</span>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-400">
-          {slug}
-        </span>
+        {showSlug && (
+          <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-400">
+            {slug}
+          </span>
+        )}
       </div>
       {children}
-      {hint && <p className="mt-1.5 text-xs text-zinc-500">{hint}</p>}
+      {hint && <p className="text-xs text-zinc-500">{hint}</p>}
     </div>
   );
 }
@@ -42,7 +49,7 @@ function renderControl({ tax, value, choices, widget, onChange }) {
 
     if (choices.length && widget === 'checkbox') {
       return (
-        <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+        <div className="flex flex-col gap-2">
           {choices.map(c => (
             <Checkbox
               key={c}
@@ -82,10 +89,13 @@ function renderControl({ tax, value, choices, widget, onChange }) {
     );
   }
 
-  // Single value
+  // Single value — coerce to scalar in case stored data is an array (e.g.
+  // taxonomy was previously `multiple: true`).
+  const scalar = Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
+
   if (choices.length) {
     return (
-      <Select value={value || ''} onChange={e => onChange(e.target.value)}>
+      <Select value={scalar} onChange={e => onChange(e.target.value)}>
         <option value="">—</option>
         {choices.map(c => <option key={c} value={c}>{c}</option>)}
       </Select>
@@ -93,6 +103,6 @@ function renderControl({ tax, value, choices, widget, onChange }) {
   }
 
   return (
-    <Input value={value || ''} onChange={e => onChange(e.target.value)} />
+    <Input value={scalar} onChange={e => onChange(e.target.value)} />
   );
 }

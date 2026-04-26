@@ -1,0 +1,16 @@
+{# Pagination — green pill links on either end of the current-page label.
+   Receives:
+     page         — current page (1-indexed)
+     total_pages  — total count
+     base_url     — URL for page 1, no trailing slash #}
+{% if total_pages and total_pages > 1 %}
+  <nav class="pagination">
+    {% if page > 1 %}
+      <a href="{{ page == 2 ? base_url : base_url ~ '/page/' ~ (page - 1) }}">&larr; Prev</a>
+    {% else %}<span></span>{% endif %}
+    <span class="pagination-meta">Page {{ page }} of {{ total_pages }}</span>
+    {% if page < total_pages %}
+      <a href="{{ base_url ~ '/page/' ~ (page + 1) }}">Next &rarr;</a>
+    {% else %}<span></span>{% endif %}
+  </nav>
+{% endif %}

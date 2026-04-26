@@ -1,0 +1,17 @@
+  </main>
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <span class="footer-glyph">&#8220;</span>
+      <nav class="footer-nav">{{ partial('nav') }}</nav>
+      <ul class="footer-legal">
+        <li><a href="/accessibility">Accessibility Statement</a></li>
+        <li><a href="/privacy">Privacy Policy</a></li>
+      </ul>
+      <div class="footer-social">{{ partial('social') }}</div>
+      <p class="footer-copy">
+        © {{ "now"|date('Y') }} by {{ config.site.name|default('Your Site') }}.
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

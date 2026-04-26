@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/cms/vendor/autoload.php';
+require_once __DIR__ . '/cms/lib/template_helpers.php';
 
 // Simple PSR-4 autoloader for our lib/ classes (in case composer dump-autoload wasn't run)
 spl_autoload_register(function ($class) {
@@ -35,6 +36,7 @@ $GLOBALS['md_index'] = $index;
 $GLOBALS['md_router'] = $router;
 $GLOBALS['md_template_dir'] = $TEMPLATE_DIR;
 $GLOBALS['md_content_dir'] = $CONTENT_DIR;
+$GLOBALS['md_cache_dir'] = $CACHE_DIR;
 
 /**
  * CSRF token — generates and stores a token in the session.
@@ -100,13 +102,26 @@ function posts(array $args = []): array
 }
 
 /**
- * Helper: render a template with variables.
+ * Render a theme template by name (no extension). PHP wins if both files
+ * exist, so existing themes are unchanged; a theme opts into Twig per-template
+ * by shipping `<name>.twig` instead of `<name>.php`.
  */
 /** @param array<string, mixed> $vars */
 function render(string $template, array $vars = []): void
 {
-    extract($vars, EXTR_SKIP);
-    require $GLOBALS['md_template_dir'] . '/' . $template . '.php';
+    $dir = $GLOBALS['md_template_dir'];
+    $php = "$dir/$template.php";
+    if (is_file($php)) {
+        extract($vars, EXTR_SKIP);
+        require $php;
+        return;
+    }
+    $twig = "$dir/$template.twig";
+    if (is_file($twig)) {
+        MD\TemplateRenderer::instance()->render("$template.twig", $vars);
+        return;
+    }
+    throw new RuntimeException("Template not found: $template (looked for $php and $twig)");
 }
 
 /**

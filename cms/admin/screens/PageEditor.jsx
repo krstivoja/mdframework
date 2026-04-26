@@ -1,22 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import suneditor from 'suneditor';
-// Pass only the plugins our toolbar actually uses. The default `plugins`
-// bundle registers fileUpload / layout / template / math / etc., each of which
-// emits a console warning when its required option isn't provided.
-import { list_bulleted, list_numbered, hr, table, link, image } from 'suneditor/plugins';
-import 'suneditor/css/editor';
-
-const plugins = { list_bulleted, list_numbered, hr, table, link, image };
-import TurndownService from 'turndown';
+import Editor from '@toast-ui/editor';
+import '@toast-ui/editor/dist/toastui-editor.css';
 import { api, getCsrf } from '../lib/api.js';
 import { encodePath, publicUrl, slugify } from '../lib/utils.js';
 import { useDirty } from '../lib/dirty.jsx';
-import { Alert, Button, Card, Field, Input, Select } from '../components/ui/index.js';
+import { Alert, Button, Field, Input, Select } from '../components/ui/index.js';
 import PageFields from '../components/PageFields.jsx';
-
-const turndown = makeTurndown();
 
 export default function PageEditor() {
   const params = useParams();
@@ -40,8 +31,8 @@ export default function PageEditor() {
   const [status, setStatus] = useState('published');
   const [taxValues, setTaxValues] = useState({});
 
-  const editorRef = useRef(null);
-  const sunRef = useRef(null);
+  const editorElRef = useRef(null);
+  const edRef = useRef(null);
   const initializedRef = useRef(false);
 
   useEffect(() => {
@@ -68,53 +59,44 @@ export default function PageEditor() {
   }, [isNew, slugTouched, title]);
 
   useEffect(() => {
-    if (!editorRef.current) return;
+    if (!editorElRef.current) return;
     if (initializedRef.current) return;
     if (!isNew && !data) return;
 
     const pagePathForUpload = path;
-    const ed = suneditor.create(editorRef.current, {
-      plugins,
-      width: '100%',
-      height: '520px',
-      buttonList: [
-        ['undo', 'redo'],
-        ['bold', 'italic', 'underline', 'strike'],
-        ['removeFormat'],
-        ['list_bulleted', 'list_numbered', 'hr'],
-        ['link', 'image', 'table'],
-        ['codeView', 'markdownView', 'fullScreen'],
-      ],
-      imageUploadHandler(_xhr, info, core) {
-        const fd = new FormData();
-        fd.append('file', info.file);
-        if (pagePathForUpload) fd.append('page_path', pagePathForUpload);
-        fetch('/admin/api/media', {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: { 'X-CSRF-Token': getCsrf() },
-          body: fd,
-        })
-          .then(r => r.json())
-          .then(data => {
-            if (data?.ok && data.url) {
-              core.plugins.image.register.call(core, info, { url: data.url });
-            }
+    const ed = new Editor({
+      el: editorElRef.current,
+      height: '600px',
+      initialEditType: 'wysiwyg',
+      previewStyle: 'vertical',
+      usageStatistics: false,
+      initialValue: !isNew && data?.body ? data.body : '',
+      hooks: {
+        addImageBlobHook(blob, callback) {
+          const fd = new FormData();
+          fd.append('file', blob);
+          if (pagePathForUpload) fd.append('page_path', pagePathForUpload);
+          fetch('/admin/api/media', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'X-CSRF-Token': getCsrf() },
+            body: fd,
           })
-          .catch(() => { /* ignore */ });
-        return false;
+            .then(r => r.json())
+            .then(json => {
+              if (json?.ok && json.url) callback(json.url, blob.name || '');
+            })
+            .catch(() => { /* ignore */ });
+        },
       },
     });
-    ed.onChange = () => setDirty(true);
-    sunRef.current = ed;
+    ed.on('change', () => setDirty(true));
+    edRef.current = ed;
     initializedRef.current = true;
 
-    if (!isNew && data?.html) {
-      ed.$.html.insert(data.html, false);
-    }
     return () => {
       try { ed.destroy?.(); } catch { /* ignore */ }
-      sunRef.current = null;
+      edRef.current = null;
       initializedRef.current = false;
     };
   }, [isNew, data, path, setDirty]);
@@ -135,8 +117,10 @@ export default function PageEditor() {
 
   const save = useMutation({
     mutationFn: async () => {
-      const html = sunRef.current?.$.html.get() || '';
-      const body = turndown.turndown(html);
+      // Toast UI stores content as markdown internally regardless of which
+      // edit mode (wysiwyg / markdown) the user is in — `getMarkdown()` is
+      // always the source of truth, no view-toggling required.
+      const body = edRef.current?.getMarkdown?.() ?? '';
       const relPath = [folder, slug].filter(Boolean).join('/');
       const payload = { title, body, status, taxonomies: taxValues };
       if (isNew) {
@@ -172,32 +156,35 @@ export default function PageEditor() {
         {save.error && <Alert tone="error">{save.error.message}</Alert>}
 
         <div className="rounded-lg border border-zinc-200 bg-white">
-          <textarea ref={editorRef} defaultValue="" />
+          <div ref={editorElRef} />
         </div>
       </section>
 
-      <aside className="flex w-72 shrink-0 flex-col gap-3 overflow-y-auto border-l border-zinc-200 bg-white p-4">
-        <Button onClick={() => save.mutate()} disabled={save.isPending}>
-          {save.isPending ? 'Saving…' : 'Save'}
-        </Button>
+      <aside className="flex w-72 shrink-0 flex-col overflow-y-auto border-l border-zinc-200 bg-white">
+        {/* Padded group — every standalone control sits here; the aside itself
+            has no x-padding so groups like <PageFields> can render full-width
+            dividers without negative-margin tricks. */}
+        <div className="flex flex-col gap-3 p-4">
+          <Button onClick={() => save.mutate()} disabled={save.isPending}>
+            {save.isPending ? 'Saving…' : 'Save'}
+          </Button>
 
-        {!isNew && (
-          <a
-            href={publicUrl(path)}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3.5 text-[13px] font-medium text-zinc-900 transition-colors hover:bg-zinc-100"
-          >
-            Preview
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9.5 2.5h4v4" />
-              <path d="M13.5 2.5L7 9" />
-              <path d="M12 9v3.5a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1H7" />
-            </svg>
-          </a>
-        )}
+          {!isNew && (
+            <a
+              href={publicUrl(path)}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3.5 text-[13px] font-medium text-zinc-900 transition-colors hover:bg-zinc-100"
+            >
+              Preview
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9.5 2.5h4v4" />
+                <path d="M13.5 2.5L7 9" />
+                <path d="M12 9v3.5a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1H7" />
+              </svg>
+            </a>
+          )}
 
-        <Card>
           <Field label="Slug">
             {isNew ? (
               <div className="flex h-9 w-full overflow-hidden rounded-md border border-zinc-200 bg-white transition-colors focus-within:border-zinc-900 focus-within:ring-2 focus-within:ring-zinc-900/15">
@@ -228,19 +215,20 @@ export default function PageEditor() {
               <option value="draft">Draft</option>
             </Select>
           </Field>
-        </Card>
 
-        {!isNew && (
-          <Button
-            variant="danger"
-            onClick={() => {
-              if (confirm(`Delete "${title || path}"?`)) del.mutate();
-            }}
-            disabled={del.isPending}
-          >
-            {del.isPending ? 'Deleting…' : 'Delete'}
-          </Button>
-        )}
+          {!isNew && (
+            <Button
+              variant="danger-outline"
+              onClick={() => {
+                if (confirm(`Delete "${title || path}"?`)) del.mutate();
+              }}
+              disabled={del.isPending}
+              className="mt-3"
+            >
+              {del.isPending ? 'Deleting…' : 'Delete'}
+            </Button>
+          )}
+        </div>
 
         <PageFields
           folder={folder}
@@ -250,25 +238,7 @@ export default function PageEditor() {
             setTaxValues(prev => ({ ...prev, [slug]: value }));
           }}
         />
-
       </aside>
     </div>
   );
-}
-
-function makeTurndown() {
-  const td = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced', bulletListMarker: '-' });
-  td.addRule('html-blocks', {
-    filter(node) {
-      const blocks = ['DIV', 'SECTION', 'ARTICLE', 'ASIDE', 'FIGURE', 'FIGCAPTION', 'HEADER', 'FOOTER', 'DETAILS', 'SUMMARY'];
-      return blocks.includes(node.nodeName) && node.hasAttributes();
-    },
-    replacement(_content, node) {
-      const html = node.outerHTML
-        .replace(/\\+_/g, '_')
-        .replace(/\\\\/g, '\\');
-      return '\n\n' + html + '\n\n';
-    },
-  });
-  return td;
 }

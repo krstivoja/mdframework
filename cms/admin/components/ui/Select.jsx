@@ -9,7 +9,7 @@ const Select = forwardRef(function Select(
   ref
 ) {
   return (
-    <span className={`relative inline-block ${className}`}>
+    <span className={`relative block w-full ${className}`}>
       <select
         ref={ref}
         className={`${baseControlCls} appearance-none pr-8`}

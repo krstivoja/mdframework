@@ -1,0 +1,43 @@
+{{ partial('header', { page_title: folder|default('Archive')|capitalize }) }}
+
+<section class="archive-hero wrap-wide">
+  <p class="archive-eyebrow">{{ folder|default('All posts')|upper }}</p>
+  <h1 class="archive-title">{% if folder %}{{ folder|capitalize }}{% else %}Latest writing{% endif %}</h1>
+  {% if folder_description %}<p class="archive-lede">{{ folder_description }}</p>{% endif %}
+</section>
+
+<div class="archive-layout wrap-wide">
+  <main>
+    {% if posts is iterable and posts|length %}
+      {% if page|default(1) == 1 %}
+        {{ partial('card', { post: posts|first, featured: true }) }}
+        <div class="cards-grid">
+          {% for post in posts|slice(1) %}
+            {{ partial('card', { post: post }) }}
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="cards-grid">
+          {% for post in posts %}
+            {{ partial('card', { post: post }) }}
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% else %}
+      <p class="empty">No posts yet.</p>
+    {% endif %}
+
+    {{ partial('pagination', {
+      page: page|default(1),
+      total_pages: total_pages|default(1),
+      base_url: '/' ~ (folder|default(''))
+    }) }}
+  </main>
+
+  {{ partial('sidebar', {
+    recent: recent|default([]),
+    tags:   tags|default([])
+  }) }}
+</div>
+
+{{ partial('footer') }}

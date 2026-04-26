@@ -1,0 +1,48 @@
+{{ partial('header', { page_title: folder|default('Blog')|capitalize }) }}
+
+<section class="archive">
+  <header class="archive-header">
+    <p class="eyebrow">{{ config.site.tagline|default('Everything is personal. Including this blog.')|upper }}</p>
+    <h1 class="display archive-title">{% if folder %}{{ folder|capitalize }}{% else %}{{ config.site.name|default('Train of Thought') }}{% endif %}</h1>
+  </header>
+
+  {{ partial('filter-tabs', { active: folder|default(''), folders: folders|default([]) }) }}
+
+  {% if posts is iterable and posts|length %}
+    {% if page|default(1) == 1 %}
+      {{ partial('featured-card', { post: posts|first }) }}
+
+      <hr class="rule">
+      {{ partial('newsletter') }}
+      <hr class="rule">
+
+      <div class="cards-grid">
+        {% for post in posts|slice(1, 6) %}
+          {{ partial('card', { post: post }) }}
+        {% endfor %}
+      </div>
+
+      {% if posts|length > 7 %}
+        <div class="all-posts">
+          <a class="btn-cta" href="/blog/page/2">All Posts</a>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="cards-grid">
+        {% for post in posts %}
+          {{ partial('card', { post: post }) }}
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% else %}
+    <p class="empty">No posts yet.</p>
+  {% endif %}
+
+  {{ partial('pagination', {
+    page: page|default(1),
+    total_pages: total_pages|default(1),
+    base_url: '/' ~ (folder|default('blog'))
+  }) }}
+</section>
+
+{{ partial('footer') }}

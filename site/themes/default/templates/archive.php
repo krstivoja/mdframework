@@ -1,8 +1,8 @@
 <?php
 $page_title = ucfirst($folder);
-require __DIR__ . '/_header.php';
+partial('header', ['page_title' => $page_title, 'meta' => $intro['meta'] ?? []]);
 ?>
-<h1><?= htmlspecialchars(ucfirst($folder)) ?></h1>
+<h1><?= e(ucfirst($folder)) ?></h1>
 
 <?php if ($intro && !empty($intro['html'])): ?>
     <div><?= $intro['html'] ?></div>
@@ -13,31 +13,21 @@ require __DIR__ . '/_header.php';
 <?php else: ?>
     <?php foreach ($items as $p): ?>
         <article>
-            <h2><a href="<?= htmlspecialchars($p['url']) ?>"><?= htmlspecialchars($p['title']) ?></a></h2>
+            <h2><a href="<?= e($p['url']) ?>"><?= e($p['title']) ?></a></h2>
             <div class="meta">
                 <?php if ($p['date']): ?>
-                    <time><?= htmlspecialchars((string)$p['date']) ?></time>
+                    <time><?= e((string)$p['date']) ?></time>
                 <?php endif; ?>
                 <?php foreach ($p['categories'] as $cat): ?>
-                    <a class="tag" href="/categories/<?= htmlspecialchars(MD\Index::slugify($cat)) ?>"><?= htmlspecialchars($cat) ?></a>
+                    <a class="tag" href="<?= e(slug_url($cat, 'categories')) ?>"><?= e($cat) ?></a>
                 <?php endforeach; ?>
             </div>
             <?php if (!empty($p['meta']['excerpt'])): ?>
-                <p><?= htmlspecialchars($p['meta']['excerpt']) ?></p>
+                <p><?= e($p['meta']['excerpt']) ?></p>
             <?php endif; ?>
         </article>
     <?php endforeach; ?>
 
-    <?php if (($total_pages ?? 1) > 1): ?>
-        <nav class="pagination">
-            <?php if ($page > 1): ?>
-                <a href="<?= $page === 2 ? '/' . htmlspecialchars($folder) : '/' . htmlspecialchars($folder) . '/page/' . ($page - 1) ?>">&larr; Prev</a>
-            <?php endif; ?>
-            <span>Page <?= $page ?> of <?= $total_pages ?></span>
-            <?php if ($page < $total_pages): ?>
-                <a href="/<?= htmlspecialchars($folder) ?>/page/<?= $page + 1 ?>">Next &rarr;</a>
-            <?php endif; ?>
-        </nav>
-    <?php endif; ?>
+    <?= paginate($page, $total_pages ?? 1, '/' . $folder) ?>
 <?php endif; ?>
-<?php require __DIR__ . '/_footer.php'; ?>
+<?php partial('footer'); ?>

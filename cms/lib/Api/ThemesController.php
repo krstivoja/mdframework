@@ -91,5 +91,6 @@ class ThemesController
         $cache = new CacheService($paths, $config['contentDir'], $config['cacheDir']);
         $cache->clearAllHtml();
         $cache->clearIndex();
+        $cache->clearTwig();
     }
 }

@@ -49,6 +49,24 @@ class CacheService
         }
     }
 
+    /**
+     * Recursively delete the Twig compiled-template cache. Called on theme
+     * activation so a swapped theme never serves a compiled template from the
+     * previous theme.
+     */
+    public function clearTwig(): void
+    {
+        $twigDir = $this->cacheDir . '/twig';
+        if (!is_dir($twigDir)) {
+            return;
+        }
+        $rdi = new \RecursiveDirectoryIterator($twigDir, \FilesystemIterator::SKIP_DOTS);
+        $rii = new \RecursiveIteratorIterator($rdi, \RecursiveIteratorIterator::CHILD_FIRST);
+        foreach ($rii as $f) {
+            $f->isDir() ? @rmdir($f->getPathname()) : @unlink($f->getPathname());
+        }
+    }
+
     /** @return array{ok: bool, count?: int, error?: string} */
     public function rebuild(): array
     {
@@ -59,6 +77,7 @@ class CacheService
             }
         }
         $this->clearIndex();
+        $this->clearTwig();
 
         $content = new Content($this->contentDir, $this->cacheDir);
         $index   = new Index($this->contentDir, $this->cacheDir, $content);

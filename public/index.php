@@ -109,11 +109,16 @@ switch ($route['type']) {
             break;
         }
         $items = array_slice($found['posts'], ($page - 1) * $perPage, $perPage);
+        foreach ($items as &$it) {
+            $it = array_merge($it['meta'] ?? [], $it);
+        }
+        unset($it);
         render('taxonomy', [
             'taxonomy'    => $route['taxonomy'],
             'term'        => $route['term'],
             'label'       => $found['label'] ?? $route['term'],
             'items'       => $items,
+            'posts'       => $items, // alias — most theme conventions use `posts`
             'page'        => $page,
             'total_pages' => $pages,
             'per_page'    => $perPage,
@@ -135,9 +140,23 @@ switch ($route['type']) {
             break;
         }
         $items = array_slice($all, ($page - 1) * $perPage, $perPage);
+        // Flatten meta into each post so themes can use `post.image`,
+        // `post.excerpt`, etc. Canonical fields (title, url, date) win over
+        // any same-named meta keys.
+        foreach ($items as &$it) {
+            $it = array_merge($it['meta'] ?? [], $it);
+        }
+        unset($it);
+        // List of every content folder (for filter-tabs and similar).
+        $folders = array_values(array_unique(array_filter(array_map(
+            fn ($p) => $p['folder'] ?? null,
+            $index->get(),
+        ))));
         render('archive', [
             'folder'      => $route['folder'],
             'items'       => $items,
+            'posts'       => $items, // alias — most theme conventions use `posts`
+            'folders'     => $folders,
             'intro'       => $intro,
             'page'        => $page,
             'total_pages' => $pages,

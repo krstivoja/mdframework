@@ -1,21 +1,24 @@
 ---
-title: Welcome
+title: 'Notes on small software'
+description: 'Essays, notes, and how-tos about shipping less and meaning more.'
 loop:
-  folder: blog
-  limit: 5
-  heading: 'Recent posts'
-categories:
-  - design
+  - blog
+  - date
+  - desc
+  - '6'
+  - 'Recent writing'
 ---
 
-This is the homepage. It's a static markdown file at `content/pages/index.md` .
+```
+A small blog about software craft, the discipline of doing less, and the tools I keep coming back to.
+```
 
-The recent posts list below is generated from the loop defined in the front matter.
+I write here every week or two — usually a short note, occasionally a longer essay. Topics drift between writing process, web development, the slow accretion of personal tooling, and whatever I happened to be wrestling with that week.
 
-asdasda
+If you would like new posts in your inbox, the [feed](/feed) is the most reliable way. There is no analytics on this site, no comments, and no signup form. Just words and the occasional picture.sadad
 
-<div class="se-component se-image-container"><figure style=""><img src="/uploads/media/38c41edb8620277167257bfc.jpg" alt="" width="auto" height="auto" data-se-size="auto,auto" data-se-file-name="38c41edb8620277167257bfc.jpg" data-se-file-size="0" style="" data-se-index="0"></figure></div>
+# test
 
-<div class="se-component se-image-container"><figure style="" class=""><img src="/uploads/media/38c41edb8620277167257bfc.jpg" alt="" width="auto" height="auto" data-se-size="auto,auto" data-se-file-name="38c41edb8620277167257bfc.jpg" data-se-file-size="0" style="" data-se-index="1"></figure></div>
-
-marko
+```php
+## wowowasdasd
+```

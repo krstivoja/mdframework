@@ -1,0 +1,12 @@
+{# Category filter tabs across the top of an archive grid.
+   Receives:
+     active   — slug of active filter ('' = "All Posts")
+     folders  — array of folder slugs to expose as filters #}
+<nav class="filter-tabs">
+  <a href="/blog" class="filter-tab {{ active ? '' : 'is-active' }}">All Posts</a>
+  {% for f in folders|default([]) %}
+    <a href="{{ slug_url(f, 'categories') }}" class="filter-tab {{ active == f ? 'is-active' : '' }}">
+      {{ f|capitalize }}
+    </a>
+  {% endfor %}
+</nav>

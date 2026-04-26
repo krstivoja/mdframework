@@ -1,0 +1,14 @@
+{{ partial('header', { page_title: meta.title|default('Post'), meta: meta }) }}
+<article>
+    <h1>{{ meta.title|default('') }}</h1>
+    <div class="meta">
+        {% if meta.date %}
+            <time>{{ meta.date }}</time>
+        {% endif %}
+        {% for cat in meta.categories|default([]) %}
+            <span class="tag">{{ cat }}</span>
+        {% endfor %}
+    </div>
+    <div>{{ html|raw }}</div>
+</article>
+{{ partial('footer') }}
