@@ -1,4 +1,4 @@
-import { NavLink, useLocation, useSearchParams } from 'react-router-dom';
+import { NavLink, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
 import { useAuth } from '../lib/auth.jsx';
@@ -75,12 +75,11 @@ function Divider() {
 }
 
 function FolderLink({ folder }) {
-  const [params] = useSearchParams();
-  const { pathname } = useLocation();
-  const active = pathname === '/' && params.get('folder') === folder;
+  const params = useParams();
+  const active = params.folder === folder;
   return (
     <NavLink
-      to={`/?folder=${encodeURIComponent(folder)}`}
+      to={`/${encodeURIComponent(folder)}`}
       className={`flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium transition-colors ${
         active
           ? 'bg-zinc-900 text-white'

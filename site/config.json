@@ -9,7 +9,8 @@
             "multiple": false,
             "post_types": [
                 "blog",
-                "pages"
+                "pages",
+                "tutorials"
             ],
             "fields": [
                 {

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
 import { cap, encodePath } from '../lib/utils.js';
@@ -8,14 +8,13 @@ import { IconSearch } from '../components/icons.jsx';
 
 // Mirrors dsystem ui_kit `PagesList.jsx` — card-wrapped, header with count
 // pill + filter toolbar, inline Draft badge, Edit + Delete row actions.
+// Mounted both at `/` (All Content) and at `/:folder` (per-folder list).
 export default function PagesList() {
-  const [params] = useSearchParams();
-  const folder = params.get('folder') || '';
+  const { folder = '' } = useParams();
   const qc = useQueryClient();
   const navigate = useNavigate();
 
   const [query, setQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
   const { data, isLoading, error } = useQuery({
@@ -28,11 +27,9 @@ export default function PagesList() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['pages'] }),
   });
 
-  const folders = data?.folders || [];
   const filtered = useMemo(() => {
     let list = data?.pages || [];
     if (folder)       list = list.filter(p => (p.folder || '') === folder);
-    if (typeFilter)   list = list.filter(p => (p.folder || '') === typeFilter);
     if (statusFilter) list = list.filter(p => (statusFilter === 'draft') === !!p.draft);
     if (query.trim()) {
       const q = query.toLowerCase();
@@ -42,7 +39,7 @@ export default function PagesList() {
       );
     }
     return list;
-  }, [data, folder, typeFilter, statusFilter, query]);
+  }, [data, folder, statusFilter, query]);
 
   if (isLoading) return <div className="text-sm text-zinc-500">Loading…</div>;
   if (error) return <div className="text-sm text-red-600">Failed to load: {error.message}</div>;
@@ -72,14 +69,6 @@ export default function PagesList() {
             />
           </div>
           <Select
-            className="w-32"
-            value={typeFilter}
-            onChange={e => setTypeFilter(e.target.value)}
-          >
-            <option value="">All types</option>
-            {folders.map(f => <option key={f} value={f}>{cap(f)}</option>)}
-          </Select>
-          <Select
             className="w-36"
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
@@ -88,7 +77,11 @@ export default function PagesList() {
             <option value="live">Live</option>
             <option value="draft">Draft</option>
           </Select>
-          <Button onClick={() => navigate('/edit')}>New page</Button>
+          {folder && (
+            <Button onClick={() => navigate(`/new/${encodeURIComponent(folder)}`)}>
+              New page
+            </Button>
+          )}
         </div>
       </header>
 
@@ -97,7 +90,11 @@ export default function PagesList() {
           <tr className="border-b border-zinc-100 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-zinc-500">
             <th className="px-6 py-3">Title</th>
             <th className="px-6 py-3">Path</th>
-            <th className="px-6 py-3">Type</th>
+            {folder ? (
+              <th className="px-6 py-3">Status</th>
+            ) : (
+              <th className="px-6 py-3">Type</th>
+            )}
             <th className="w-40 px-6 py-3"></th>
           </tr>
         </thead>
@@ -112,18 +109,21 @@ export default function PagesList() {
           {filtered.map(p => (
             <tr key={p.path} className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50">
               <td className="px-6 py-4">
-                <span className="inline-flex items-center gap-2">
-                  <Link to={`/edit/${p.path}`} className="font-semibold text-zinc-900 hover:underline">
-                    {p.title || '(untitled)'}
-                  </Link>
-                  {p.draft && <Badge tone="draft">Draft</Badge>}
-                </span>
+                <Link to={`/${p.path}`} className="font-semibold text-zinc-900 hover:underline">
+                  {p.title || '(untitled)'}
+                </Link>
               </td>
               <td className="px-6 py-4 font-mono text-[12px] text-zinc-500">{p.path}</td>
-              <td className="px-6 py-4 text-zinc-500">{p.folder || '—'}</td>
+              {folder ? (
+                <td className="px-6 py-4">
+                  <Badge tone={p.draft ? 'draft' : 'live'}>{p.draft ? 'Draft' : 'Live'}</Badge>
+                </td>
+              ) : (
+                <td className="px-6 py-4 text-zinc-500">{p.folder || '—'}</td>
+              )}
               <td className="px-6 py-4">
                 <div className="flex justify-end gap-2">
-                  <Button variant="secondary" size="sm" onClick={() => navigate(`/edit/${p.path}`)}>
+                  <Button variant="secondary" size="sm" onClick={() => navigate(`/${p.path}`)}>
                     Edit
                   </Button>
                   <Button

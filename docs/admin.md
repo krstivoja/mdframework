@@ -27,8 +27,11 @@ ADMIN_PASS_HASH=$2y$12$...
 
 ## Admin features
 
+- **Three-column layout** — primary nav (Folders / Media / Settings / Backup) on the left, a sibling-list column in the middle when a folder is open, and the active screen on the right
 - **Pages list** — all content files, with live/draft status and folder filter
 - **Editor** — SunEditor v3 (WYSIWYG, with code/markdown view); HTML is converted to Markdown on save via Turndown
+- **Sibling switcher** — when editing, the middle column lists every page in the same folder with a search filter, so you can hop between files without going back to the list. Unsaved-change prompt appears before switching.
+- **Editor sidebar** — Save / Preview / Slug / Status / Delete live in a right sidebar; the centre pane is title + SunEditor only. Custom fields defined in **Settings → Manage fields** render below Status when their `Applies to folders` matches the page's folder.
 - **Image uploads** — toolbar button; files saved to `public/uploads/`
 - **Create / edit / delete** any `.md` file
 - **Media library** — shared `public/uploads/media/` pool with previews, alt/caption sidecars
@@ -56,6 +59,18 @@ The PHP layer's only jobs are:
 3. Manage the session cookie and CSRF token
 
 There are no PHP-rendered admin templates apart from `setup-required.php` (shown only when no admin password is configured).
+
+### Admin URL scheme
+
+| URL | Screen |
+|-----|--------|
+| `/admin/` | All Content table |
+| `/admin/:folder` | Folder index — table view, no middle column |
+| `/admin/:folder/:slug` | Editor for an item — middle column lists siblings, highlights the active one |
+| `/admin/new/:folder` | New-item editor for that folder |
+| `/admin/media`, `/admin/backup`, `/admin/settings` | Standalone screens (no middle column) |
+
+`media`, `backup`, `settings`, `new`, and `login` are reserved folder names — don't create content folders with those names.
 
 ## JSON API
 

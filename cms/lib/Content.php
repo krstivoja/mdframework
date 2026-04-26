@@ -16,8 +16,13 @@ class Content
     {
         $this->contentDir = rtrim($contentDir, '/');
         $this->cacheDir   = rtrim($cacheDir, '/');
+        // 'html_input' => 'allow' lets HTML blocks (image figures from the
+        // admin editor, embedded snippets) round-trip cleanly. Without this,
+        // <div>…</div> blocks get escaped to text on every reload and Turndown
+        // then escapes any underscores in them on the next save — accumulating
+        // backslashes (e.g. class="\\\_se\\\_…") with each round-trip.
         $this->md         = new CommonMarkConverter([
-            'html_input'         => 'escape',
+            'html_input'         => 'allow',
             'allow_unsafe_links' => false,
         ]);
     }
