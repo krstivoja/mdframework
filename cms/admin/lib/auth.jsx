@@ -12,6 +12,7 @@ export function AuthProvider({ children }) {
       setCsrf(me.csrf);
       setState({ status: 'ready', user: me.user });
     } catch {
+      setCsrf('');
       setState({ status: 'ready', user: null });
     }
   }, []);

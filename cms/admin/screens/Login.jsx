@@ -1,16 +1,20 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth.jsx';
 import { Alert, Button, Field, Input } from '../components/ui/index.js';
 
 export default function Login() {
   const { user, login } = useAuth();
+  const location = useLocation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  if (user) return <Navigate to="/" replace />;
+  const from = location.state?.from;
+  const redirectTo = from ? `${from.pathname || '/'}${from.search || ''}${from.hash || ''}` : '/';
+
+  if (user) return <Navigate to={redirectTo} replace />;
 
   async function onSubmit(e) {
     e.preventDefault();

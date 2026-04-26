@@ -37,7 +37,7 @@ async function request(method, path, { body, signal } = {}) {
   try { data = text ? JSON.parse(text) : null; } catch { /* non-JSON */ }
 
   if (!res.ok || (data && data.ok === false)) {
-    const msg = (data && data.error) || `${res.status} ${res.statusText}`;
+    const msg = (data && data.error) || text || `${res.status} ${res.statusText}`;
     throw new ApiError(msg, res.status, data);
   }
   return data;

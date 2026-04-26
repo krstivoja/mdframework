@@ -6,17 +6,21 @@ import Protected from './components/Protected.jsx';
 import Shell from './components/Shell.jsx';
 import NotFound from './components/NotFound.jsx';
 
+// Eager: critical-path screens. Login is the entry for unauthenticated users;
+// PagesList is the landing route once signed in.
 import Login from './screens/Login.jsx';
 import PagesList from './screens/PagesList.jsx';
-import Media from './screens/Media.jsx';
-import Backup from './screens/Backup.jsx';
-import Settings from './screens/Settings/index.jsx';
-import SiteSettings from './screens/Settings/SiteSettings.jsx';
-import Fields from './screens/Settings/Fields/index.jsx';
-import Themes from './screens/Settings/Themes.jsx';
 
-// Editor pulls in SunEditor (~900KB) — load on demand.
-const PageEditor = lazy(() => import('./screens/PageEditor.jsx'));
+// Lazy: each screen pulls in its own deps (SunEditor, Turndown, the taxonomy
+// builder, the backup zip flow, etc.). Splitting one chunk per screen keeps
+// the initial bundle small and warms the cache as the user clicks around.
+const PageEditor   = lazy(() => import('./screens/PageEditor.jsx'));
+const Media        = lazy(() => import('./screens/Media.jsx'));
+const Backup       = lazy(() => import('./screens/Backup.jsx'));
+const Settings     = lazy(() => import('./screens/Settings/index.jsx'));
+const SiteSettings = lazy(() => import('./screens/Settings/SiteSettings.jsx'));
+const Fields       = lazy(() => import('./screens/Settings/Fields/index.jsx'));
+const Themes       = lazy(() => import('./screens/Settings/Themes.jsx'));
 
 export default function App() {
   const { status, user } = useAuth();
@@ -34,16 +38,16 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route element={<Protected user={user} />}>
         <Route element={<Shell />}>
-          <Route path="/" element={<PagesList />} />
-          <Route path="/edit" element={<LazyEditor />} />
-          <Route path="/edit/*" element={<LazyEditor />} />
-          <Route path="/media" element={<Media />} />
-          <Route path="/settings" element={<Settings />}>
-            <Route index element={<SiteSettings />} />
-            <Route path="fields" element={<Fields />} />
-            <Route path="themes" element={<Themes />} />
+          <Route path="/"          element={<PagesList />} />
+          <Route path="/edit"      element={<Lazy><PageEditor /></Lazy>} />
+          <Route path="/edit/*"    element={<Lazy><PageEditor /></Lazy>} />
+          <Route path="/media"     element={<Lazy><Media /></Lazy>} />
+          <Route path="/backup"    element={<Lazy><Backup /></Lazy>} />
+          <Route path="/settings"  element={<Lazy><Settings /></Lazy>}>
+            <Route index           element={<Lazy><SiteSettings /></Lazy>} />
+            <Route path="fields"   element={<Lazy><Fields /></Lazy>} />
+            <Route path="themes"   element={<Lazy><Themes /></Lazy>} />
           </Route>
-          <Route path="/backup" element={<Backup />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>
@@ -51,10 +55,10 @@ export default function App() {
   );
 }
 
-function LazyEditor() {
+function Lazy({ children }) {
   return (
-    <Suspense fallback={<div className="text-sm text-zinc-500">Loading editor…</div>}>
-      <PageEditor />
+    <Suspense fallback={<div className="text-sm text-zinc-500">Loading…</div>}>
+      {children}
     </Suspense>
   );
 }
