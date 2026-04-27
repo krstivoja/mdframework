@@ -1,0 +1,79 @@
+/* Prive — quiet monochrome editorial */
+@import url('https://rsms.me/inter/inter.css');
+
+*, *::before, *::after { box-sizing: border-box; }
+body, h1, h2, h3, p, ul, ol, figure, blockquote { margin: 0; }
+ul, ol { padding: 0; }
+img, video { max-width: 100%; display: block; }
+
+:root {
+  --fg: #0e0e0e;
+  --bg: #fbfaf7;
+  --muted: #6f6f6f;
+  --rule: #e3e1dc;
+  --max: 680px;
+}
+
+html { font-family: 'Inter', system-ui, sans-serif; color: var(--fg); background: var(--bg); -webkit-font-smoothing: antialiased; }
+body { font-size: 16px; line-height: 1.65; padding: 0; }
+
+.container { max-width: var(--max); margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+
+/* --- header / nav --- */
+.site-header { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 5rem; }
+.site-header .brand { font-weight: 600; font-size: 1rem; letter-spacing: -0.01em; text-decoration: none; color: var(--fg); }
+.site-nav ul { list-style: none; display: flex; gap: 1.75rem; }
+.site-nav a { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+.site-nav a:hover { color: var(--fg); }
+
+/* --- archive --- */
+.archive-intro { margin-bottom: 4rem; }
+.archive-intro h1 { font-size: 1.625rem; font-weight: 600; letter-spacing: -0.02em; }
+.archive-intro p { color: var(--muted); margin-top: 0.75rem; max-width: 30em; }
+
+.archive-list { list-style: none; }
+.archive-row { display: grid; grid-template-columns: 6rem 1fr; gap: 1.5rem; padding: 1.5rem 0; border-top: 1px solid var(--rule); }
+.archive-row:last-child { border-bottom: 1px solid var(--rule); }
+.archive-row time { color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; padding-top: 0.2rem; }
+.archive-row h2 { font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; }
+.archive-row h2 a { color: var(--fg); text-decoration: none; }
+.archive-row h2 a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.archive-row p { color: var(--muted); font-size: 0.95rem; margin-top: 0.4rem; }
+
+/* --- single page / post --- */
+.page-header { margin-bottom: 3rem; }
+.page-header .eyebrow { color: var(--muted); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1rem; }
+.page-header h1, h1 { font-size: 2.25rem; font-weight: 600; letter-spacing: -0.025em; line-height: 1.15; }
+.page-header .lede { color: var(--muted); font-size: 1.125rem; margin-top: 1rem; max-width: 32em; }
+
+.content { font-size: 1.0625rem; }
+.content h2 { font-size: 1.375rem; margin-top: 2.5rem; font-weight: 600; letter-spacing: -0.015em; }
+.content h3 { font-size: 1.125rem; margin-top: 2rem; font-weight: 600; }
+.content p, .content ul, .content ol { margin-block: 1.1rem; }
+.content ul, .content ol { padding-left: 1.25rem; }
+.content blockquote { border-left: 2px solid var(--fg); padding-left: 1rem; color: var(--muted); font-style: italic; margin: 1.5rem 0; }
+.content a { color: var(--fg); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--rule); }
+.content a:hover { text-decoration-color: var(--fg); }
+.content img { margin-block: 1.5rem; }
+.content code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.9em; background: rgba(0,0,0,0.04); padding: 0.1em 0.35em; border-radius: 3px; }
+.content pre { background: #0e0e0e; color: #fbfaf7; padding: 1.25rem; border-radius: 6px; overflow-x: auto; font-size: 0.9rem; }
+.content pre code { background: none; color: inherit; padding: 0; }
+.content hr { border: 0; border-top: 1px solid var(--rule); margin-block: 2.5rem; }
+
+/* --- footer / pagination --- */
+.site-footer { margin-top: 6rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); color: var(--muted); font-size: 0.85rem; display: flex; justify-content: space-between; }
+.pagination { display: flex; gap: 1rem; align-items: center; margin-top: 3rem; font-size: 0.9rem; color: var(--muted); }
+.pagination a { color: var(--fg); text-decoration: none; }
+.pagination a:hover { text-decoration: underline; }
+
+/* --- editorial-template overrides (we reuse those template files but ignore most decorative classes) --- */
+.featured-card, .card { display: block; padding: 1.5rem 0; border-top: 1px solid var(--rule); text-decoration: none; color: var(--fg); }
+.featured-thumb, .card-thumb, .featured-badge, .card-meta-sub, .filter-tabs, .newsletter, .rule, .cards-grid, .all-posts { display: none !important; }
+.featured-body, .card-body { padding: 0; }
+.featured-title, .card-title { font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.featured-title a, .card-title a { color: var(--fg); text-decoration: none; }
+.featured-meta, .card-meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.4rem; }
+.featured-excerpt, .card-excerpt { color: var(--muted); margin-top: 0.4rem; font-size: 0.95rem; }
+.archive-title, .display { font-size: 1.625rem; font-weight: 600; letter-spacing: -0.02em; }
+.eyebrow { color: var(--muted); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; }
+.archive-header { margin-bottom: 3rem; }

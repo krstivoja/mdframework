@@ -1,0 +1,20 @@
+{# Big featured post above the recent grid. Receives:
+     post — page record #}
+<a class="featured-card" href="{{ post.url }}">
+  <div class="featured-thumb">
+    <span class="featured-badge">Featured Post</span>
+    {% if post.image or post.cover %}
+      <img src="{{ post.image|default(post.cover) }}" alt="{{ post.title }}">
+    {% else %}
+      <span class="featured-thumb-placeholder">{{ post.title|slice(0,1)|upper }}</span>
+    {% endif %}
+  </div>
+  <div class="featured-body">
+    <div class="featured-meta">
+      {% if post.date %}<time>{{ post.date|date('M j') }}</time>{% endif %}
+      {% if post.reading_time %}<span class="dot">·</span><span>{{ post.reading_time }} min read</span>{% endif %}
+    </div>
+    <h2 class="featured-title">{{ post.title }}</h2>
+    {% if post.excerpt %}<p class="featured-excerpt">{{ post.excerpt }}</p>{% endif %}
+  </div>
+</a>

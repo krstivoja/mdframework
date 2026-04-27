@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ page_title|default(config.site.name|default('Site')) }}{% if page_title %} — {{ config.site.name|default('') }}{% endif %}</title>
+  {% if meta.description %}<meta name="description" content="{{ meta.description }}">{% endif %}
+  {% if meta.canonical %}<link rel="canonical" href="{{ meta.canonical }}">{% endif %}
+  <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+  <link rel="alternate" type="application/atom+xml" title="{{ config.site.name|default('Site') }}" href="/feed">
+</head>
+<body>
+  <div class="container">
+    <header class="site-header">
+      <nav class="site-nav">
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/blog">Blog</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>

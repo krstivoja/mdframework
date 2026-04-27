@@ -1,0 +1,33 @@
+{{ partial('header', { page_title: meta.title|default('Post'), meta: meta }) }}
+
+<article class="post">
+  <header class="post-header">
+    <div class="post-byline">
+      <span class="avatar">{{ (meta.author|default('A'))|slice(0,1)|upper }}</span>
+      <span>{{ meta.author|default('Admin') }}</span>
+      {% if meta.date %}<span class="dot">·</span><time>{{ meta.date|date('M j') }}</time>{% endif %}
+      {% if meta.reading_time %}<span class="dot">·</span><span>{{ meta.reading_time }} min read</span>{% endif %}
+    </div>
+
+    <h1 class="display">{{ meta.title|default('') }}</h1>
+    {% if meta.subtitle %}<p class="post-subtitle">{{ meta.subtitle }}</p>{% endif %}
+  </header>
+
+  {% if meta.image or meta.cover %}
+    <figure class="post-cover">
+      <img src="{{ meta.image|default(meta.cover) }}" alt="{{ meta.title|default('') }}">
+    </figure>
+  {% endif %}
+
+  <div class="content">{{ html|raw }}</div>
+
+  {% if meta.tags|default([])|length %}
+    <footer class="post-tags">
+      {% for t in meta.tags %}
+        <a class="tag" href="{{ slug_url(t, 'tags') }}">#{{ t }}</a>
+      {% endfor %}
+    </footer>
+  {% endif %}
+</article>
+
+{{ partial('footer') }}

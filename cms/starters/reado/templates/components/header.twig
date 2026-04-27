@@ -1,0 +1,23 @@
+{# Header — quote-glyph logo, centered nav, social icons on the right.
+   Receives:
+     page_title — string
+     meta       — page front-matter (optional)  #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ page_title|default('') }}{% if config.site.name %} — {{ config.site.name }}{% endif %}</title>
+  {% if meta.description %}<meta name="description" content="{{ meta.description }}">{% endif %}
+  <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+  <link rel="alternate" type="application/atom+xml" title="{{ config.site.name|default('') }}" href="/feed">
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="/" aria-label="Home"><span class="brand-glyph">&#8220;</span></a>
+      <nav class="site-nav">{{ partial('nav') }}</nav>
+      <div class="site-social">{{ partial('social') }}</div>
+    </div>
+  </header>
+  <main>

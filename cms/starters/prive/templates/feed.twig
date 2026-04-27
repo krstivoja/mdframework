@@ -1,0 +1,19 @@
+{% spaceless %}
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>{{ config.site.name|default('') }}</title>
+  <link href="{{ feed_url }}" rel="self"/>
+  <link href="{{ site_url }}"/>
+  <updated>{{ updated }}</updated>
+  <id>{{ site_url }}</id>
+  {% for post in posts %}
+    <entry>
+      <title>{{ post.title }}</title>
+      <link href="{{ site_url ~ post.url }}"/>
+      <id>{{ site_url ~ post.url }}</id>
+      <updated>{{ post.date|default(updated) }}</updated>
+      {% if post.excerpt %}<summary>{{ post.excerpt }}</summary>{% endif %}
+    </entry>
+  {% endfor %}
+</feed>
+{% endspaceless %}

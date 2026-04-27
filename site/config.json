@@ -56,7 +56,7 @@
             ]
         }
     },
-    "active_theme": "editorial",
+    "active_theme": "blank",
     "uploads": {
         "max_mb": 5,
         "max_width": 0,

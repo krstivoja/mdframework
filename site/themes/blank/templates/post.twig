@@ -1,0 +1,9 @@
+{{ partial('header', { page_title: meta.title|default('Post'), meta: meta }) }}
+
+<article>
+  <h1>{{ meta.title|default('') }}</h1>
+  {% if meta.date %}<p class="archive-meta"><time>{{ meta.date }}</time></p>{% endif %}
+  {{ html|raw }}
+</article>
+
+{{ partial('footer') }}
