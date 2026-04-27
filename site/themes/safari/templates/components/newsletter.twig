@@ -1,0 +1,17 @@
+{# Inline newsletter row — split layout: copy left, form right. #}
+<section class="newsletter">
+  <div class="newsletter-copy">
+    <p>{{ pitch|default('Get notified when new posts go live. Thoughtful writing and fresh ideas, delivered straight to your inbox.') }}</p>
+  </div>
+  <form class="newsletter-form" action="#" method="post">
+    <label class="newsletter-field">
+      <span>Email <em>*</em></span>
+      <input type="email" name="email" required>
+    </label>
+    <label class="newsletter-consent">
+      <input type="checkbox" name="consent" required>
+      <span>Yes, subscribe me to your newsletter. <em>*</em></span>
+    </label>
+    <button type="submit" class="btn-cta">Subscribe</button>
+  </form>
+</section>

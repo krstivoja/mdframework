@@ -1,0 +1,13 @@
+{{ partial('header', { page_title: meta.title|default('Page'), meta: meta }) }}
+
+<article class="page">
+  <header class="page-header">
+    {% if meta.eyebrow %}<p class="eyebrow">{{ meta.eyebrow|upper }}</p>{% endif %}
+    <h1 class="display">{{ meta.title|default('') }}</h1>
+    {% if meta.lede %}<p class="lede">{{ meta.lede }}</p>{% endif %}
+  </header>
+
+  <div class="content">{{ html|raw }}</div>
+</article>
+
+{{ partial('footer') }}

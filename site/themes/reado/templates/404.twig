@@ -1,0 +1,8 @@
+{{ partial('header', { page_title: 'Not found' }) }}
+<section class="not-found">
+  <p class="eyebrow">404</p>
+  <h1 class="display">This thought hasn&rsquo;t been written yet.</h1>
+  <p>Nothing here at <code>{{ url|default('') }}</code>.</p>
+  <a class="btn-cta" href="/">Back home</a>
+</section>
+{{ partial('footer') }}

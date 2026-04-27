@@ -1,17 +1,13 @@
 {
     "site": {
-        "name": "My Site Marko",
+        "name": "My Site",
         "base": "/"
     },
     "taxonomies": {
         "categories": {
             "label": "Categories",
             "multiple": false,
-            "post_types": [
-                "blog",
-                "pages",
-                "tutorials"
-            ],
+            "post_types": ["blog", "tutorials"],
             "fields": [
                 {
                     "name": "image",
@@ -38,10 +34,7 @@
         "tags": {
             "label": "Tags",
             "multiple": true,
-            "post_types": [
-                "blog",
-                "tutorials"
-            ],
+            "post_types": ["blog", "tutorials"],
             "fields": [
                 {
                     "name": "terms",
@@ -55,11 +48,5 @@
                 }
             ]
         }
-    },
-    "active_theme": "safari",
-    "uploads": {
-        "max_mb": 5,
-        "max_width": 0,
-        "max_height": 0
     }
 }

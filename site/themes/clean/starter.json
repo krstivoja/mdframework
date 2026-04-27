@@ -1,0 +1,5 @@
+{
+  "name": "Clean",
+  "description": "A minimal Twig-based starter theme organized around a components/ folder. Demonstrates the convention: top-level templates compose reusable parts (header, footer, nav, sidebar, pagination, card) via {{ partial('name') }} or {% include 'components/...' %}.",
+  "version": "0.1.0"
+}
