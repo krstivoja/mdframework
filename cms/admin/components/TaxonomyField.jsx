@@ -9,11 +9,12 @@ export default function TaxonomyField({ slug, tax, value, onChange }) {
   const arrayField = (tax.fields || []).find(f => f.type === 'array');
   const choices    = arrayField?.items  || [];
   const widget     = arrayField?.widget || 'select';
+  const multiple   = !!arrayField?.multiple;
   const hint       = tax.hint || tax.description || '';
 
   return (
     <FieldShell label={label} slug={slug} hint={hint}>
-      {renderControl({ tax, value, choices, widget, onChange })}
+      {renderControl({ multiple, value, choices, widget, onChange })}
     </FieldShell>
   );
 }
@@ -42,9 +43,9 @@ function FieldShell({ label, slug, hint, children }) {
   );
 }
 
-function renderControl({ tax, value, choices, widget, onChange }) {
+function renderControl({ multiple, value, choices, widget, onChange }) {
   // Multi-value
-  if (tax.multiple) {
+  if (multiple) {
     const arr = Array.isArray(value) ? value : value ? [String(value)] : [];
 
     if (choices.length && widget === 'checkbox') {

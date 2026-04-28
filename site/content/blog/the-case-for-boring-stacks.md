@@ -1,18 +1,22 @@
 ---
 title: 'The case for boring stacks'
-date: 2026-04-22
+date: '2026-04-22'
 author: 'Marko Krstić'
-reading_time: 6
+reading_time: '6'
 excerpt: 'The most exciting tooling decision is usually the one nobody at the table wants to bring up. Here is why I keep choosing it anyway.'
 image: /uploads/media/boring-stacks.jpg
 cover_caption: 'Photo by Mike Petrucci on Unsplash.'
 categories:
-  - Essays
+  - design
 tags:
   - workflow
   - simplicity
   - tooling
+  - gsap
+categoriess: tutorial
 ---
+
+### Marko
 
 There is a particular kind of meeting I have learned to recognise in the first thirty seconds. Someone draws a box on the whiteboard, labels it with the project name, and immediately starts proposing technologies. Within five minutes the box has sprouted four queues, two databases, an event bus, and a cache. The work itself — what the project actually has to do — has not been mentioned once.
 

@@ -6,11 +6,9 @@
     "taxonomies": {
         "categories": {
             "label": "Categories",
-            "multiple": false,
             "post_types": [
                 "blog",
-                "pages",
-                "tutorials"
+                "pages"
             ],
             "fields": [
                 {
@@ -27,6 +25,7 @@
                     "name": "terms",
                     "type": "array",
                     "widget": "select",
+                    "multiple": true,
                     "items": [
                         "tech",
                         "design",
@@ -37,7 +36,6 @@
         },
         "tags": {
             "label": "Tags",
-            "multiple": true,
             "post_types": [
                 "blog",
                 "tutorials"
@@ -47,6 +45,7 @@
                     "name": "terms",
                     "type": "array",
                     "widget": "checkbox",
+                    "multiple": true,
                     "items": [
                         "gsap",
                         "php",
@@ -56,7 +55,7 @@
             ]
         }
     },
-    "active_theme": "safari",
+    "active_theme": "blank",
     "uploads": {
         "max_mb": 5,
         "max_width": 0,

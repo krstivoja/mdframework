@@ -1,4 +1,5 @@
-import { Button, Checkbox, Input } from '../../../components/ui/index.js';
+import { Button, Input } from '../../../components/ui/index.js';
+import { IconTrash } from '../../../components/icons.jsx';
 import FieldRow from './FieldRow.jsx';
 
 export default function TaxonomyRow({ slug, tax, folders, onUpdate, onRename, onRemove }) {
@@ -64,15 +65,9 @@ export default function TaxonomyRow({ slug, tax, folders, onUpdate, onRename, on
             <p className="mt-1 text-xs text-zinc-500">Empty = applies to all folders.</p>
           </div>
 
-          <Checkbox
-            label="Allow multiple values"
-            checked={!!tax.multiple}
-            onChange={e => onUpdate({ multiple: e.target.checked })}
-          />
-
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-medium text-zinc-600">Fields</div>
+              <div className="text-xs font-medium text-zinc-600">Sub fields</div>
               <Button variant="link" size="sm" onClick={addField}>+ Add field</Button>
             </div>
             {(tax.fields || []).length === 0 && (
@@ -89,7 +84,15 @@ export default function TaxonomyRow({ slug, tax, folders, onUpdate, onRename, on
           </div>
         </div>
 
-        <Button variant="link-danger" onClick={onRemove}>Remove</Button>
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label="Remove taxonomy"
+          title="Remove"
+          className="mt-[18px] inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 [&>svg]:h-3.5 [&>svg]:w-3.5"
+        >
+          {IconTrash}
+        </button>
       </div>
     </div>
   );

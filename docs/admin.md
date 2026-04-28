@@ -31,7 +31,7 @@ ADMIN_PASS_HASH=$2y$12$...
 - **Pages list** — all content files, with live/draft status and folder filter
 - **Editor** — Toast UI Editor v3 with WYSIWYG mode and a markdown source mode (toggle at the bottom). Storage is markdown directly — no HTML→Markdown conversion step, so what you see in source view is exactly what's written to the `.md` file.
 - **Sibling switcher** — when editing, the middle column lists every page in the same folder with a search filter, so you can hop between files without going back to the list. Unsaved-change prompt appears before switching.
-- **Editor sidebar** — Save / Preview / Slug / Status / Delete live in a right sidebar; the centre pane is title + SunEditor only. Custom fields defined in **Settings → Manage fields** render below Status when their `Applies to folders` matches the page's folder.
+- **Editor sidebar** — Save / Preview / Slug / Status / Delete live in a right sidebar; the centre pane is title + SunEditor only. Custom fields defined in **Settings → Manage fields** render below Status when their `Applies to folders` matches the page's folder. The **Allow multiple values** toggle is per-field — it appears next to **Choices (one per line)** on each List-of-choices field, so a single taxonomy can mix single-value fields (image, description) with a multi-select term list.
 - **Image uploads** — toolbar button; files saved to `public/uploads/`
 - **Create / edit / delete** any `.md` file
 - **Media library** — shared `public/uploads/media/` pool with previews, alt/caption sidecars

@@ -49,3 +49,12 @@
 html, body, #root {
   height: 100%;
 }
+
+/* Tailwind v4 dropped the default cursor on `<button>`. Restore it so every
+   non-disabled button in the admin shows a pointer without per-component opt-in. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+}

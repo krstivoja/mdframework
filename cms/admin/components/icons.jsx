@@ -23,6 +23,16 @@ export const IconPlus = (
   </svg>
 );
 
+export const IconTrash = (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash2-icon lucide-trash-2">
+    <path d="M10 11v6"/>
+    <path d="M14 11v6"/>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+    <path d="M3 6h18"/>
+    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+  </svg>
+);
+
 export const IconImage = (
   <svg {...stroke}>
     <rect x="2" y="2" width="12" height="12" rx="1.5" />
@@ -47,9 +57,8 @@ export const IconBackup = (
 );
 
 export const IconCog = (
-  <svg {...stroke}>
-    <circle cx="8" cy="8" r="2" />
-    <path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.5 3.5l1.4 1.4M11.1 11.1l1.4 1.4M3.5 12.5l1.4-1.4M11.1 4.9l1.4-1.4" />
+  <svg {...stroke} viewBox="0 0 24 24">
+    <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/>
   </svg>
 );
 
@@ -67,3 +76,4 @@ export const IconSearch = (
     <path d="M10.5 10.5L14 14" />
   </svg>
 );
+

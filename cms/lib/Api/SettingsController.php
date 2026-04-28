@@ -37,6 +37,12 @@ class SettingsController
             $slug = preg_replace('/[^a-z0-9_-]/', '', strtolower((string)$slug));
             if (!$slug) continue;
 
+            // One-shot migration: legacy taxonomy-level `multiple` is folded
+            // into the first array-type field so existing config.json upgrades
+            // silently on first save.
+            $legacyMultiple = !empty($tax['multiple']);
+            $folded = false;
+
             $fields = [];
             foreach ((array)($tax['fields'] ?? []) as $f) {
                 $name = preg_replace('/[^a-z0-9_-]/', '', strtolower((string)($f['name'] ?? '')));
@@ -48,7 +54,9 @@ class SettingsController
                         fn ($v) => trim((string)$v),
                         (array)($f['items'] ?? [])
                     ), fn ($v) => $v !== ''));
-                    $fields[] = ['name' => $name, 'type' => 'array', 'widget' => $widget, 'items' => $items];
+                    $multiple = !empty($f['multiple']) || (!$folded && $legacyMultiple);
+                    $folded   = $folded || $legacyMultiple;
+                    $fields[] = ['name' => $name, 'type' => 'array', 'widget' => $widget, 'multiple' => $multiple, 'items' => $items];
                 } else {
                     $fields[] = ['name' => $name, 'type' => 'single', 'value' => trim((string)($f['value'] ?? ''))];
                 }
@@ -61,7 +69,6 @@ class SettingsController
 
             $taxonomies[$slug] = [
                 'label'      => trim((string)($tax['label'] ?? $slug)),
-                'multiple'   => !empty($tax['multiple']),
                 'post_types' => $postTypes,
                 'fields'     => $fields,
             ];
