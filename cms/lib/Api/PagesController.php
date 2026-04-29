@@ -143,6 +143,17 @@ class PagesController
             unset($meta['draft']);
         }
 
+        // Per-post template override — empty string clears the key so the
+        // public renderer falls back to the route-type default (post / page).
+        if (array_key_exists('template', $input)) {
+            $tpl = preg_replace('/[^a-z0-9_-]/', '', strtolower(trim((string)$input['template'])));
+            if ($tpl !== '') {
+                $meta['template'] = $tpl;
+            } else {
+                unset($meta['template']);
+            }
+        }
+
         // Taxonomies — pass-through, repo persists everything in $meta.
         if (is_array($input['taxonomies'] ?? null)) {
             foreach ($input['taxonomies'] as $taxSlug => $value) {

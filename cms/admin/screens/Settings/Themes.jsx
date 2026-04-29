@@ -23,6 +23,12 @@ export default function Themes() {
     onError: (e) => setError(e.message),
   });
 
+  const remove = useMutation({
+    mutationFn: (slug) => api.post('/themes/delete', { slug }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['themes'] }),
+    onError: (e) => setError(e.message),
+  });
+
   if (isLoading) return <div className="text-sm text-zinc-500">Loading…</div>;
 
   return (
@@ -35,14 +41,30 @@ export default function Themes() {
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {(data?.themes || []).map(t => (
             <div key={t.slug} className="rounded-md border border-zinc-200 p-3">
-              <div className="flex items-center justify-between">
-                <div className="font-medium">{t.name || t.slug}</div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="font-medium">{t.name || t.slug}</div>
+                  <EngineBadge engine={t.engine} />
+                </div>
                 {data.active === t.slug ? (
                   <Badge tone="active">Active</Badge>
                 ) : (
-                  <Button variant="link" size="sm" onClick={() => activate.mutate(t.slug)}>
-                    Activate
-                  </Button>
+                  <div className="flex items-center gap-3">
+                    <Button variant="link" size="sm" onClick={() => activate.mutate(t.slug)}>
+                      Activate
+                    </Button>
+                    <Button
+                      variant="link-danger"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm(`Delete the "${t.name || t.slug}" theme? This removes the theme files from disk.`)) {
+                          remove.mutate(t.slug);
+                        }
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 )}
               </div>
               {t.description && <p className="mt-1 text-xs text-zinc-500">{t.description}</p>}
@@ -55,7 +77,10 @@ export default function Themes() {
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {(data?.starters || []).map(s => (
             <div key={s.slug} className="rounded-md border border-zinc-200 p-3">
-              <div className="font-medium">{s.name || s.slug}</div>
+              <div className="flex items-center gap-2">
+                <div className="font-medium">{s.name || s.slug}</div>
+                <EngineBadge engine={s.engine} />
+              </div>
               {s.description && <p className="mt-1 text-xs text-zinc-500">{s.description}</p>}
               <div className="mt-2">
                 <Button
@@ -72,4 +97,14 @@ export default function Themes() {
       </Card>
     </div>
   );
+}
+
+// Tiny tone-coded badge that surfaces the templating engine declared in
+// `theme.json` (or auto-detected by ThemeService::detectEngine). Skipped
+// when the engine couldn't be determined — better silence than a misleading
+// "unknown" pill on the card.
+function EngineBadge({ engine }) {
+  if (!engine || engine === 'unknown') return null;
+  const tone = engine === 'twig' ? 'success' : engine === 'php' ? 'purple' : 'warning';
+  return <Badge tone={tone}>{engine}</Badge>;
 }

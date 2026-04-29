@@ -1,0 +1,7 @@
+{
+  "name": "Blank (Twig)",
+  "version": "0.1.0",
+  "description": "Minimal Twig scaffold — modern CSS reset + system font + readable max-width column. Build your own design on top.",
+  "author": "MD Framework",
+  "engine": "twig"
+}

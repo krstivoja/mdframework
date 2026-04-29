@@ -27,6 +27,10 @@ class ThemesController
             return;
         }
 
+        if ($method === 'GET' && $action === 'templates') {
+            \json_response(['ok' => true, 'templates' => $themes->listTemplates()]);
+        }
+
         Router::requireCsrf();
 
         if ($method !== 'POST') {
@@ -53,6 +57,15 @@ class ThemesController
             }
             \json_response(['ok' => false, 'error' => $result['error'] ?? 'Failed'], 400);
         }
+        if ($action === 'delete') {
+            $slug   = preg_replace('/[^a-z0-9_-]/', '', (string)($body['slug'] ?? ''));
+            $result = $themes->delete($slug);
+            if (!empty($result['ok'])) {
+                self::clearCache($config);
+                \json_response(['ok' => true]);
+            }
+            \json_response(['ok' => false, 'error' => $result['error'] ?? 'Failed'], 400);
+        }
         if ($action === 'replace') {
             $starter   = preg_replace('/[^a-z0-9_-]/', '', (string)($body['starter'] ?? ''));
             $themeSlug = preg_replace('/[^a-z0-9_-]/', '', (string)($body['theme_slug'] ?? $themes->active()));
@@ -70,11 +83,15 @@ class ThemesController
     /** @param array<string, mixed> $config */
     private static function list(ThemeService $themes, array $config): void
     {
+        // Starters and installed themes both use `theme.json` for metadata.
+        // The Starters card globs `cms/starters/*/theme.json`; the Installed
+        // card globs `site/themes/*/theme.json` (handled by ThemeService::list).
         $starters = [];
-        foreach (glob($config['cmsRoot'] . '/starters/*/starter.json') ?: [] as $f) {
-            $slug          = basename(dirname($f));
-            $meta          = json_decode((string)file_get_contents($f), true) ?? [];
-            $starters[$slug] = array_merge(['name' => $slug, 'description' => ''], $meta, ['slug' => $slug]);
+        foreach (glob($config['cmsRoot'] . '/starters/*/theme.json') ?: [] as $f) {
+            $slug            = basename(dirname($f));
+            $meta            = json_decode((string)file_get_contents($f), true) ?? [];
+            $engine          = $meta['engine'] ?? ThemeService::detectEngine(dirname($f) . '/templates');
+            $starters[$slug] = array_merge(['name' => $slug, 'description' => ''], $meta, ['slug' => $slug, 'engine' => $engine]);
         }
         \json_response([
             'ok'       => true,

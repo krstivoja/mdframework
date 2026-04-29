@@ -24,11 +24,17 @@ export default function PageEditor() {
     queryFn: () => api.get(`/pages/${encodePath(path)}`),
     enabled: !isNew,
   });
+  const { data: templatesData } = useQuery({
+    queryKey: ['theme-templates'],
+    queryFn: () => api.get('/themes/templates'),
+  });
+  const templates = templatesData?.templates || [];
 
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [slugTouched, setSlugTouched] = useState(false);
   const [status, setStatus] = useState('published');
+  const [template, setTemplate] = useState('');
   const [taxValues, setTaxValues] = useState({});
 
   const editorElRef = useRef(null);
@@ -41,6 +47,7 @@ export default function PageEditor() {
       setSlug('');
       setSlugTouched(false);
       setStatus('published');
+      setTemplate('');
       setTaxValues({});
     } else if (data) {
       const rest = (data.path || '').split('/').slice(1).join('/');
@@ -48,6 +55,7 @@ export default function PageEditor() {
       setSlug(rest);
       setSlugTouched(true);
       setStatus(data.meta?.draft ? 'draft' : 'published');
+      setTemplate(data.meta?.template || '');
       setTaxValues(data.meta || {});
     }
     setDirty(false);
@@ -122,7 +130,7 @@ export default function PageEditor() {
       // always the source of truth, no view-toggling required.
       const body = edRef.current?.getMarkdown?.() ?? '';
       const relPath = [folder, slug].filter(Boolean).join('/');
-      const payload = { title, body, status, taxonomies: taxValues };
+      const payload = { title, body, status, template, taxonomies: taxValues };
       if (isNew) {
         payload.path = relPath;
         return api.post('/pages', payload);
@@ -213,6 +221,18 @@ export default function PageEditor() {
             >
               <option value="published">Published</option>
               <option value="draft">Draft</option>
+            </Select>
+          </Field>
+
+          <Field label="Template">
+            <Select
+              value={template}
+              onChange={e => markDirty(setTemplate)(e.target.value)}
+            >
+              <option value="">Default ({folder === 'pages' ? 'page' : 'post'})</option>
+              {templates.map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
             </Select>
           </Field>
 

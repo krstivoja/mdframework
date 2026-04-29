@@ -26,7 +26,7 @@
                 {
                     "name": "categories",
                     "type": "array",
-                    "widget": "select",
+                    "widget": "checkbox",
                     "multiple": true,
                     "items": [
                         "tech",
