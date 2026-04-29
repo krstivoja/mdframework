@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../../lib/api.js';
+import { slugify } from '../../../lib/utils.js';
 import { Alert, Button, Card, Input } from '../../../components/ui/index.js';
 import TaxonomyRow from './TaxonomyRow.jsx';
 
@@ -60,16 +61,16 @@ export default function Fields() {
 }
 
 function TaxonomiesEditor({ taxonomies, onChange, folders }) {
-  const [newSlug, setNewSlug] = useState('');
+  const [newLabel, setNewLabel] = useState('');
 
   function addTaxonomy() {
-    const slug = newSlug.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    const slug = slugify(newLabel);
     if (!slug || taxonomies[slug]) return;
     onChange({
       ...taxonomies,
-      [slug]: { label: slug, multiple: false, post_types: [], fields: [] },
+      [slug]: { label: newLabel, post_types: [], fields: [] },
     });
-    setNewSlug('');
+    setNewLabel('');
   }
 
   function updateTax(slug, patch) {
@@ -112,13 +113,14 @@ function TaxonomiesEditor({ taxonomies, onChange, folders }) {
         ))}
       </div>
 
-      <div className="flex items-center gap-2 border-t border-zinc-100 pt-4">
-        <Input
-          className="w-auto"
-          value={newSlug}
-          onChange={e => setNewSlug(e.target.value)}
-          placeholder="new-field-slug"
-        />
+      <div className="flex items-end gap-2 border-t border-zinc-100 pt-4">
+        <label className="block text-xs">
+          <span className="font-medium text-zinc-600">Label</span>
+          <Input
+            value={newLabel}
+            onChange={e => setNewLabel(e.target.value)}
+          />
+        </label>
         <Button variant="secondary" onClick={addTaxonomy}>Add field</Button>
       </div>
     </div>

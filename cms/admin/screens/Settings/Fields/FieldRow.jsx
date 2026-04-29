@@ -80,6 +80,11 @@ export default function FieldRow({ field, onChange, onRemove }) {
               />
             </>
           )}
+          <Checkbox
+            label="Hide from sidebar"
+            checked={!!field.hidden}
+            onChange={e => onChange({ hidden: e.target.checked })}
+          />
         </div>
 
         <button

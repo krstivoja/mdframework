@@ -2,10 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
 import TaxonomyField from './TaxonomyField.jsx';
 
-// Renders the user-defined taxonomy/field set for the current folder. Each
-// taxonomy slug maps to one front-matter key. Each field is rendered via
-// `<TaxonomyField>` with its own label + style — no wrapping card; the parent
-// container's gap controls spacing.
+// Renders every visible sub-field across taxonomies that apply to the current
+// folder. Each sub-field is a top-level front-matter key (its `name`); the
+// taxonomy is just an admin grouping for shared `Applies to folders` settings.
+// Set `hidden: true` on a field in Settings to suppress it here.
 export default function PageFields({ folder, values, onChange }) {
   const { data } = useQuery({
     queryKey: ['settings'],
@@ -13,22 +13,22 @@ export default function PageFields({ folder, values, onChange }) {
   });
 
   const taxonomies = data?.settings?.taxonomies || {};
-  const applicable = Object.entries(taxonomies).filter(([, t]) =>
-    !t.post_types?.length || (t.post_types || []).includes(folder)
-  );
-  if (applicable.length === 0) return null;
+  const fields = Object.values(taxonomies).flatMap(tax => {
+    const applies = !tax.post_types?.length || tax.post_types.includes(folder);
+    if (!applies) return [];
+    return (tax.fields || []).filter(f => f.name && !f.hidden);
+  });
 
-  // Edge-to-edge dividers — parent (the aside) has px-0 so the lines span
-  // the full sidebar width. Each row keeps its own px-4 for content padding.
+  if (fields.length === 0) return null;
+
   return (
     <div className="divide-y divide-zinc-200 border-t border-zinc-200">
-      {applicable.map(([slug, tax]) => (
-        <div key={slug} className="px-4 py-4">
+      {fields.map(field => (
+        <div key={field.name} className="px-4 py-4">
           <TaxonomyField
-            slug={slug}
-            tax={tax}
-            value={values[slug]}
-            onChange={v => onChange(slug, v)}
+            field={field}
+            value={values[field.name]}
+            onChange={v => onChange(field.name, v)}
           />
         </div>
       ))}

@@ -14,15 +14,17 @@
                 {
                     "name": "image",
                     "type": "single",
-                    "value": ""
+                    "value": "",
+                    "hidden": true
                 },
                 {
                     "name": "description",
                     "type": "single",
-                    "value": ""
+                    "value": "",
+                    "hidden": true
                 },
                 {
-                    "name": "terms",
+                    "name": "categories",
                     "type": "array",
                     "widget": "select",
                     "multiple": true,
@@ -30,7 +32,8 @@
                         "tech",
                         "design",
                         "tutorial"
-                    ]
+                    ],
+                    "hidden": false
                 }
             ]
         },
@@ -42,7 +45,7 @@
             ],
             "fields": [
                 {
-                    "name": "terms",
+                    "name": "tags",
                     "type": "array",
                     "widget": "checkbox",
                     "multiple": true,
@@ -50,7 +53,30 @@
                         "gsap",
                         "php",
                         "css"
-                    ]
+                    ],
+                    "hidden": false
+                }
+            ]
+        },
+        "marko2222": {
+            "label": "Marko2222",
+            "post_types": [
+                "blog",
+                "pages",
+                "tutorials"
+            ],
+            "fields": [
+                {
+                    "name": "wow",
+                    "type": "single",
+                    "value": "wwwww",
+                    "hidden": false
+                },
+                {
+                    "name": "wow2",
+                    "type": "single",
+                    "value": "sadasd",
+                    "hidden": false
                 }
             ]
         }

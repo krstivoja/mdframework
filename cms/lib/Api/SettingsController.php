@@ -48,6 +48,7 @@ class SettingsController
                 $name = preg_replace('/[^a-z0-9_-]/', '', strtolower((string)($f['name'] ?? '')));
                 if (!$name) continue;
                 $type = (($f['type'] ?? '') === 'array') ? 'array' : 'single';
+                $hidden = !empty($f['hidden']);
                 if ($type === 'array') {
                     $widget = in_array($f['widget'] ?? '', ['select', 'checkbox', 'radio'], true) ? $f['widget'] : 'select';
                     $items  = array_values(array_filter(array_map(
@@ -56,9 +57,9 @@ class SettingsController
                     ), fn ($v) => $v !== ''));
                     $multiple = !empty($f['multiple']) || (!$folded && $legacyMultiple);
                     $folded   = $folded || $legacyMultiple;
-                    $fields[] = ['name' => $name, 'type' => 'array', 'widget' => $widget, 'multiple' => $multiple, 'items' => $items];
+                    $fields[] = ['name' => $name, 'type' => 'array', 'widget' => $widget, 'multiple' => $multiple, 'items' => $items, 'hidden' => $hidden];
                 } else {
-                    $fields[] = ['name' => $name, 'type' => 'single', 'value' => trim((string)($f['value'] ?? ''))];
+                    $fields[] = ['name' => $name, 'type' => 'single', 'value' => trim((string)($f['value'] ?? '')), 'hidden' => $hidden];
                 }
             }
 

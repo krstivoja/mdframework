@@ -1,31 +1,28 @@
 import { Checkbox, Input, Select } from './ui/index.js';
 
-// One front-matter field rendered with its own label + styled wrapper.
-// Used by PageFields for each user-defined taxonomy / metadata field on the
-// page editor sidebar. Picks the widget based on the taxonomy's `multiple`
-// flag, the field's `widget`, and whether it has fixed `items`.
-export default function TaxonomyField({ slug, tax, value, onChange }) {
-  const label = tax.label || slug;
-  const arrayField = (tax.fields || []).find(f => f.type === 'array');
-  const choices    = arrayField?.items  || [];
-  const widget     = arrayField?.widget || 'select';
-  const multiple   = !!arrayField?.multiple;
-  const hint       = tax.hint || tax.description || '';
+// One front-matter sub-field rendered with its own label + styled wrapper.
+// Each sub-field's `name` is the front-matter key — single-value fields write
+// a string, list-of-choices fields write a string or array depending on the
+// `multiple` flag.
+export default function TaxonomyField({ field, value, onChange }) {
+  const label    = field.label || titleCase(field.name);
+  const isArray  = field.type === 'array';
+  const choices  = isArray ? (field.items || []) : [];
+  const widget   = field.widget || 'select';
+  const multiple = isArray && !!field.multiple;
 
   return (
-    <FieldShell label={label} slug={slug} hint={hint}>
-      {renderControl({ multiple, value, choices, widget, onChange })}
+    <FieldShell label={label} slug={field.name}>
+      {renderControl({ isArray, multiple, value, choices, widget, onChange })}
     </FieldShell>
   );
 }
 
-// Visual shell shared by every tax field — bare label header + control. Sits
-// between sibling fields with a 1px divider added by the parent (PageFields
-// uses `divide-y` so the lines come for free).
-function FieldShell({ label, slug, hint, children }) {
-  // Only show the front-matter key on the right when it's actually a
-  // different word from the label — otherwise it's just visual noise
-  // ("Categories  CATEGORIES").
+// Visual shell — bare label header + control. Sits between sibling fields
+// with a 1px divider added by the parent (PageFields uses `divide-y`).
+function FieldShell({ label, slug, children }) {
+  // Only show the front-matter key on the right when it differs from the
+  // visible label (e.g. label "Cover image" + slug "image").
   const showSlug = slug && slug.toLowerCase() !== (label || '').toLowerCase();
   return (
     <div className="space-y-2">
@@ -38,13 +35,17 @@ function FieldShell({ label, slug, hint, children }) {
         )}
       </div>
       {children}
-      {hint && <p className="text-xs text-zinc-500">{hint}</p>}
     </div>
   );
 }
 
-function renderControl({ multiple, value, choices, widget, onChange }) {
-  // Multi-value
+function renderControl({ isArray, multiple, value, choices, widget, onChange }) {
+  // Free-text single field — no fixed choices, just an input.
+  if (!isArray) {
+    const scalar = Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
+    return <Input value={scalar} onChange={e => onChange(e.target.value)} />;
+  }
+
   if (multiple) {
     const arr = Array.isArray(value) ? value : value ? [String(value)] : [];
 
@@ -90,10 +91,8 @@ function renderControl({ multiple, value, choices, widget, onChange }) {
     );
   }
 
-  // Single value — coerce to scalar in case stored data is an array (e.g.
-  // taxonomy was previously `multiple: true`).
+  // Single value from a fixed list.
   const scalar = Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
-
   if (choices.length) {
     return (
       <Select value={scalar} onChange={e => onChange(e.target.value)}>
@@ -102,8 +101,9 @@ function renderControl({ multiple, value, choices, widget, onChange }) {
       </Select>
     );
   }
+  return <Input value={scalar} onChange={e => onChange(e.target.value)} />;
+}
 
-  return (
-    <Input value={scalar} onChange={e => onChange(e.target.value)} />
-  );
+function titleCase(s) {
+  return (s || '').replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }

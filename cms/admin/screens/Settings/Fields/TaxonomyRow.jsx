@@ -24,6 +24,13 @@ export default function TaxonomyRow({ slug, tax, folders, onUpdate, onRename, on
         <div className="flex-1 space-y-3">
           <div className="grid gap-2 sm:grid-cols-2">
             <label className="block text-xs">
+              <span className="font-medium text-zinc-600">Label</span>
+              <Input
+                value={tax.label || ''}
+                onChange={e => onUpdate({ label: e.target.value })}
+              />
+            </label>
+            <label className="block text-xs">
               <span className="font-medium text-zinc-600">Slug</span>
               <Input
                 mono
@@ -31,17 +38,10 @@ export default function TaxonomyRow({ slug, tax, folders, onUpdate, onRename, on
                 onBlur={e => onRename(e.target.value)}
               />
             </label>
-            <label className="block text-xs">
-              <span className="font-medium text-zinc-600">Label</span>
-              <Input
-                value={tax.label || ''}
-                onChange={e => onUpdate({ label: e.target.value })}
-              />
-            </label>
           </div>
 
           <div>
-            <div className="text-xs font-medium text-zinc-600">Applies to folders</div>
+            <div className="text-xs font-medium text-zinc-600">Applies to folders. Leave empty for all.</div>
             <div className="mt-1 flex flex-wrap gap-1">
               {folders.length === 0 && <span className="text-xs text-zinc-400">No folders found.</span>}
               {folders.map(f => {
@@ -62,17 +62,15 @@ export default function TaxonomyRow({ slug, tax, folders, onUpdate, onRename, on
                 );
               })}
             </div>
-            <p className="mt-1 text-xs text-zinc-500">Empty = applies to all folders.</p>
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="text-xs font-medium text-zinc-600">Sub fields</div>
-              <Button variant="link" size="sm" onClick={addField}>+ Add field</Button>
+            <div className="flex items-center">
+              {(tax.fields || []).length > 0 && (
+                <div className="text-xs font-medium text-zinc-600">Sub fields</div>
+              )}
+              <Button variant="link" size="sm" onClick={addField} className="ml-auto">+ Add Subfield</Button>
             </div>
-            {(tax.fields || []).length === 0 && (
-              <p className="text-xs text-zinc-400">No fields yet.</p>
-            )}
             {(tax.fields || []).map((field, i) => (
               <FieldRow
                 key={i}
