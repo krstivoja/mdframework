@@ -38,6 +38,24 @@ export default function SiteSettings() {
     },
   });
 
+  const [cacheMsg, setCacheMsg] = useState('');
+  const clearCache = useMutation({
+    mutationFn: () => api.post('/cache/clear'),
+    onSuccess: () => {
+      setCacheMsg('Cache cleared');
+      setTimeout(() => setCacheMsg(''), 2500);
+    },
+    onError: (e) => setCacheMsg(`Failed: ${e.message}`),
+  });
+  const rebuildCache = useMutation({
+    mutationFn: () => api.post('/cache/rebuild'),
+    onSuccess: (res) => {
+      setCacheMsg(`Cache rebuilt (${res?.count ?? 0} pages)`);
+      setTimeout(() => setCacheMsg(''), 2500);
+    },
+    onError: (e) => setCacheMsg(`Failed: ${e.message}`),
+  });
+
   if (isLoading) return <div className="text-sm text-zinc-500">Loading…</div>;
 
   return (
@@ -76,6 +94,29 @@ export default function SiteSettings() {
           <Input type="number" min="0" max="20000"
             value={uploads.max_height} onChange={e => setUploads({ ...uploads, max_height: +e.target.value })} />
         </Field>
+      </Card>
+
+      <Card title="Cache">
+        <p className="text-xs text-zinc-500">
+          Clears rendered HTML, the content index, and the compiled Twig cache. Use this after editing files on disk or switching themes if a page looks stale.
+        </p>
+        <div className="mt-3 flex items-center gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => clearCache.mutate()}
+            disabled={clearCache.isPending || rebuildCache.isPending}
+          >
+            {clearCache.isPending ? 'Clearing…' : 'Clear cache'}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => rebuildCache.mutate()}
+            disabled={clearCache.isPending || rebuildCache.isPending}
+          >
+            {rebuildCache.isPending ? 'Rebuilding…' : 'Clear & rebuild'}
+          </Button>
+          {cacheMsg && <span className="text-xs text-zinc-500">{cacheMsg}</span>}
+        </div>
       </Card>
     </div>
   );
