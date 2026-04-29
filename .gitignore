@@ -1,5 +1,6 @@
 .DS_Store
 .env
+.idea/
 .phpunit.result.cache
 src/node_modules/
 src/.vite-hot

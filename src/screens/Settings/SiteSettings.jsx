@@ -55,6 +55,15 @@ export default function SiteSettings() {
     },
     onError: (e) => setCacheMsg(`Failed: ${e.message}`),
   });
+  const rebuildAssets = useMutation({
+    mutationFn: () => api.post('/cache/rebuild-assets'),
+    onSuccess: (res) => {
+      const n = (res?.compiled || []).length;
+      setCacheMsg(n ? `Compiled ${n} stylesheet${n === 1 ? '' : 's'}` : 'No SCSS changes');
+      setTimeout(() => setCacheMsg(''), 2500);
+    },
+    onError: (e) => setCacheMsg(`Failed: ${e.message}`),
+  });
 
   if (isLoading) return <div className="text-sm text-zinc-500">Loading…</div>;
 
@@ -114,6 +123,13 @@ export default function SiteSettings() {
             disabled={clearCache.isPending || rebuildCache.isPending}
           >
             {rebuildCache.isPending ? 'Rebuilding…' : 'Clear & rebuild'}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => rebuildAssets.mutate()}
+            disabled={rebuildAssets.isPending}
+          >
+            {rebuildAssets.isPending ? 'Compiling…' : 'Rebuild theme SCSS'}
           </Button>
           {cacheMsg && <span className="text-xs text-zinc-500">{cacheMsg}</span>}
         </div>

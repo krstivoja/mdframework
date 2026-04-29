@@ -7,6 +7,8 @@ namespace MD\Api;
 use MD\CacheService;
 use MD\Content;
 use MD\PathResolver;
+use MD\ScssCompiler;
+use MD\ThemeService;
 
 /**
  * Cache management for the admin UI. Lets the user wipe rendered HTML, the
@@ -48,6 +50,16 @@ class CacheController
         if ($action === 'rebuild') {
             $result = $cache->rebuild();
             \json_response($result);
+        }
+
+        if ($action === 'rebuild-assets') {
+            // Force-recompile the active theme's SCSS bundle, ignoring
+            // mtime — useful after editing a partial that the watcher
+            // didn't pick up, or after switching theme without restarting.
+            $themes   = new ThemeService($config['appRoot'], $config['config']);
+            $themeDir = $config['themesDir'] . '/' . $themes->active();
+            $result   = (new ScssCompiler())->compileTheme($themeDir);
+            \json_response(['ok' => true] + $result);
         }
 
         \json_response(['ok' => false, 'error' => 'Unknown cache action'], 404);

@@ -27,6 +27,16 @@ $themes       = new MD\ThemeService($ROOT, $config);
 $TEMPLATE_DIR = $themes->templateDir();
 $GLOBALS['md_themes'] = $themes;
 
+// Auto-compile the active theme's SCSS if any source is newer than the
+// matching CSS. The check is cheap (a few stat() calls); compilation only
+// runs when something actually changed. Themes without `assets/` are
+// no-ops. Triggered here so both the public site and the admin shell pick
+// up edits without a manual rebuild step.
+$themeDir = dirname($TEMPLATE_DIR);
+if (is_dir($themeDir . '/assets')) {
+    (new MD\ScssCompiler())->compileTheme($themeDir);
+}
+
 $content = new MD\Content($CONTENT_DIR, $CACHE_DIR);
 $index = new MD\Index($CONTENT_DIR, $CACHE_DIR, $content);
 $router = new MD\Router($CONTENT_DIR);
