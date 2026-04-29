@@ -53,6 +53,9 @@ class Router
                 case 'update':
                     UpdateController::handle($method, $config);
                     return;
+                case 'cache':
+                    CacheController::handle($rest, $method, $config);
+                    return;
             }
         } catch (\Throwable $e) {
             \json_response(['ok' => false, 'error' => $e->getMessage()], 500);
