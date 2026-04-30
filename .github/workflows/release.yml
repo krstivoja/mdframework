@@ -1,0 +1,80 @@
+name: Release
+
+# Triggers on tag push, e.g. `git tag 0.0.7 && git push origin 0.0.7`.
+# Builds composer (no-dev) + the admin SPA, packages everything into a
+# turnkey zip using .distignore, and attaches it to a GitHub Release.
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+*'
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+permissions:
+  contents: write   # required to create the Release and upload assets
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: src/package-lock.json
+
+      - name: Composer install (no dev)
+        working-directory: cms
+        run: composer install --no-dev --optimize-autoloader --classmap-authoritative --no-interaction --no-progress
+
+      - name: NPM install
+        working-directory: src
+        run: npm ci --no-audit --no-fund
+
+      - name: Build admin SPA
+        working-directory: src
+        run: npm run build
+
+      - name: Resolve version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "package=mdframework-${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Package release zip
+        run: |
+          # rsync's --exclude-from doesn't skip '#' comments or blank lines,
+          # so preprocess .distignore into a clean pattern list.
+          grep -vE '^(#|$)' .distignore > /tmp/excludes
+
+          PKG="${{ steps.version.outputs.package }}"
+          OUT="release/${PKG}"
+          mkdir -p "${OUT}"
+
+          rsync -a \
+            --exclude-from=/tmp/excludes \
+            --exclude='.git/' \
+            --exclude='release/' \
+            ./ "${OUT}/"
+
+          ( cd release && zip -rq "${PKG}.zip" "${PKG}" )
+          ls -lh "release/${PKG}.zip"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/${{ steps.version.outputs.package }}.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: false
