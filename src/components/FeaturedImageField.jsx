@@ -14,12 +14,18 @@ import MediaPicker from './MediaPicker.jsx';
 export default function FeaturedImageField({ value, onChange, pagePath }) {
   const [open, setOpen] = useState(false);
 
+  // Be liberal in what we accept: front matter may already store `image` as
+  // a YAML list (legacy data, hand-edits, or a sibling taxonomy sub-field
+  // with `multiple: true`). Display the first entry; on Replace/Remove we
+  // always write a single string back, normalizing the shape on next save.
+  const url = Array.isArray(value) ? (value[0] || '') : (value || '');
+
   return (
     <Field label="Featured image">
-      {value ? (
+      {url ? (
         <div className="space-y-2">
           <img
-            src={value}
+            src={url}
             alt=""
             className="w-full rounded-md border border-zinc-200 object-cover"
           />
