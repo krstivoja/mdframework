@@ -18,6 +18,12 @@ spl_autoload_register(function ($class) use ($cmsRoot) {
 
 MD\Env::load($appRoot . '/.env');
 
+// First-run only: copy starter content / config / theme into /site if it's
+// empty. /site is gitignored — the defaults a user sees on a fresh install
+// live under cms/starters/ and are seeded here. Idempotent on subsequent
+// requests (a few stat() calls when nothing's missing).
+MD\Bootstrap::ensureSiteDefaults($appRoot);
+
 session_set_cookie_params([
     'lifetime' => 0,
     'path'     => '/',

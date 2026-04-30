@@ -13,25 +13,12 @@ src/dist/
 .vite-hot
 
 # ──────────────────────────────────────────────────────────────────
-# Runtime caches — auto-rebuilt on first request
+# /site is fully user-owned, never tracked. Defaults (config, content,
+# uploads stub, default theme) live under cms/starters/ and are copied
+# in on first request by MD\Bootstrap::ensureSiteDefaults(). Editing
+# content in the admin no longer creates diffs in the framework repo.
 # ──────────────────────────────────────────────────────────────────
-site/cache/
-
-# ──────────────────────────────────────────────────────────────────
-# User content — populated at install time, never tracked
-# Exception: ship a starter homepage so a fresh install isn't 404
-# ──────────────────────────────────────────────────────────────────
-site/content/*
-!site/content/pages/
-site/content/pages/*
-!site/content/pages/index.md
-!site/content/blog/
-site/content/blog/*
-!site/content/blog/_index.md
-!site/content/blog/hello-world.md
-
-site/uploads/*
-!site/uploads/index.php
+site/
 
 # ──────────────────────────────────────────────────────────────────
 # Local config / secrets

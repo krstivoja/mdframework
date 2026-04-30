@@ -25,6 +25,12 @@ $UPLOADS_DIR = $ROOT . '/site/uploads';
 // same values. Env::load is idempotent.
 MD\Env::load($ROOT . '/.env');
 
+// First-run only: copy starter content / config / theme into /site if it's
+// empty. /site is gitignored — the defaults a user sees on a fresh install
+// live under cms/starters/ and are seeded here. Idempotent and cheap when
+// the directories already exist.
+MD\Bootstrap::ensureSiteDefaults($ROOT);
+
 $config = new MD\Config($ROOT . '/site/config.json');
 $GLOBALS['md_config'] = $config;
 

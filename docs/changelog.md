@@ -9,6 +9,9 @@ All notable changes to MD Framework are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Changed
+- **`/site` is now fully gitignored; defaults live under `cms/starters/`.** Editing content in the admin no longer creates a diff in the framework repo. Symfony's YAML dumper rewrites every save in its preferred style (single-quoted strings, block-style lists), so previously-tracked starter files (`pages/index.md`, `blog/hello-world.md`, `blog/_index.md`, `themes/blank/`, `config.json`, `uploads/index.php`) generated phantom diffs on every admin save. Moved them all into `cms/starters/` (`content/`, `uploads/`, `config.example.json`; theme is the existing `blank-twig` starter). New `MD\Bootstrap::ensureSiteDefaults()` copies them into `/site/` on the first request after install — idempotent, ~5 stat() calls when `/site` is already populated. Triggered from both `bootstrap.php` (public entry) and `admin.php` (admin entry).
+
 ### Added
 - **Featured image field in the editor sidebar.** New default field positioned between Slug and Status. Picks via the existing MediaPicker (Library + Upload tabs), stores the URL at `meta.image` in front matter. Remove clears the key entirely instead of writing `image: ""`. Starter `post.twig` / `post.php` templates now render the image above the title when set; archive lists already expose it via meta-flattening as `post.image`.
 

@@ -49,9 +49,10 @@ app/
 │   ├── assets/               # Symlinked → site/themes/<active>/assets
 │   └── cms/dist/             # Built admin SPA bundle (Vite manifest + hashed assets)
 │
-├── cms/                      # Framework code + admin app
+├── cms/                      # Framework code + admin app + starter assets
 │   ├── composer.json
 │   ├── lib/                  # Core PHP (namespace MD\)
+│   │   ├── Bootstrap.php     # First-run /site seeding from cms/starters/
 │   │   ├── Content.php       # Markdown parser + HTML cache
 │   │   ├── Index.php         # Post index builder + filter
 │   │   ├── Router.php        # URL → route resolver
@@ -61,7 +62,12 @@ app/
 │   │   ├── ScssCompiler.php  # Auto-compile theme SCSS
 │   │   ├── template_helpers.php  # e(), partial(), asset_url(), paginate(), slug_url()
 │   │   └── Api/              # /admin/api/* JSON controllers
-│   ├── starters/             # Bundled starter themes (blank-twig, blank-php)
+│   ├── starters/             # Defaults copied into /site on first request
+│   │   ├── content/          # Welcome page + sample blog post
+│   │   ├── uploads/          # Security stub (index.php)
+│   │   ├── config.example.json
+│   │   ├── blank-twig/       # Default theme (copied to site/themes/<active>)
+│   │   └── blank-php/        # PHP-engine alternative
 │   └── templates/            # Admin SPA shell + setup-required gate
 │
 ├── src/                      # Admin SPA source (React 18 + Vite + Tailwind)
@@ -71,14 +77,14 @@ app/
 │   ├── styles.css
 │   └── vite.config.js
 │
-└── site/                     # Site-owned data (back this up)
-    ├── config.json           # Site settings, taxonomies, upload limits
-    ├── content/              # Markdown content
+└── site/                     # User data — git-ignored, seeded on first request
+    ├── config.json           # Copied from cms/starters/config.example.json
+    ├── content/              # Copied from cms/starters/content/
     │   ├── pages/            # Flat pages — /about, /contact, etc.
-    │   │   └── index.md      # Homepage (if present)
+    │   │   └── index.md      # Homepage stub
     │   ├── blog/             # Folder → /blog archive + /blog/<slug> posts
     │   └── <folder>/         # Any folder becomes a collection
-    ├── themes/               # Installed themes
+    ├── themes/               # Copied from cms/starters/blank-twig/ on first run
     │   └── <slug>/
     │       ├── theme.json
     │       ├── templates/    # post.twig | post.php, archive.*, taxonomy.*, etc.
@@ -90,6 +96,8 @@ app/
         ├── html/             # Per-page HTML cache (.json files)
         └── twig/             # Compiled Twig templates
 ```
+
+`/site` is **never tracked in git** — it's user data, populated by `MD\Bootstrap::ensureSiteDefaults()` on the first request after install. Editing content in the admin won't show up as a diff in the framework repo.
 
 ## Next steps
 
