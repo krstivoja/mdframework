@@ -25,6 +25,10 @@ site/content/*
 !site/content/pages/
 site/content/pages/*
 !site/content/pages/index.md
+!site/content/blog/
+site/content/blog/*
+!site/content/blog/_index.md
+!site/content/blog/hello-world.md
 
 site/uploads/*
 !site/uploads/index.php
