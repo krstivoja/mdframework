@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useFileUpload } from '../lib/hooks.js';
 import { useToast } from '../lib/toast.jsx';
 import { extLabel, isImageFile } from '../lib/utils.js';
-import { Alert, Button } from './ui/index.js';
+import { Alert, Button, Dropzone } from './ui/index.js';
 
 /**
  * Modal dropzone for the Media library "Upload" button. Accepts one or many
@@ -18,9 +18,7 @@ import { Alert, Button } from './ui/index.js';
  * it auto-closes after a short delay.
  */
 export default function MediaUploadDialog({ open, onClose }) {
-  const inputRef = useRef(null);
   const [items, setItems] = useState([]); // [{ id, file, status, error?, url? }]
-  const [drag, setDrag] = useState(false);
   const toast = useToast();
 
   const { upload, busy } = useFileUpload({
@@ -98,38 +96,15 @@ export default function MediaUploadDialog({ open, onClose }) {
         </header>
 
         <div className="flex-1 space-y-3 overflow-y-auto p-5">
-          <div
-            onDragEnter={(e) => { e.preventDefault(); setDrag(true); }}
-            onDragOver={(e)  => { e.preventDefault(); setDrag(true); }}
-            onDragLeave={()  => setDrag(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDrag(false);
-              enqueue(e.dataTransfer.files);
-            }}
-            className={`flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-10 text-center transition-colors ${
-              drag ? 'border-zinc-900 bg-zinc-50' : 'border-zinc-300 bg-white'
-            }`}
-          >
-            <p className="text-sm text-zinc-700">Drop files here</p>
-            <p className="mt-1 text-xs text-zinc-500">one or many — they'll upload one after another</p>
-            <Button
-              variant="secondary"
-              className="mt-3"
-              disabled={busy}
-              onClick={() => inputRef.current?.click()}
-            >
-              Choose files
-            </Button>
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              hidden
-              onChange={(e) => { enqueue(e.target.files); e.target.value = ''; }}
-            />
-          </div>
+          <Dropzone
+            accept="image/*"
+            multiple
+            disabled={busy}
+            label="Drop files here"
+            hint="one or many — they'll upload one after another"
+            buttonLabel="Choose files"
+            onFiles={(files) => enqueue(files)}
+          />
 
           {items.length > 0 && (
             <ul className="divide-y divide-zinc-100 rounded-md border border-zinc-200">
