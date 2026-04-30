@@ -7,7 +7,11 @@ import Sidebar from './Sidebar.jsx';
 // editor view) render their own `<Outlet />` directly.
 export default function Shell() {
   return (
-    <div className="flex min-h-screen bg-zinc-50 text-zinc-900 antialiased">
+    // `h-screen` (not `min-h-screen`) gives the flex column a definite
+    // height — required for the page-editor surface to actually fill the
+    // viewport via `flex-1 min-h-0`. Internal scrolling is owned by
+    // `<PaddedOutlet>` and the editor's own panes.
+    <div className="flex h-screen overflow-hidden bg-zinc-50 text-zinc-900 antialiased">
       <Sidebar />
       <Outlet />
     </div>

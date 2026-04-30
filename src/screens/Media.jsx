@@ -1,13 +1,14 @@
-import { memo, useRef } from 'react';
+import { memo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
-import { useConfirmDialog, useFileUpload } from '../lib/hooks.js';
+import { useConfirmDialog } from '../lib/hooks.js';
 import { extLabel, isImageFile } from '../lib/utils.js';
-import { Alert, Button, ConfirmDialog } from '../components/ui/index.js';
+import { Button, ConfirmDialog } from '../components/ui/index.js';
+import MediaUploadDialog from '../components/MediaUploadDialog.jsx';
 
 export default function Media() {
   const qc = useQueryClient();
-  const fileRef = useRef(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const { confirm, dialogProps } = useConfirmDialog();
 
   const { data, isLoading } = useQuery({
@@ -28,31 +29,14 @@ export default function Media() {
     if (ok) del.mutate(name);
   }
 
-  const { upload, busy, error } = useFileUpload({
-    endpoint: '/admin/api/media',
-    invalidate: [['media']],
-  });
-
-  async function onPick(e) {
-    const f = e.target.files?.[0];
-    try { await upload(f); } catch {} finally { e.target.value = ''; }
-  }
-
   if (isLoading) return <div className="text-sm text-zinc-500">Loading…</div>;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Media library</h1>
-        <div>
-          <input ref={fileRef} type="file" hidden onChange={onPick} />
-          <Button onClick={() => fileRef.current?.click()} disabled={busy}>
-            {busy ? 'Uploading…' : 'Upload'}
-          </Button>
-        </div>
+        <Button onClick={() => setUploadOpen(true)}>Upload</Button>
       </div>
-
-      {error && <Alert tone="error">{error}</Alert>}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {(data?.files || []).length === 0 && (
@@ -64,6 +48,8 @@ export default function Media() {
           <MediaItem key={f.name + (f.url || '')} file={f} onDelete={() => askDelete(f.name)} />
         ))}
       </div>
+
+      <MediaUploadDialog open={uploadOpen} onClose={() => setUploadOpen(false)} />
       <ConfirmDialog {...dialogProps} />
     </div>
   );
@@ -102,4 +88,3 @@ const MediaItem = memo(function MediaItem({ file, onDelete }) {
     </div>
   );
 });
-

@@ -57,6 +57,13 @@ html, body, #root {
 .cm-host .cm-editor { flex: 1; min-height: inherit; }
 .cm-host .cm-scroller { font-family: var(--font-mono); }
 
+/* Toast UI's default chrome wraps the toolbar + edit surface in
+   `.toastui-editor-defaultUI`. It defaults to `width: auto` which can
+   collapse to its content rather than filling the wrapper we hand it.
+   Force it to claim the whole flex parent so the editor stretches with
+   the page. */
+.toastui-editor-defaultUI { min-width: 100%; }
+
 /* Tailwind v4 dropped the default cursor on `<button>`. Restore it so every
    non-disabled button in the admin shows a pointer without per-component opt-in. */
 @layer base {
