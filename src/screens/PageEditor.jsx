@@ -121,6 +121,29 @@ export default function PageEditor() {
     onOpenMediaPicker: () => setPickerOpen(true),
   });
 
+  // If the user reloaded while in HTML mode, seed htmlValue from the
+  // mounted editor — switchEditorMode's "entering html" branch only fires
+  // on an interactive transition, not on initial mount, so without this
+  // the textarea renders empty and saving would wipe the post body.
+  useEffect(() => {
+    if (!bodyReady || editorMode !== 'html' || htmlValue !== '') return;
+    const ed = edRef.current;
+    if (!ed) return;
+    try {
+      const raw = ed.getHTML() || '';
+      setHtmlValue(beautifyHtml(raw, {
+        indent_size: 2,
+        wrap_line_length: 100,
+        end_with_newline: true,
+        preserve_newlines: true,
+        max_preserve_newlines: 1,
+      }));
+    } catch { /* ignore */ }
+    // Only fires on the first body-ready render — subsequent mode switches
+    // route through switchEditorMode which owns the htmlValue lifecycle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bodyReady]);
+
   const markDirty = (setter) => (value) => {
     setDirty(true);
     setter(value);
