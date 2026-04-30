@@ -1,67 +1,62 @@
-# ──────────────────────────────────────────────────────────────────
-# Dependencies — regenerated via `composer install` / `npm ci`
-# ──────────────────────────────────────────────────────────────────
-cms/vendor/
-src/node_modules/
+# .distignore — patterns excluded when packaging a release zip
+#
+# Format: one path/glob per line, relative to the package root.
+# Compatible with rsync --exclude-from and `wp dist-archive`-style tools.
+# Use this list from release.sh (or any packager) to strip dev-only files
+# while keeping vendor/ and the built admin SPA.
 
 # ──────────────────────────────────────────────────────────────────
-# Build artifacts — regenerated via `npm run build`
+# Source code that's compiled into public/cms/dist/
 # ──────────────────────────────────────────────────────────────────
-public/cms/dist/
-src/dist/
-**/.vite/
-.vite-hot
+src/
 
 # ──────────────────────────────────────────────────────────────────
-# Runtime caches — auto-rebuilt on first request
+# Tests + linting + static analysis
 # ──────────────────────────────────────────────────────────────────
-site/cache/
+cms/tests/
+cms/phpunit.xml
+cms/.phpunit.result.cache
+cms/.php-cs-fixer.dist.php
+cms/.php-cs-fixer.cache
+.phpunit.result.cache
+phpstan.neon
+phpstan-baseline.neon
 
 # ──────────────────────────────────────────────────────────────────
-# User content — populated at install time, never tracked
-# Exception: ship a starter homepage so a fresh install isn't 404
+# Documentation source (Jekyll site for GitHub Pages)
 # ──────────────────────────────────────────────────────────────────
-site/content/*
-!site/content/pages/
-site/content/pages/*
-!site/content/pages/index.md
-
-site/uploads/*
-!site/uploads/index.php
+docs/
 
 # ──────────────────────────────────────────────────────────────────
-# Local config / secrets
+# Local config / runtime / secrets
 # ──────────────────────────────────────────────────────────────────
 .env
 .env.local
 .env.*.local
+site/cache/
 
 # ──────────────────────────────────────────────────────────────────
-# Tool caches & local-only output
+# VCS + repo hygiene
 # ──────────────────────────────────────────────────────────────────
-.phpunit.result.cache
-.php-cs-fixer.cache
-phpstan-baseline.neon
-coverage/
-*.log
+.git/
+.gitignore
+.gitattributes
+.distignore
+.github/
 
 # ──────────────────────────────────────────────────────────────────
-# Editor / IDE
+# Editor / OS metadata
 # ──────────────────────────────────────────────────────────────────
 .idea/
 .vscode/
-*.swp
-*.swo
-
-# ──────────────────────────────────────────────────────────────────
-# OS metadata
-# ──────────────────────────────────────────────────────────────────
 .DS_Store
 **/.DS_Store
 Thumbs.db
+*.swp
 
 # ──────────────────────────────────────────────────────────────────
-# Release artifacts
+# Build / release artifacts
 # ──────────────────────────────────────────────────────────────────
 release/
 *.zip
+*.log

@@ -1,81 +1,33 @@
 {
     "site": {
-        "name": "My Site Marko",
+        "name": "MD Framework",
         "base": "/"
     },
     "taxonomies": {
         "categories": {
             "label": "Categories",
-            "post_types": [
-                "blog",
-                "pages"
-            ],
+            "post_types": ["blog"],
             "fields": [
-                {
-                    "name": "image",
-                    "type": "single",
-                    "value": "",
-                    "hidden": true
-                },
-                {
-                    "name": "description",
-                    "type": "single",
-                    "value": "",
-                    "hidden": true
-                },
                 {
                     "name": "categories",
                     "type": "array",
                     "widget": "checkbox",
                     "multiple": true,
-                    "items": [
-                        "tech",
-                        "design",
-                        "tutorial"
-                    ],
+                    "items": [],
                     "hidden": false
                 }
             ]
         },
         "tags": {
             "label": "Tags",
-            "post_types": [
-                "blog",
-                "tutorials"
-            ],
+            "post_types": ["blog"],
             "fields": [
                 {
                     "name": "tags",
                     "type": "array",
                     "widget": "checkbox",
                     "multiple": true,
-                    "items": [
-                        "gsap",
-                        "php",
-                        "css"
-                    ],
-                    "hidden": false
-                }
-            ]
-        },
-        "marko2222": {
-            "label": "Marko2222",
-            "post_types": [
-                "blog",
-                "pages",
-                "tutorials"
-            ],
-            "fields": [
-                {
-                    "name": "wow",
-                    "type": "single",
-                    "value": "wwwww",
-                    "hidden": false
-                },
-                {
-                    "name": "wow2",
-                    "type": "single",
-                    "value": "sadasd",
+                    "items": [],
                     "hidden": false
                 }
             ]
