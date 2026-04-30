@@ -9,6 +9,7 @@ import { useDirty } from '../lib/dirty.jsx';
 import { html as beautifyHtml } from 'js-beautify';
 import { Alert, Button, ConfirmDialog, Field, Input, SegmentedControl, Select } from '../components/ui/index.js';
 import { useConfirmDialog } from '../lib/hooks.js';
+import { useToast } from '../lib/toast.jsx';
 import CodeEditor from '../components/CodeEditor.jsx';
 import MediaPicker from '../components/MediaPicker.jsx';
 import PageFields from '../components/PageFields.jsx';
@@ -23,6 +24,7 @@ export default function PageEditor() {
   const qc = useQueryClient();
   const { setDirty } = useDirty();
   const { confirm: confirmDelete, dialogProps: confirmProps } = useConfirmDialog();
+  const toast = useToast();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['page', path],
@@ -51,10 +53,6 @@ export default function PageEditor() {
   const [editorMode, setEditorMode] = useState('wysiwyg');
   const [htmlValue, setHtmlValue] = useState('');
 
-  // Last-save timestamp (ms epoch) for the "Saved at HH:MM" indicator next to
-  // the Save button. Reset on every successful save mutation.
-  const [savedAt, setSavedAt] = useState(null);
-
   // Media picker — opened from the editor's toolbar Image button (Toast UI's
   // built-in URL/file dialog is replaced with our two-tab Library/Upload modal).
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -62,6 +60,21 @@ export default function PageEditor() {
   const editorElRef = useRef(null);
   const edRef = useRef(null);
   const initializedRef = useRef(false);
+  // Holds the body string used as Toast UI's `initialValue`. Captured once
+  // from the first `data` payload, then frozen — refetches that follow a
+  // save must NOT tear the editor down and remount it (that would dump
+  // cursor focus back to the top of the document).
+  const initialBodyRef = useRef('');
+  // `bodyReady` flips once on first load so the init effect can re-run when
+  // the page query resolves; subsequent refetches don't change it.
+  const [bodyReady, setBodyReady] = useState(isNew);
+  useEffect(() => {
+    if (bodyReady || isNew) return;
+    if (data?.body !== undefined) {
+      initialBodyRef.current = data.body;
+      setBodyReady(true);
+    }
+  }, [bodyReady, isNew, data]);
 
   useEffect(() => {
     if (isNew) {
@@ -91,7 +104,7 @@ export default function PageEditor() {
   useEffect(() => {
     if (!editorElRef.current) return;
     if (initializedRef.current) return;
-    if (!isNew && !data) return;
+    if (!bodyReady) return;
 
     const pagePathForUpload = path;
 
@@ -112,7 +125,7 @@ export default function PageEditor() {
       previewStyle: 'vertical',
       usageStatistics: false,
       hideModeSwitch: true,
-      initialValue: !isNew && data?.body ? data.body : '',
+      initialValue: !isNew ? initialBodyRef.current : '',
       toolbarItems: [
         ['heading', 'bold', 'italic', 'strike'],
         ['hr', 'quote'],
@@ -149,7 +162,12 @@ export default function PageEditor() {
       edRef.current = null;
       initializedRef.current = false;
     };
-  }, [isNew, data, path, setDirty]);
+    // `data` is intentionally NOT a dep: the editor manages its own content
+    // after first init, so a refetch (e.g. post-save invalidation) must not
+    // tear down + remount the editor — that would dump cursor focus back to
+    // the top of the document. `bodyReady` flips exactly once per mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isNew, path, bodyReady, setDirty]);
 
   const markDirty = (setter) => (value) => {
     setDirty(true);
@@ -189,7 +207,7 @@ export default function PageEditor() {
       qc.invalidateQueries({ queryKey: ['pages'] });
       qc.invalidateQueries({ queryKey: ['page', res.path] });
       setDirty(false);
-      setSavedAt(Date.now());
+      toast.show(`Saved at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
       if (isNew) {
         const rest = (res.path || '').split('/').slice(1).join('/');
         navigate(`/${encodeURIComponent(folder)}/${encodePath(rest)}`, { replace: true });
@@ -275,11 +293,6 @@ export default function PageEditor() {
           <Button onClick={() => save.mutate()} disabled={save.isPending}>
             {save.isPending ? 'Saving…' : 'Save'}
           </Button>
-          {savedAt && !save.isPending && (
-            <div className="text-center text-[11px] text-zinc-500">
-              Saved at {new Date(savedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </div>
-          )}
 
           {!isNew && (
             <a

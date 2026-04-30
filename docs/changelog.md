@@ -11,7 +11,7 @@ All notable changes to MD Framework are documented here. The format is based on 
 
 ### Documentation
 - Rewrote **Caching** doc with what's cached / how invalidation works / manual controls / when to think about it.
-- Rewrote **Templates** doc as the full theming guide for both Twig and PHP — partials, layouts, per-route variable reference, helper reference, full pagination examples in both engines, taxonomy filtering and tag/category linking, custom queries via `posts()` and `Index`, per-post template overrides, theme assets + SCSS auto-compile, and a reusable `_inspect.twig` / `_inspect.php` partial for dumping every variable available to a template.
+- **Split theming docs into three.** `templates.md` is now the engine-agnostic reference (theme structure, route variables, helper signatures, `posts()` API, per-post overrides, theme assets + SCSS auto-compile). New `templates-twig.md` and `templates-php.md` are full end-to-end cookbooks in their respective idioms — header/footer partials, `post`/`archive`/`taxonomy`/`feed`/`404` walkthroughs, full pagination with both default and custom numbered markup, tag/category linking and tag-cloud builders, recent/related-posts partials, and a copy-paste `_inspect` debug partial gated behind `site.debug` in `config.json`.
 - Fixed `content.md` filter examples (custom-field filters must go inside `filter:`, not at the top level of `posts()`).
 - Updated `index.md` directory tree to match the current `cms/` + `site/` + `src/` layout.
 - Replaced `extending.md` with new sections on adding collections, taxonomies, template helpers, and using `Index` for custom queries — old advice to switch on `$data['meta']['template']` inside `public/index.php` was stale; per-post template overrides are now declarative via the `template:` front-matter field.
@@ -31,7 +31,7 @@ All notable changes to MD Framework are documented here. The format is based on 
 - **`PagesList` rows are memoised** (`React.memo` + stable `useCallback` handlers) so search/filter typing only re-renders the row whose props actually changed.
 - **Bulk delete** on `PagesList` — header checkbox toggles all visible rows, per-row checkbox toggles one, a sticky toolbar surfaces the count and "Delete selected" action.
 - **Themed `<ConfirmDialog>`** + `useConfirmDialog()` hook replaces every `window.confirm` in the admin (PagesList row delete, Media library delete, PageEditor delete sidebar button). Esc and the backdrop cancel; the destructive action is auto-focused.
-- **`Cmd/Ctrl+S` saves** in `PageEditor`; the sidebar shows a compact "Saved at HH:MM" indicator after each successful save.
+- **`Cmd/Ctrl+S` saves** in `PageEditor`; a bottom-right toast slides in with "Saved at HH:MM" after each successful save and auto-dismisses after ~2.4s. New `<ToastProvider>` + `useToast()` (`lib/toast.jsx`) is mounted at the app root for any future notification need.
 - **Saved-page slug** is now visually dimmed to signal it's locked (the URL is in the wild — changing it would break links).
 - **`aria-current="page"`** on active sidebar links + folder links so screen readers can announce the current section.
 - **New `<SegmentedControl>` UI primitive** replaces the editor mode toggle's hand-rolled markup and is now used for the **Status** sidebar field (Published / Draft) — a two-option pill toggle reads better than a dropdown for binary state. Pass `options=[{value, label}]`, `value`, `onChange`, plus an optional `ariaLabel`; the control renders with `role="radiogroup"` and `aria-checked` per option.

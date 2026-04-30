@@ -94,7 +94,9 @@ app/
 ## Next steps
 
 - [Content]({{ '/content' | relative_url }}) — front matter, routing, pagination, taxonomy archives
-- [Templates]({{ '/templates' | relative_url }}) — full theming guide for Twig **and** PHP, with helpers, pagination, taxonomy filtering, querying, and a debug/inspect helper
+- [Templates]({{ '/templates' | relative_url }}) — engine-agnostic reference: route variables, helpers, `posts()` API, per-post overrides, theme assets
+  - [Templates — Twig]({{ '/templates-twig' | relative_url }}) — end-to-end cookbook: layouts, archive + pagination, taxonomy linking, recent/related posts, `_inspect` partial
+  - [Templates — PHP]({{ '/templates-php' | relative_url }}) — same cookbook in plain PHP, with escaping rules and the legacy output-buffer layout
 - [Caching]({{ '/caching' | relative_url }}) — what's cached, how it invalidates, when to clear it manually
 - [Admin]({{ '/admin' | relative_url }}) — editor, uploads, settings, backup, auth
 - [Extending]({{ '/extending' | relative_url }}) — collections, custom templates, custom helpers, taxonomies
