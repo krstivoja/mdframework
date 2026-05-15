@@ -54,7 +54,7 @@ class Vite
         }
 
         if (!is_file($this->manifestFile)) {
-            return '<!-- vite manifest missing — run `npm run build` in app/cms -->';
+            return '<!-- vite manifest missing — run `npm run build` in app/src -->';
         }
         $manifest = json_decode((string)file_get_contents($this->manifestFile), true);
         if (!is_array($manifest) || !isset($manifest[$entry])) {

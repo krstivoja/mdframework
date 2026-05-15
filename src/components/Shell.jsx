@@ -2,21 +2,22 @@ import { Link, Outlet } from 'react-router-dom';
 import { useAuth } from '../lib/auth.jsx';
 import Sidebar from './Sidebar.jsx';
 
-// Outer chrome: sidebar (240px) + the active layout. Padded content for
-// "regular" screens (PagesList/Media/Settings/Backup) is provided by
-// `<PaddedOutlet>`; layouts that need full-bleed (PostTypeShell's 3-col
-// editor view) render their own `<Outlet />` directly.
+// Outer chrome: optional top banner + the (Sidebar | content) row.
+// `<PostTypeShell />` renders as a fragment (PostTypeList + Outlet) — those
+// must remain direct children of the same flex *row* alongside <Sidebar />,
+// so the banner is lifted into a sibling column above the row rather than
+// wrapping the outlet. Padded "regular" screens get their wrapping from
+// `<PaddedOutlet>`; the editor renders its own full-bleed layout.
 export default function Shell() {
   const { passwordIsDefault } = useAuth();
   return (
-    // `h-screen` (not `min-h-screen`) gives the flex column a definite
-    // height — required for the page-editor surface to actually fill the
-    // viewport via `flex-1 min-h-0`. Internal scrolling is owned by
-    // `<PaddedOutlet>` and the editor's own panes.
-    <div className="flex h-screen overflow-hidden bg-zinc-50 text-zinc-900 antialiased">
-      <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-        {passwordIsDefault && <DefaultPasswordBanner />}
+    <div className="flex h-screen flex-col overflow-hidden bg-zinc-50 text-zinc-900 antialiased">
+      {passwordIsDefault && <DefaultPasswordBanner />}
+      {/* The row must keep its definite height so the page-editor surface
+          can use `flex-1 min-h-0` to fill the viewport; `min-h-0` here lets
+          the row shrink to whatever the banner left behind. */}
+      <div className="flex min-h-0 flex-1">
+        <Sidebar />
         <Outlet />
       </div>
     </div>
