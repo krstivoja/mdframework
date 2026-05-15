@@ -1,10 +1,10 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, getCsrf } from '../lib/api.js';
 import { useConfirmDialog } from '../lib/hooks.js';
 import { cap, encodePath } from '../lib/utils.js';
-import { Button, ConfirmDialog, Input, Select } from '../components/ui/index.js';
+import { Button, ConfirmDialog, Dropzone, Input, Select } from '../components/ui/index.js';
 import { IconSearch } from '../components/icons.jsx';
 import PageRow from '../components/PageRow.jsx';
 
@@ -22,7 +22,7 @@ export default function PagesList() {
   // filter changes so what's "selected" always matches what's visible.
   const [selected, setSelected] = useState(() => new Set());
   const [importMsg, setImportMsg] = useState(null);
-  const importInputRef = useRef(null);
+  const [importOpen, setImportOpen] = useState(false);
   const { confirm, dialogProps } = useConfirmDialog();
 
   const { data, isLoading, error } = useQuery({
@@ -75,8 +75,7 @@ export default function PagesList() {
   }
 
   function exportPages() {
-    // GET endpoint — auth is the session cookie which the browser sends
-    // with a top-level navigation, so a plain href download works.
+    // Session cookie rides along with the top-level navigation; no CSRF on GET.
     const q = folder ? `?folder=${encodeURIComponent(folder)}` : '';
     window.location.href = `/admin/api/pages-export${q}`;
   }
@@ -109,9 +108,8 @@ export default function PagesList() {
     onError: (err) => setImportMsg(`Import failed: ${err.message}`),
   });
 
-  function onImportFiles(fileList) {
-    const files = Array.from(fileList || []).filter(Boolean);
-    if (files.length === 0) return;
+  function onImportFiles(files) {
+    if (!files || files.length === 0) return;
     setImportMsg(null);
     importMut.mutate(files);
   }
@@ -185,21 +183,13 @@ export default function PagesList() {
                 Download
               </Button>
               <Button
-                variant="secondary"
-                onClick={() => importInputRef.current?.click()}
-                disabled={importMut.isPending}
-                aria-busy={importMut.isPending}
+                variant={importOpen ? 'primary' : 'secondary'}
+                onClick={() => { setImportOpen((v) => !v); setImportMsg(null); }}
+                aria-expanded={importOpen}
+                aria-controls="pages-import-region"
               >
-                {importMut.isPending ? 'Importing…' : 'Import'}
+                Import
               </Button>
-              <input
-                ref={importInputRef}
-                type="file"
-                accept=".md,.zip,application/zip,text/markdown"
-                multiple
-                hidden
-                onChange={(e) => { onImportFiles(e.target.files); e.target.value = ''; }}
-              />
               <Button onClick={() => navigate(`/new/${encodeURIComponent(folder)}`)}>
                 New page
               </Button>
@@ -208,12 +198,17 @@ export default function PagesList() {
         </div>
       </header>
 
-      {importMsg && (
-        <div
-          role="status"
-          className="border-b border-zinc-100 bg-zinc-50 px-6 py-2.5 text-[13px] text-zinc-700"
-        >
-          {importMsg}
+      {folder && importOpen && (
+        <div id="pages-import-region" className="space-y-3 border-b border-zinc-100 bg-zinc-50 px-6 py-5">
+          <Dropzone
+            accept=".md,.zip,application/zip,text/markdown" multiple
+            disabled={importMut.isPending}
+            label="Drop .md or .zip files here"
+            hint={`Files import into ${folder}; existing slugs overwrite. ZIPs can carry per-post uploads.`}
+            buttonLabel={importMut.isPending ? 'Importing…' : 'Choose files'}
+            onFiles={onImportFiles}
+          />
+          {importMsg && <div role="status" aria-live="polite" className="text-[13px] text-zinc-700">{importMsg}</div>}
         </div>
       )}
 
