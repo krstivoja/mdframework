@@ -33,7 +33,7 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-zinc-100 px-4">
       <form
         onSubmit={onSubmit}
-        className="w-full max-w-sm space-y-4 rounded-lg border border-zinc-200 bg-white p-6 shadow-sm"
+        className="w-full max-w-sm space-y-4 rounded-lg border border-zinc-200 bg-white p-6 shadow-card"
       >
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-md bg-zinc-900 text-sm font-semibold text-white">M</span>

@@ -73,7 +73,7 @@ function ToastItem({ toast, onDismiss }) {
   return (
     <div
       onClick={onDismiss}
-      className={`pointer-events-auto flex max-w-sm cursor-pointer items-center gap-2 rounded-md px-3.5 py-2 text-[13px] font-medium shadow-lg transition-all duration-200 ${
+      className={`pointer-events-auto flex max-w-sm cursor-pointer items-center gap-2 rounded-md px-3.5 py-2 text-[13px] font-medium shadow-modal transition-all duration-200 ${
         tones[toast.tone] || tones.success
       } ${shown ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}
       role="status"

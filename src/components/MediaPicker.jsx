@@ -43,7 +43,7 @@ export default function MediaPicker({ open, onClose, onPick, pagePath = '' }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex h-[80vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg bg-white shadow-lg"
+        className="flex h-[80vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg bg-white shadow-modal"
       >
         <header className="flex items-center justify-between border-b border-zinc-100 px-5 py-3">
           <h2 id={titleId} className="sr-only">Media picker</h2>

@@ -162,13 +162,13 @@ Three fixed heights keep inputs & buttons on a shared baseline:
 
 ### Elevation (shadow system)
 
-Three-level scale, very subtle (this is a B&W system — shadows are structural, not decorative):
+Three-level scale, very subtle (this is a B&W system — shadows are structural, not decorative). Each level is a **two-part recipe** — a soft ambient shadow plus a tighter contact shadow — so the lift reads as physical depth, not a single fuzzy halo (per *Refactoring UI* Ch. 6).
 
-- `--shadow-sm`: `0 1px 2px rgba(0,0,0,.05)` — resting state for cards, media items.
-- `--shadow-md`: `0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -2px rgba(0,0,0,.05)` — hover on cards.
-- `--shadow-lg`: `0 16px 40px rgba(0,0,0,.12)` — modal dialogs, floating toast.
+- `--elevation-1` → `shadow-card`: `0 1px 2px rgba(0,0,0,.06), 0 1px 1px rgba(0,0,0,.04)` — cards, sidebar, list, badge background.
+- `--elevation-2` → `shadow-popover`: `0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -2px rgba(0,0,0,.05)` — popover, menu, hover lift, dropdown.
+- `--elevation-3` → `shadow-modal`: `0 12px 32px rgba(0,0,0,.12), 0 2px 4px rgba(0,0,0,.06)` — modal, dialog, full-page sheet, floating toast.
 
-Active theme card uses a dual-shadow trick: `0 0 0 1px var(--primary), var(--shadow-sm)` — the primary color simulates a 2px border without shifting layout.
+Active theme card uses a dual-shadow trick: `0 0 0 1px var(--primary), var(--elevation-1)` — the primary color simulates a 2px border without shifting layout.
 
 ### Borders
 
@@ -197,7 +197,7 @@ Inputs also get a soft triple shadow on focus: `box-shadow: 0 0 0 3px rgba(9, 9,
 - **Primary button:** bg → `--primary-hover` (zinc-800) on hover. No press-shrink.
 - **Secondary button:** bg → `--surface-2` on hover; border stays `--border`.
 - **Danger button:** bg → `--danger-hover` (#b91c1c).
-- **Media item / theme card / starter card:** `--shadow-sm` → `--shadow-md` on hover; no transform.
+- **Media item / theme card / starter card:** `--elevation-1` → `--elevation-2` on hover; no transform.
 - **Image picker item:** border → `--primary`, plus 1px primary ring-shadow.
 - **Active sidebar link:** inverted — bg `--primary`, text `--primary-fg` (white).
 - **No scale transforms.** The admin stays still — shadow + color swap only.
@@ -244,9 +244,9 @@ The admin has **no stock imagery**. Product uses real uploaded user content (jpg
 
 Three card types, all share the same vocabulary:
 
-- **Admin card:** white bg, 1px border, radius-lg (8px), padding `--space-6`, shadow-sm. Always the root container of a page's content.
-- **Media item / theme card / starter card:** 1px border, radius-md/lg, `overflow: hidden` so the image pins to the top edge with no radius mismatch. Shadow-sm resting → shadow-md hover.
-- **Taxonomy item:** flatter — 1px border, radius-md, padding `--space-4`, shadow-sm. Sits in a stacked list.
+- **Admin card:** white bg, 1px border, radius-lg (8px), padding `--space-6`, `shadow-card`. Always the root container of a page's content.
+- **Media item / theme card / starter card:** 1px border, radius-md/lg, `overflow: hidden` so the image pins to the top edge with no radius mismatch. `shadow-card` resting → `shadow-popover` hover.
+- **Taxonomy item:** flatter — 1px border, radius-md, padding `--space-4`, `shadow-card`. Sits in a stacked list.
 
 ### Badges & chips
 
@@ -273,7 +273,7 @@ No gradients at all. Protection is handled by **solid fills on capsules** — th
 
 ### Toast
 
-Bottom-right fixed, `--space-6` offset. Primary-bg by default; `--media-toast--success` switches to green; `--media-toast--error` to red. `shadow-lg`, 2.8s dwell.
+Bottom-right fixed, `--space-6` offset. Primary-bg by default; `--media-toast--success` switches to green; `--media-toast--error` to red. `shadow-modal`, 2.8s dwell.
 
 ---
 

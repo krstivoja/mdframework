@@ -132,7 +132,7 @@ export default function PagesList() {
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm" aria-hidden="true">
+      <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-card" aria-hidden="true">
         <div className="h-6 w-40 animate-pulse rounded bg-zinc-200" />
         <div className="mt-6 space-y-3">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -147,7 +147,7 @@ export default function PagesList() {
   const title = folder ? cap(folder) : 'All Content';
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white shadow-sm">
+    <div className="rounded-lg border border-zinc-200 bg-white shadow-card">
       <header className="flex flex-wrap items-center gap-3 border-b border-zinc-100 px-6 py-5">
         <h1 className="flex items-center gap-2 text-[20px] font-semibold tracking-tight">
           {title}

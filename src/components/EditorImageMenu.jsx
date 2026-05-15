@@ -106,7 +106,7 @@ export default function EditorImageMenu({
     <div
       data-editor-image-menu
       style={{ position: 'fixed', top, left, zIndex: 60 }}
-      className="flex items-center gap-1 rounded-md border border-zinc-200 bg-white p-1 shadow-md"
+      className="flex items-center gap-1 rounded-md border border-zinc-200 bg-white p-1 shadow-popover"
       role="toolbar"
       aria-label="Image actions"
     >

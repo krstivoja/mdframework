@@ -41,7 +41,7 @@ export default function ConfirmDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
-        className="w-full max-w-sm rounded-lg bg-white p-5 shadow-xl"
+        className="w-full max-w-sm rounded-lg bg-white p-5 shadow-modal"
       >
         <h2 id="confirm-dialog-title" className="text-base font-semibold text-zinc-900">{title}</h2>
         {message && <p className="mt-2 text-sm text-zinc-600">{message}</p>}

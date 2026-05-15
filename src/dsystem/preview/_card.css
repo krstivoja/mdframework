@@ -101,5 +101,5 @@ body {
 .admin-card {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius-lg); padding: var(--space-4);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--elevation-1);
 }

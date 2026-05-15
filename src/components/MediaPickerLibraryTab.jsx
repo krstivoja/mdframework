@@ -42,7 +42,7 @@ export default function MediaPickerLibraryTab({ onPick, pagePath }) {
             type="button"
             onClick={() => onPick({ url: f.url, alt: f.alt || f.name })}
             aria-label={`Choose ${f.name}`}
-            className="group w-full overflow-hidden rounded-lg border border-zinc-200 bg-white text-left transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20"
+            className="group w-full overflow-hidden rounded-lg border border-zinc-200 bg-white text-left transition-shadow hover:shadow-popover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20"
           >
             <img
               src={f.thumb_url || f.url}

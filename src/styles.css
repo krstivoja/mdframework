@@ -44,6 +44,14 @@
   --color-success-soft:   var(--success-soft-bg);
   --color-warning-soft:   var(--warning-soft-bg);
   --color-warning-soft-fg: var(--warning-soft-fg);
+
+  /* Three-step elevation system — generates `shadow-card`,
+     `shadow-popover`, `shadow-modal` utilities. See the dsystem
+     `colors_and_type.css` for the underlying recipes and the surfaces
+     each level is intended for. */
+  --shadow-card:    var(--elevation-1);
+  --shadow-popover: var(--elevation-2);
+  --shadow-modal:   var(--elevation-3);
 }
 
 html, body, #root {

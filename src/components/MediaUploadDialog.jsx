@@ -89,7 +89,7 @@ export default function MediaUploadDialog({ open, onClose }) {
       aria-modal="true"
       aria-labelledby="media-upload-title"
     >
-      <div className="flex max-h-[80vh] w-full max-w-lg flex-col overflow-hidden rounded-lg bg-white shadow-lg">
+      <div className="flex max-h-[80vh] w-full max-w-lg flex-col overflow-hidden rounded-lg bg-white shadow-modal">
         <header className="flex items-center justify-between border-b border-zinc-100 px-5 py-3">
           <h2 id="media-upload-title" className="text-base font-semibold text-zinc-900">Upload media</h2>
           <Button variant="ghost" onClick={onClose} disabled={busy}>Close</Button>
