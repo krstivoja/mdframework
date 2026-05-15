@@ -134,6 +134,8 @@ All endpoints accept and return JSON. Mutating requests must include the CSRF to
 | `POST` | `/admin/api/pages` | Create a page |
 | `PUT`  | `/admin/api/pages/{path}` | Update a page |
 | `DELETE` | `/admin/api/pages/{path}` | Delete a page |
+| `GET`  | `/admin/api/pages-export[?folder=…]` | Download a `.zip` of pages in `folder` (or all content). Includes per-post upload directories alongside each `.md` |
+| `POST` | `/admin/api/pages-import` | Import pages from one or more files (multipart `files[]` accepting `.md` or `.zip`, optional `folder` field for loose .md files). Existing slugs are overwritten |
 | `GET`  | `/admin/api/media[?page_path=…]` | List media (optionally including a page's attachments) |
 | `POST` | `/admin/api/media` | Upload (multipart `file` + optional `page_path`) |
 | `PATCH` | `/admin/api/media/{name}` | Update alt/caption sidecar |
@@ -161,7 +163,7 @@ npm install
 npm run dev    # Vite dev server on :5173 with HMR
 ```
 
-Then load `http://<your-host>/admin/` in a browser. The PHP shell auto-detects the dev server (via the `app/cms/.vite-hot` file Vite writes on listen) and injects script tags pointing to `localhost:5173`. React Fast Refresh + Tailwind hot-reload work without reload.
+Then load `http://<your-host>/admin/` in a browser. The PHP shell auto-detects the dev server (via the `app/src/.vite-hot` file Vite writes on listen) and injects script tags pointing to `localhost:5173`. React Fast Refresh + Tailwind hot-reload work without reload.
 
 ```bash
 npm run build  # Outputs hashed assets + manifest to app/public/cms/dist/
@@ -169,7 +171,7 @@ npm run build  # Outputs hashed assets + manifest to app/public/cms/dist/
 
 In production (no dev server), PHP reads `app/public/cms/dist/.vite/manifest.json` and emits the hashed `<script>`/`<link>` tags.
 
-If a stale `.vite-hot` file ever points to a dead dev server (e.g. after an ungraceful Vite shutdown), delete it: `rm app/cms/.vite-hot`. The PHP shell will fall back to the production manifest.
+If a stale `.vite-hot` file ever points to a dead dev server (e.g. after an ungraceful Vite shutdown), delete it: `rm app/src/.vite-hot`. The PHP shell will fall back to the production manifest.
 
 ## Path format for new pages
 

@@ -1,11 +1,12 @@
-import { memo, useCallback, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useMemo, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../lib/api.js';
+import { api, getCsrf } from '../lib/api.js';
 import { useConfirmDialog } from '../lib/hooks.js';
 import { cap, encodePath } from '../lib/utils.js';
-import { Badge, Button, ConfirmDialog, Input, Select } from '../components/ui/index.js';
+import { Button, ConfirmDialog, Input, Select } from '../components/ui/index.js';
 import { IconSearch } from '../components/icons.jsx';
+import PageRow from '../components/PageRow.jsx';
 
 // Mirrors dsystem ui_kit `PagesList.jsx` — card-wrapped, header with count
 // pill + filter toolbar, inline Draft badge, Edit + Delete row actions.
@@ -20,6 +21,8 @@ export default function PagesList() {
   // Bulk selection — tracks page paths the user has ticked. Cleared on
   // filter changes so what's "selected" always matches what's visible.
   const [selected, setSelected] = useState(() => new Set());
+  const [importMsg, setImportMsg] = useState(null);
+  const importInputRef = useRef(null);
   const { confirm, dialogProps } = useConfirmDialog();
 
   const { data, isLoading, error } = useQuery({
@@ -69,6 +72,48 @@ export default function PagesList() {
       else filtered.forEach((p) => next.delete(p.path));
       return next;
     });
+  }
+
+  function exportPages() {
+    // GET endpoint — auth is the session cookie which the browser sends
+    // with a top-level navigation, so a plain href download works.
+    const q = folder ? `?folder=${encodeURIComponent(folder)}` : '';
+    window.location.href = `/admin/api/pages-export${q}`;
+  }
+
+  const importMut = useMutation({
+    mutationFn: async (files) => {
+      const fd = new FormData();
+      if (folder) fd.append('folder', folder);
+      for (const f of files) fd.append('files[]', f);
+      const res = await fetch('/admin/api/pages-import', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'X-CSRF-Token': getCsrf() },
+        body: fd,
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Import failed');
+      return data;
+    },
+    onSuccess: (data) => {
+      const n = data.imported?.length || 0;
+      const errs = data.errors?.length || 0;
+      setImportMsg(
+        errs
+          ? `Imported ${n}; ${errs} skipped. ${data.errors.slice(0, 3).join(' ')}`
+          : `Imported ${n} ${n === 1 ? 'page' : 'pages'}.`,
+      );
+      qc.invalidateQueries({ queryKey: ['pages'] });
+    },
+    onError: (err) => setImportMsg(`Import failed: ${err.message}`),
+  });
+
+  function onImportFiles(fileList) {
+    const files = Array.from(fileList || []).filter(Boolean);
+    if (files.length === 0) return;
+    setImportMsg(null);
+    importMut.mutate(files);
   }
 
   async function bulkDelete() {
@@ -134,6 +179,25 @@ export default function PagesList() {
             <option value="live">Live</option>
             <option value="draft">Draft</option>
           </Select>
+          <Button variant="secondary" onClick={exportPages}>
+            {folder ? `Download ${folder}` : 'Download all'}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => importInputRef.current?.click()}
+            disabled={importMut.isPending}
+            aria-busy={importMut.isPending}
+          >
+            {importMut.isPending ? 'Importing…' : 'Import'}
+          </Button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".md,.zip,application/zip,text/markdown"
+            multiple
+            hidden
+            onChange={(e) => { onImportFiles(e.target.files); e.target.value = ''; }}
+          />
           {folder && (
             <Button onClick={() => navigate(`/new/${encodeURIComponent(folder)}`)}>
               New page
@@ -141,6 +205,15 @@ export default function PagesList() {
           )}
         </div>
       </header>
+
+      {importMsg && (
+        <div
+          role="status"
+          className="border-b border-zinc-100 bg-zinc-50 px-6 py-2.5 text-[13px] text-zinc-700"
+        >
+          {importMsg}
+        </div>
+      )}
 
       {visibleSelected.length > 0 && (
         <div className="flex items-center justify-between gap-3 border-b border-zinc-100 bg-zinc-50 px-6 py-2 text-[12px]">
@@ -224,41 +297,3 @@ export default function PagesList() {
     </div>
   );
 }
-
-const PageRow = memo(function PageRow({ page, showStatus, selected, onToggle, onEdit, onDelete }) {
-  const handleEdit = useCallback(() => onEdit(`/${page.path}`), [onEdit, page.path]);
-  const handleDelete = useCallback(() => onDelete(page), [onDelete, page]);
-  const handleToggle = useCallback((e) => onToggle(page.path, e.target.checked), [onToggle, page.path]);
-  return (
-    <tr className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50">
-      <td className="px-6 py-4">
-        <input
-          type="checkbox"
-          checked={selected}
-          onChange={handleToggle}
-          aria-label={`Select ${page.title || page.path}`}
-          className="h-4 w-4 cursor-pointer rounded border-zinc-300"
-        />
-      </td>
-      <td className="px-6 py-4">
-        <Link to={`/${page.path}`} className="font-semibold text-zinc-900 hover:underline">
-          {page.title || '(untitled)'}
-        </Link>
-      </td>
-      <td className="px-6 py-4 font-mono text-[12px] text-zinc-500">{page.path}</td>
-      {showStatus ? (
-        <td className="px-6 py-4">
-          <Badge tone={page.draft ? 'draft' : 'live'}>{page.draft ? 'Draft' : 'Live'}</Badge>
-        </td>
-      ) : (
-        <td className="px-6 py-4 text-zinc-500">{page.folder || '—'}</td>
-      )}
-      <td className="px-6 py-4">
-        <div className="flex justify-end gap-2">
-          <Button variant="secondary" size="sm" onClick={handleEdit}>Edit</Button>
-          <Button variant="danger" size="sm" onClick={handleDelete}>Delete</Button>
-        </div>
-      </td>
-    </tr>
-  );
-});

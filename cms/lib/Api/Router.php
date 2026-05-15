@@ -38,6 +38,12 @@ class Router
                 case 'pages':
                     PagesController::handle($rest, $method, $config);
                     return;
+                case 'pages-export':
+                    PagesIoController::export($method, $config);
+                    return;
+                case 'pages-import':
+                    PagesIoController::import($method, $config);
+                    return;
                 case 'media':
                     MediaController::handle($rest, $method, $config);
                     return;
