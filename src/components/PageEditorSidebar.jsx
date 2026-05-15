@@ -1,5 +1,5 @@
 import { publicUrl } from '../lib/utils.js';
-import { Button, ConfirmDialog, Field, Input, SegmentedControl, Select } from './ui/index.js';
+import { Button, Field, Input, SegmentedControl, Select } from './ui/index.js';
 import FeaturedImageField from './FeaturedImageField.jsx';
 import FilesPanel from './FilesPanel.jsx';
 import PageFields from './PageFields.jsx';
@@ -32,8 +32,6 @@ export default function PageEditorSidebar({
   del,
   markDirty,
   setDirty,
-  confirmDelete,
-  confirmProps,
 }) {
   return (
     <aside className="flex w-72 shrink-0 flex-col overflow-y-auto border-l border-zinc-200 bg-white">
@@ -134,15 +132,12 @@ export default function PageEditorSidebar({
         )}
 
         {!isNew && (
+          // Soft delete: clicking Delete trashes the page and surfaces an
+          // Undo toast on the destination screen. No modal — the toast is
+          // the safety net (10s window, server keeps the file for 24h).
           <Button
             variant="danger-outline"
-            onClick={async () => {
-              const ok = await confirmDelete({
-                title: 'Delete page',
-                message: `Delete "${title || path}"? This cannot be undone.`,
-              });
-              if (ok) del.mutate();
-            }}
+            onClick={() => del.mutate()}
             disabled={del.isPending}
             className="mt-3"
           >
@@ -150,7 +145,6 @@ export default function PageEditorSidebar({
           </Button>
         )}
       </div>
-      <ConfirmDialog {...confirmProps} />
 
       <PageFields
         folder={folder}

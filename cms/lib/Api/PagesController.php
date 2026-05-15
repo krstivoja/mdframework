@@ -82,6 +82,12 @@ class PagesController
         sort($folders);
 
         $pages = array_values($svc['index']->get(includeDrafts: true));
+
+        // Lazy purge — every list request prunes trash entries older than
+        // 24h. Cheap (a scandir + manifest read per entry) and means we
+        // don't need cron / scheduled jobs.
+        ServiceFactory::trash($config)->purgeStale();
+
         \json_response(['ok' => true, 'pages' => $pages, 'folders' => $folders]);
     }
 
@@ -231,8 +237,8 @@ class PagesController
     }
 
     /**
-     * @param array{paths: PathResolver, repo: ContentRepository} $svc
-     * @param array<string, mixed>                                $config
+     * @param array{paths: PathResolver, repo: ContentRepository, cache: CacheService} $svc
+     * @param array<string, mixed>                                                     $config
      */
     private static function delete(string $relPath, array $svc, array $config): void
     {
@@ -240,8 +246,48 @@ class PagesController
         if (!$abs) {
             \json_response(['ok' => false, 'error' => 'Not found'], 404);
         }
-        $svc['repo']->delete($relPath, $abs);
-        ServiceFactory::audit($config)->record('page.delete', $relPath);
-        \json_response(['ok' => true]);
+        $token = ServiceFactory::trash($config)->move($relPath);
+        if ($token === null) {
+            \json_response(['ok' => false, 'error' => "Couldn't move the page to trash."], 500);
+        }
+        // The trash move took the file off disk; the cache+index still
+        // think it's there, so wipe the same entries the repo would have.
+        $svc['cache']->clearPage($relPath);
+        $svc['cache']->clearIndex();
+        ServiceFactory::audit($config)->record('page.delete', $relPath, ['token' => $token]);
+        \json_response(['ok' => true, 'token' => $token]);
+    }
+
+    /**
+     * Restore a previously-trashed page by token. Returns the rel_path so
+     * the client can refresh navigation / scroll to it.
+     *
+     * @param array<string, mixed> $config
+     */
+    public static function restore(string $method, array $config): void
+    {
+        if ($method !== 'POST') {
+            \json_response(['ok' => false, 'error' => 'Method not allowed'], 405);
+        }
+        Router::requireAuth();
+        Router::requireCsrf();
+
+        $body  = Router::jsonBody();
+        $token = trim((string)($body['token'] ?? ''));
+        if ($token === '') {
+            \json_response(['ok' => false, 'error' => 'Missing token'], 400);
+        }
+
+        $relPath = ServiceFactory::trash($config)->restore($token);
+        if ($relPath === null) {
+            \json_response(['ok' => false, 'error' => "Couldn't restore from this token. It may have already been purged or restored."], 404);
+        }
+
+        $cache = ServiceFactory::cache($config);
+        $cache->clearPage($relPath);
+        $cache->clearIndex();
+        ServiceFactory::audit($config)->record('page.restore', $relPath, ['token' => $token]);
+
+        \json_response(['ok' => true, 'path' => $relPath]);
     }
 }

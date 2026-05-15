@@ -73,7 +73,12 @@ export default function Backup() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Backup</h1>
+      <header className="space-y-2">
+        <h1 className="text-xl font-semibold">Backup</h1>
+        <p className="max-w-2xl text-[13px] leading-relaxed text-zinc-500">
+          A backup is a single .zip of your content, media, themes, and site config — everything mdframework needs to bring this site back exactly as it is. There's no database to dump. Pick a scope below to download your first one.
+        </p>
+      </header>
 
       {msg && <Alert tone={msg.tone}>{msg.text}</Alert>}
 

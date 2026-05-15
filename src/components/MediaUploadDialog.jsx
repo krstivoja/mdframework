@@ -17,7 +17,7 @@ import { Alert, Button, Dropzone } from './ui/index.js';
  * the modal stays open if anything failed so the user can retry, otherwise
  * it auto-closes after a short delay.
  */
-export default function MediaUploadDialog({ open, onClose }) {
+export default function MediaUploadDialog({ open, onClose, initialFiles }) {
   const [items, setItems] = useState([]); // [{ id, file, status, error?, url? }]
   const toast = useToast();
 
@@ -27,9 +27,16 @@ export default function MediaUploadDialog({ open, onClose }) {
   });
 
   // Reset queue every time the modal re-opens so a previous run's results
-  // don't bleed into the next session.
+  // don't bleed into the next session. When the caller hands us files (the
+  // first-run dropzone in the Media screen), enqueue them immediately so the
+  // user sees one continuous upload flow instead of "drop, then drop again".
   useEffect(() => {
-    if (open) setItems([]);
+    if (!open) return;
+    setItems([]);
+    if (initialFiles && initialFiles.length > 0) {
+      enqueue(initialFiles);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   // Esc to close — but only when nothing's uploading, otherwise the user

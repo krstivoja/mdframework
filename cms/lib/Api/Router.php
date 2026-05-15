@@ -44,6 +44,9 @@ class Router
                 case 'pages-import':
                     PagesIoController::import($method, $config);
                     return;
+                case 'pages-restore':
+                    PagesController::restore($method, $config);
+                    return;
                 case 'media':
                     MediaController::handle($rest, $method, $config);
                     return;

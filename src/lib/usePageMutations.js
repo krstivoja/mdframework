@@ -31,13 +31,37 @@ export function usePageMutations({
   const navigate = useNavigate();
   const toast = useToast();
 
+  // Delete moves the page to trash and returns a token. We navigate back to
+  // the folder list and surface an Undo toast there — the editor itself is
+  // gone by the time the user reaches for it, so showing the toast at the
+  // destination is what makes Undo discoverable.
   const del = useMutation({
-    mutationFn: () => api.delete(`/pages/${encodePath(path)}`),
-    onSuccess: () => {
+    mutationFn: async () => {
+      const data = await api.delete(`/pages/${encodePath(path)}`);
+      return { token: data?.token, title: title || path };
+    },
+    onSuccess: ({ token, title: pageTitle }) => {
       qc.invalidateQueries({ queryKey: ['pages'] });
       setDirty(false);
       navigate(`/${encodeURIComponent(folder)}`, { replace: true });
+      toast.show(`Deleted "${pageTitle}".`, {
+        duration: 10000,
+        action: token ? {
+          label: 'Undo',
+          onClick: async () => {
+            try {
+              const res = await api.post('/pages-restore', { token });
+              qc.invalidateQueries({ queryKey: ['pages'] });
+              toast.show('Restored.', { tone: 'info', duration: 1800 });
+              if (res?.path) navigate(`/${encodePath(res.path)}`);
+            } catch {
+              toast.show("Couldn't restore — it may have already been purged.", { tone: 'error' });
+            }
+          },
+        } : undefined,
+      });
     },
+    onError: (err) => toast.show(err.message || "Couldn't delete.", { tone: 'error' }),
   });
 
   const save = useMutation({

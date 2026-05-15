@@ -6,7 +6,6 @@ import { encodePath, slugify } from '../lib/utils.js';
 import { useDirty } from '../lib/dirty.jsx';
 import { html as beautifyHtml } from 'js-beautify';
 import { Alert, Button, Input } from '../components/ui/index.js';
-import { useConfirmDialog } from '../lib/hooks.js';
 import { deleteImage, replaceImageUrl } from '../lib/editorBody.js';
 import { usePageMutations } from '../lib/usePageMutations.js';
 import { useToastUiEditor } from '../lib/useToastUiEditor.js';
@@ -23,7 +22,6 @@ export default function PageEditor() {
   const isNew = slugPath === '';
   const path = isNew ? '' : `${folder}/${slugPath}`;
   const { setDirty } = useDirty();
-  const { confirm: confirmDelete, dialogProps: confirmProps } = useConfirmDialog();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['page', path],
@@ -264,8 +262,6 @@ export default function PageEditor() {
         del={del}
         markDirty={markDirty}
         setDirty={setDirty}
-        confirmDelete={confirmDelete}
-        confirmProps={confirmProps}
       />
 
       <MediaPicker

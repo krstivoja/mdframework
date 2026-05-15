@@ -2,11 +2,12 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, getCsrf } from '../lib/api.js';
-import { useConfirmDialog } from '../lib/hooks.js';
-import { cap, encodePath } from '../lib/utils.js';
-import { Button, ConfirmDialog, Dropzone, Input, Select } from '../components/ui/index.js';
+import { usePageTrash } from '../lib/usePageTrash.js';
+import { cap } from '../lib/utils.js';
+import { Button, Dropzone, Input, Select } from '../components/ui/index.js';
 import { IconSearch } from '../components/icons.jsx';
 import PageRow from '../components/PageRow.jsx';
+import PagesListEmptyState from '../components/PagesListEmptyState.jsx';
 
 // Mirrors dsystem ui_kit `PagesList.jsx` — card-wrapped, header with count
 // pill + filter toolbar, inline Draft badge, Edit + Delete row actions.
@@ -23,16 +24,11 @@ export default function PagesList() {
   const [selected, setSelected] = useState(() => new Set());
   const [importMsg, setImportMsg] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
-  const { confirm, dialogProps } = useConfirmDialog();
+  const { del, deleteMany } = usePageTrash();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['pages'],
     queryFn: () => api.get('/pages'),
-  });
-
-  const del = useMutation({
-    mutationFn: (path) => api.delete(`/pages/${encodePath(path)}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['pages'] }),
   });
 
   const filtered = useMemo(() => {
@@ -114,20 +110,11 @@ export default function PagesList() {
     importMut.mutate(files);
   }
 
-  async function bulkDelete() {
+  function bulkDelete() {
     if (visibleSelected.length === 0) return;
-    const ok = await confirm({
-      title: `Delete ${visibleSelected.length} pages`,
-      message: `Delete ${visibleSelected.length} selected ${visibleSelected.length === 1 ? 'page' : 'pages'}? This cannot be undone.`,
-    });
-    if (!ok) return;
-    // Run sequentially so a failure doesn't bury earlier successes; the
-    // mutation cache invalidates only when everything's done.
-    for (const path of visibleSelected) {
-      try { await api.delete(`/pages/${encodePath(path)}`); } catch { /* keep going */ }
-    }
+    const paths = [...visibleSelected];
     setSelected(new Set());
-    qc.invalidateQueries({ queryKey: ['pages'] });
+    deleteMany(paths);
   }
 
   if (isLoading) {
@@ -249,27 +236,12 @@ export default function PagesList() {
         </thead>
         <tbody>
           {filtered.length === 0 && (
-            <tr>
-              <td colSpan={5} className="px-6 py-12 text-center">
-                <div className="mx-auto max-w-sm space-y-3 text-zinc-500">
-                  <div className="text-sm font-semibold text-zinc-700">
-                    {query || statusFilter ? 'No pages match your filter' : 'No pages yet'}
-                  </div>
-                  <div className="text-xs">
-                    {query || statusFilter
-                      ? 'Try clearing the search or status filter.'
-                      : folder
-                        ? `Create your first page under ${folder} to get started.`
-                        : 'Pick a folder from the sidebar and add a page.'}
-                  </div>
-                  {folder && !query && !statusFilter && (
-                    <Button onClick={() => navigate(`/new/${encodeURIComponent(folder)}`)}>
-                      New page
-                    </Button>
-                  )}
-                </div>
-              </td>
-            </tr>
+            <PagesListEmptyState
+              folder={folder}
+              filterActive={!!(query || statusFilter)}
+              columnSpan={5}
+              onNew={() => navigate(`/new/${encodeURIComponent(folder)}`)}
+            />
           )}
           {filtered.map(p => (
             <PageRow
@@ -279,18 +251,11 @@ export default function PagesList() {
               selected={selected.has(p.path)}
               onToggle={toggleOne}
               onEdit={navigate}
-              onDelete={async (page) => {
-                const ok = await confirm({
-                  title: 'Delete page',
-                  message: `Delete "${page.title || page.path}"? This cannot be undone.`,
-                });
-                if (ok) del.mutate(page.path);
-              }}
+              onDelete={(page) => del.mutate(page)}
             />
           ))}
         </tbody>
       </table>
-      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

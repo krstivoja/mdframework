@@ -13,6 +13,7 @@ use MD\Index;
 use MD\MediaService;
 use MD\PathResolver;
 use MD\ThemeService;
+use MD\Trash;
 
 /**
  * Single source of truth for the service graph that controllers need to
@@ -85,5 +86,11 @@ final class ServiceFactory
     public static function audit(array $config): AuditLog
     {
         return new AuditLog($config['cacheDir']);
+    }
+
+    /** @param array<string, mixed> $config */
+    public static function trash(array $config): Trash
+    {
+        return new Trash($config['cacheDir'], $config['contentDir']);
     }
 }

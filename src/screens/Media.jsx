@@ -3,18 +3,28 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
 import { useConfirmDialog } from '../lib/hooks.js';
 import { extLabel, isImageFile } from '../lib/utils.js';
-import { Button, ConfirmDialog } from '../components/ui/index.js';
+import { Button, ConfirmDialog, Dropzone } from '../components/ui/index.js';
 import MediaUploadDialog from '../components/MediaUploadDialog.jsx';
 
 export default function Media() {
   const qc = useQueryClient();
   const [uploadOpen, setUploadOpen] = useState(false);
+  // When the empty-state dropzone receives files, we hand them to the upload
+  // dialog so the user doesn't have to re-drop inside the modal.
+  const [pendingFiles, setPendingFiles] = useState(null);
   const { confirm, dialogProps } = useConfirmDialog();
 
   const { data, isLoading } = useQuery({
     queryKey: ['media'],
     queryFn: () => api.get('/media'),
   });
+  // Drives the size-limit hint in the empty-state dropzone. Falls back to the
+  // 5 MB default when settings haven't loaded yet — better than rendering "0 MB".
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => api.get('/settings'),
+  });
+  const maxMb = settings?.uploads?.max_mb ?? 5;
 
   const del = useMutation({
     mutationFn: (name) => api.delete(`/media/${encodeURIComponent(name)}`),
@@ -38,18 +48,39 @@ export default function Media() {
         <Button onClick={() => setUploadOpen(true)}>Upload</Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-        {(data?.files || []).length === 0 && (
-          <div className="col-span-full rounded-lg border border-dashed border-zinc-300 bg-white p-10 text-center text-sm text-zinc-500">
-            No files yet.
+      {(data?.files || []).length === 0 ? (
+        <div className="space-y-3 rounded-lg border border-zinc-200 bg-white p-6 shadow-card">
+          <div className="space-y-1 text-center">
+            <h2 className="text-base font-semibold text-zinc-800">Your media library is empty</h2>
+            <p className="text-[13px] text-zinc-500">
+              Upload images, PDFs, or ZIPs and link them from any page. Files live in site/uploads/ and are served straight off disk — no database, no resize step.
+            </p>
           </div>
-        )}
-        {(data?.files || []).map(f => (
-          <MediaItem key={f.name + (f.url || '')} file={f} onDelete={() => askDelete(f.name)} />
-        ))}
-      </div>
+          <Dropzone
+            accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.pdf,.zip,image/*,application/pdf,application/zip"
+            multiple
+            label="Drop files here to upload"
+            hint={`JPG · PNG · GIF · WebP · SVG · PDF · ZIP — up to ${maxMb} MB each`}
+            buttonLabel="Choose files"
+            onFiles={(files) => { setPendingFiles(files); setUploadOpen(true); }}
+          />
+          <p className="text-center text-[11px] text-zinc-400">
+            Change the size limit under Settings → Uploads.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          {(data?.files || []).map(f => (
+            <MediaItem key={f.name + (f.url || '')} file={f} onDelete={() => askDelete(f.name)} />
+          ))}
+        </div>
+      )}
 
-      <MediaUploadDialog open={uploadOpen} onClose={() => setUploadOpen(false)} />
+      <MediaUploadDialog
+        open={uploadOpen}
+        onClose={() => { setUploadOpen(false); setPendingFiles(null); }}
+        initialFiles={pendingFiles}
+      />
       <ConfirmDialog {...dialogProps} />
     </div>
   );
