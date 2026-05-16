@@ -75,12 +75,15 @@ class Env
 
         // Replace the hash define. The value side is matched as "anything up
         // to the closing paren" so both `'literal'` and the getenv-fallback
-        // form `getenv('MD_ADMIN_PASS_HASH') ?: '…'` are recognised.
+        // form `getenv('MD_ADMIN_PASS_HASH') ?: '…'` are recognised. Using
+        // preg_replace_callback (instead of preg_replace) avoids the trap
+        // where `$2`, `$10`, etc. in a bcrypt hash get interpreted as
+        // capture-group backreferences and silently stripped.
         $hashLine = "define('MD_ADMIN_PASS_HASH', '" . addslashes($hash) . "');";
         $count    = 0;
-        $out      = preg_replace(
+        $out      = preg_replace_callback(
             '/define\(\s*[\'"]MD_ADMIN_PASS_HASH[\'"]\s*,\s*[^)]*(?:\([^)]*\))?[^)]*\);/',
-            $hashLine,
+            fn() => $hashLine,
             $src,
             1,
             $count,

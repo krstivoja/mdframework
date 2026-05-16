@@ -7,6 +7,15 @@ layout: default
 
 All notable changes to MD Framework are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.54] — 2026-05-16
+
+### Fixed
+- **Auto-hashed admin passwords got mangled, breaking first-time login.** `Env::upgradePlaintextPassword` used `preg_replace` to write the bcrypt hash into `config.php`, but PHP's replacement string interpreter treated the `$2`, `$10` segments of `$2y$10$…` as capture-group backreferences and stripped them — turning `$2y$10$AHxA…` into `y$AHxA…`. The stored hash was non-functional and `password_verify` always returned false. Switched to `preg_replace_callback` (which doesn't interpret `$<n>` in the replacement) and added two regression tests covering the bcrypt-`$` case and the `getenv() ?: …` line format from `config.example.php`.
+- **PHPUnit silently exited on the `MD_BOOT` guard.** Tests ran outside an HTTP entry point so `MD_BOOT` was never defined, and the `defined('MD_BOOT') || exit;` at the top of every `cms/lib/*.php` caused the test runner to bail before reporting anything. Added `cms/tests/bootstrap.php` that defines `MD_BOOT` before composer's autoload runs; `phpunit.xml` now points at it. All 10 Env tests pass.
+
+### Migration
+- Existing 0.0.53 installs where you let `MD_ADMIN_PASS=admin` auto-upgrade have a corrupted `MD_ADMIN_PASS_HASH` in `config.php`. Easiest fix: edit `config.php`, restore the `getenv('MD_ADMIN_PASS_HASH') ?: ''` line and add `define('MD_ADMIN_PASS', 'admin');` back, then visit `/admin` once with the fixed framework to re-trigger the auto-upgrade. Or generate the hash by hand with `php -r "echo password_hash('admin', PASSWORD_BCRYPT);"` and paste it directly.
+
 ## [0.0.53] — 2026-05-16
 
 ### Fixed
@@ -153,6 +162,7 @@ All notable changes to MD Framework are documented here. The format is based on 
 - Admin UI at `/admin/` with EasyMDE editor, image uploads, CSRF protection, bcrypt-hashed credentials in `.env`.
 - PHP template system with `render()` helper and `_layout.php` output-buffer pattern.
 
+[0.0.54]: https://github.com/krstivoja/mdframework/releases/tag/0.0.54
 [0.0.53]: https://github.com/krstivoja/mdframework/releases/tag/0.0.53
 [0.0.52]: https://github.com/krstivoja/mdframework/releases/tag/0.0.52
 [1.0.0]: https://github.com/krstivoja/mdframework/releases/tag/v1.0.0
