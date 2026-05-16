@@ -8,6 +8,7 @@ $routeType = $route_type ?? '?';
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title><?= e($pageTitle) ?> — Debug (PHP)</title>
+  <?= seo_head() ?>
   <style>
     body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; background:#f4f4f5; color:#18181b; }
     main { max-width: 960px; margin: 0 auto; padding: 1.5rem; }

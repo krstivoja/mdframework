@@ -150,6 +150,25 @@ class SeoTest extends TestCase
         $this->assertStringContainsString('twitter:site" content="@krstivoja"', $tags);
     }
 
+    public function testCanonicalAutoDerivedFromCurrentUrl(): void
+    {
+        $tags = Seo::tagsFor('post', ['meta' => ['title' => 'X']], $this->baseConfig(), self::URL);
+
+        $this->assertStringContainsString('<link rel="canonical" href="https://example.com/blog/hello-world">', $tags);
+    }
+
+    public function testCanonicalFrontMatterOverridesAutoUrl(): void
+    {
+        $tags = Seo::tagsFor('post', [
+            'meta' => ['title' => 'X', 'canonical' => 'https://canonical.example/another'],
+        ], $this->baseConfig(), self::URL);
+
+        $this->assertStringContainsString('<link rel="canonical" href="https://canonical.example/another">', $tags);
+        // og:url still reflects the current request — only canonical should
+        // change. The negative assertion targets only the canonical line.
+        $this->assertStringNotContainsString('canonical" href="https://example.com', $tags);
+    }
+
     public function testEmptyTwitterHandleIsOmitted(): void
     {
         $config = $this->baseConfig();

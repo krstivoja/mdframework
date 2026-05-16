@@ -34,6 +34,27 @@ defined('MD_BOOT') || exit;
 final class Seo
 {
     /**
+     * Flipped by `seo_head()` so render()'s implicit `</head>` injection
+     * skips on requests where the theme placed the SEO block itself.
+     */
+    private static bool $emittedThisRequest = false;
+
+    public static function markEmittedThisRequest(): void
+    {
+        self::$emittedThisRequest = true;
+    }
+
+    public static function wasEmittedThisRequest(): bool
+    {
+        return self::$emittedThisRequest;
+    }
+
+    public static function resetForNextRequest(): void
+    {
+        self::$emittedThisRequest = false;
+    }
+
+    /**
      * @param array<string, mixed> $vars   Template scope (meta, posts, …).
      * @param array<string, mixed> $config Full site config.
      * @return string Block of `<meta>` + `<script>` tags ready to inject, possibly empty.
@@ -64,6 +85,7 @@ final class Seo
         $out  = "\n  <!-- SEO injected by MD\\Seo -->\n";
         $out .= self::robotsTag($indexable);
         $out .= self::descriptionTag($description);
+        $out .= self::canonicalTag($meta, $absUrl);
 
         if (($seo['opengraph'] ?? true) === true) {
             $out .= self::openGraphTags($title, $description, $absUrl, $image, $type, $siteName, $locale);
@@ -149,6 +171,20 @@ final class Seo
     {
         if ($description === '') return '';
         return '  <meta name="description" content="' . self::esc($description) . '">' . "\n";
+    }
+
+    /**
+     * Per-page `meta.canonical` wins; otherwise emit the current absolute
+     * URL so paginated archives and trailing-slash variants point at the
+     * page's preferred location.
+     *
+     * @param array<string, mixed> $meta
+     */
+    private static function canonicalTag(array $meta, string $absUrl): string
+    {
+        $url = $meta['canonical'] ?? $absUrl;
+        if (!is_string($url) || $url === '') return '';
+        return '  <link rel="canonical" href="' . self::esc($url) . '">' . "\n";
     }
 
     private static function openGraphTags(string $title, string $description, string $url, string $image, string $type, string $siteName, string $locale): string

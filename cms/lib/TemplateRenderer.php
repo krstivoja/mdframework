@@ -45,6 +45,7 @@ final class TemplateRenderer
         }
         $this->twig->addFunction(new TwigFunction('paginate', 'paginate', $isSafe));
         $this->twig->addFunction(new TwigFunction('inspect', 'inspect', $isSafe));
+        $this->twig->addFunction(new TwigFunction('seo_head', 'seo_head', $isSafe));
         $this->twig->addFunction(new TwigFunction('partial', function (string $name, array $vars = []): string {
             ob_start();
             partial($name, $vars);

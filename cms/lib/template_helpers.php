@@ -120,6 +120,30 @@ if (!function_exists('slug_url')) {
     }
 }
 
+if (!function_exists('seo_head')) {
+    /**
+     * Theme-facing accessor for the SEO block bootstrap.php otherwise
+     * auto-injects before `</head>`. Use this when you want the tags at
+     * an explicit position in your `<head>` partial — calling it tells
+     * the framework to skip auto-injection so you don't get duplicates.
+     *
+     * Usage:
+     *   PHP:   <?= seo_head() ?>
+     *   Twig:  {{ seo_head()|raw }}
+     */
+    function seo_head(): string
+    {
+        $template = $GLOBALS['md_current_template'] ?? '';
+        $vars     = $GLOBALS['md_current_vars']     ?? [];
+        $config   = $GLOBALS['md_config'] ?? null;
+        $configArr = ($config && method_exists($config, 'all')) ? $config->all() : [];
+        $url      = (string)($_SERVER['REQUEST_URI'] ?? '/');
+        $out      = MD\Seo::tagsFor($template, $vars, $configArr, parse_url($url, PHP_URL_PATH) ?: '/');
+        MD\Seo::markEmittedThisRequest();
+        return $out;
+    }
+}
+
 if (!function_exists('inspect')) {
     /**
      * Render a pretty-printed, collapsible dump of any value as HTML. Useful

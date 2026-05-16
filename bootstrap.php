@@ -151,7 +151,13 @@ function render(string $template, array $vars = []): void
     // Buffer the rendered output so we can inject SEO tags into <head>
     // before flushing. Templates that don't produce HTML (feed.* writes
     // Atom XML and sets its own Content-Type) won't contain `</head>` and
-    // pass through untouched.
+    // pass through untouched. A theme that calls seo_head() explicitly
+    // flips MD\Seo::markEmittedThisRequest() so we skip the implicit
+    // injection here and don't double-emit.
+    MD\Seo::resetForNextRequest();
+    $GLOBALS['md_current_template'] = $template;
+    $GLOBALS['md_current_vars']     = $vars;
+
     ob_start();
     if (is_file($php)) {
         extract($vars, EXTR_SKIP);
@@ -161,7 +167,9 @@ function render(string $template, array $vars = []): void
     }
     $body = (string)ob_get_clean();
 
-    $body = inject_seo($body, $template, $vars);
+    if (!MD\Seo::wasEmittedThisRequest()) {
+        $body = inject_seo($body, $template, $vars);
+    }
 
     echo $body;
     admin_edit_button();

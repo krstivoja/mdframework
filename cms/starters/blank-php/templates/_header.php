@@ -9,8 +9,7 @@ $meta      = $meta ?? [];
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title><?= e($pageTitle) ?><?= !empty($page_title) ? ' — ' . e($siteName) : '' ?></title>
-  <?php if (!empty($meta['description'])): ?><meta name="description" content="<?= e($meta['description']) ?>"><?php endif; ?>
-  <?php if (!empty($meta['canonical'])): ?><link rel="canonical" href="<?= e($meta['canonical']) ?>"><?php endif; ?>
+  <?= seo_head() ?>
   <link rel="stylesheet" href="<?= e(asset_url('style.css')) ?>">
   <link rel="alternate" type="application/atom+xml" title="<?= e($siteName) ?>" href="/feed">
 </head>
