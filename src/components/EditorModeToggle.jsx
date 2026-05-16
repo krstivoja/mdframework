@@ -3,27 +3,20 @@ import { SegmentedControl } from './ui/index.js';
 
 // Editor view selector. Toast UI's own bottom-right switcher is hidden via
 // `hideModeSwitch: true`; this is the single source of truth for which
-// surface the user is editing in.
-//
-// `withFiles=true` appends a "Files" tab that the parent renders as the
-// per-post attachments grid in place of an editor surface — handy for
-// dragging in / managing the post's images without being stuck in the
-// sidebar's narrow column. Hidden on /new/* (no path = no folder yet).
-export default function EditorModeToggle({ mode, onChange, withFiles = false }) {
-  const options = [
-    { value: 'wysiwyg',  label: 'WYSIWYG'  },
-    { value: 'markdown', label: 'Markdown' },
-    { value: 'html',     label: 'HTML'     },
-  ];
-  if (withFiles) {
-    options.push({ value: 'files', label: 'Files' });
-  }
+// editing surface the user is on. Files is a sibling surface (rendered
+// by PageEditor as a separate button alongside Format) — it doesn't
+// appear here.
+export default function EditorModeToggle({ mode, onChange }) {
   return (
     <SegmentedControl
       ariaLabel="Editor mode"
       value={mode}
       onChange={onChange}
-      options={options}
+      options={[
+        { value: 'wysiwyg',  label: 'WYSIWYG'  },
+        { value: 'markdown', label: 'Markdown' },
+        { value: 'html',     label: 'HTML'     },
+      ]}
     />
   );
 }

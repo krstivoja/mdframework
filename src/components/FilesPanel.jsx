@@ -58,15 +58,32 @@ export default function FilesPanel({ pagePath }) {
     <div className="space-y-3">
       {uploadError && <Alert tone="error">{uploadError}</Alert>}
 
+      {/* Dropzone is on top because file lists grow — keeping the
+          upload target above the fold means the user doesn't have to
+          scroll back up to drag images in. */}
+      <Dropzone
+        accept="image/*"
+        multiple
+        disabled={busy}
+        label="Drop images here"
+        hint="Files land in this post's folder."
+        buttonLabel={busy ? 'Uploading…' : 'Choose files'}
+        onFiles={uploadFiles}
+      />
+
       {isLoading ? (
-        <div className="grid grid-cols-3 gap-2" aria-hidden="true">
+        <div
+          className="grid gap-2"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))' }}
+          aria-hidden="true"
+        >
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="aspect-square animate-pulse rounded-md bg-zinc-100" />
           ))}
         </div>
       ) : files.length === 0 ? (
         <p className="rounded-md border border-dashed border-zinc-200 px-3 py-4 text-center text-xs text-zinc-500">
-          No files yet — drop images below to attach them to this post.
+          No files yet — drop images above to attach them to this post.
         </p>
       ) : (
         // auto-fill keeps tiles ~120px wide regardless of container width.
@@ -113,16 +130,6 @@ export default function FilesPanel({ pagePath }) {
           ))}
         </ul>
       )}
-
-      <Dropzone
-        accept="image/*"
-        multiple
-        disabled={busy}
-        label="Drop images here"
-        hint="Files land in this post's folder."
-        buttonLabel={busy ? 'Uploading…' : 'Choose files'}
-        onFiles={uploadFiles}
-      />
 
       <ConfirmDialog {...dialogProps} />
     </div>

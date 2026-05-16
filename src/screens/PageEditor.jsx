@@ -66,11 +66,20 @@ export default function PageEditor() {
     try { localStorage.setItem('mdframework:editor-mode', editorMode); } catch { /* private mode etc. */ }
   }, [editorMode]);
 
-  // /new/* has no folder yet → Files tab would render an empty grid +
-  // useless upload box. Force the toggle back to an editor surface.
+  // /new/* has no folder yet → Files view would render an empty grid +
+  // dropzone with nowhere to upload to. Force back to an editor surface.
   useEffect(() => {
     if (isNew && editorMode === 'files') setEditorMode('wysiwyg');
   }, [isNew, editorMode]);
+
+  // While the user is on Files view we still want the editor toggle to
+  // visibly show *which* editor surface they'd return to. Remember the
+  // last editor surface (wysiwyg / markdown / html) and feed that into
+  // the SegmentedControl when the active mode is 'files'.
+  const lastEditorSurfaceRef = useRef(editorMode === 'files' ? 'wysiwyg' : editorMode);
+  useEffect(() => {
+    if (editorMode !== 'files') lastEditorSurfaceRef.current = editorMode;
+  }, [editorMode]);
   const [htmlValue, setHtmlValue] = useState('');
 
   // Media picker — opened from the editor's toolbar Image button (Toast UI's
@@ -211,10 +220,19 @@ export default function PageEditor() {
 
         <div className="flex items-center gap-2">
           <EditorModeToggle
-            mode={editorMode}
+            mode={editorMode === 'files' ? lastEditorSurfaceRef.current : editorMode}
             onChange={(next) => switchEditorMode(next, editorMode, edRef, htmlValue, setHtmlValue, setEditorMode)}
-            withFiles={!isNew}
           />
+          {!isNew && (
+            <Button
+              variant={editorMode === 'files' ? 'primary' : 'secondary'}
+              size="sm"
+              aria-pressed={editorMode === 'files'}
+              onClick={() => setEditorMode((m) => (m === 'files' ? lastEditorSurfaceRef.current : 'files'))}
+            >
+              Files
+            </Button>
+          )}
           {editorMode === 'html' && (
             <Button
               variant="secondary"

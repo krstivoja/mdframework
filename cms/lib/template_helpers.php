@@ -119,3 +119,36 @@ if (!function_exists('slug_url')) {
         return '/' . e($taxonomy) . '/' . e(MD\Index::slugify($term));
     }
 }
+
+if (!function_exists('inspect')) {
+    /**
+     * Render a pretty-printed, collapsible dump of any value as HTML. Useful
+     * inside theme templates while you're figuring out what variables the
+     * route handed you — pair with the `debug-twig` / `debug-php` starters,
+     * or sprinkle into a real theme during development.
+     *
+     * Output is fully escaped and labelled with the value's PHP type, so it
+     * is safe to drop straight into any template position.
+     *
+     * Usage:
+     *   PHP:   <?= inspect($meta, 'meta') ?>
+     *   Twig:  {{ inspect(meta, 'meta')|raw }}
+     */
+    function inspect(mixed $value, string $label = ''): string
+    {
+        $type = get_debug_type($value);
+        $body = htmlspecialchars(print_r($value, true), ENT_QUOTES, 'UTF-8');
+        $heading = $label !== ''
+            ? '<strong>' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</strong> '
+            : '';
+        $style = 'background:#0b0f19;color:#e5e7eb;border-radius:6px;padding:.75rem 1rem;'
+               . 'margin:.5rem 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;'
+               . 'font-size:12px;line-height:1.45;overflow-x:auto;';
+        return '<details class="md-inspect" open style="' . $style . '">'
+             . '<summary style="cursor:pointer;color:#a7f3d0;margin-bottom:.5rem">'
+             . $heading . '<code style="color:#fcd34d">' . $type . '</code>'
+             . '</summary>'
+             . '<pre style="margin:0;white-space:pre-wrap;word-break:break-word">' . $body . '</pre>'
+             . '</details>';
+    }
+}

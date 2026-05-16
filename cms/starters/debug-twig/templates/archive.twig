@@ -1,0 +1,13 @@
+{{ partial('header', { page_title: 'Archive route — ' ~ (folder|default('?')), route_type: 'archive' }) }}
+
+<h2>Route variables</h2>
+{{ inspect(folder, 'folder')|raw }}
+{{ inspect(posts, 'posts')|raw }}
+{{ inspect(intro, 'intro')|raw }}
+{{ inspect(page, 'page')|raw }}
+{{ inspect(total_pages, 'total_pages')|raw }}
+
+<h2>paginate() output</h2>
+{{ paginate(page|default(1), total_pages|default(1), '/' ~ (folder|default(''))) }}
+
+{{ partial('footer') }}
