@@ -72,14 +72,6 @@ export default function PageEditor() {
     if (isNew && editorMode === 'files') setEditorMode('wysiwyg');
   }, [isNew, editorMode]);
 
-  // While the user is on Files view we still want the editor toggle to
-  // visibly show *which* editor surface they'd return to. Remember the
-  // last editor surface (wysiwyg / markdown / html) and feed that into
-  // the SegmentedControl when the active mode is 'files'.
-  const lastEditorSurfaceRef = useRef(editorMode === 'files' ? 'wysiwyg' : editorMode);
-  useEffect(() => {
-    if (editorMode !== 'files') lastEditorSurfaceRef.current = editorMode;
-  }, [editorMode]);
   const [htmlValue, setHtmlValue] = useState('');
 
   // Media picker — opened from the editor's toolbar Image button (Toast UI's
@@ -220,20 +212,10 @@ export default function PageEditor() {
 
         <div className="flex items-center gap-2">
           <EditorModeToggle
-            mode={editorMode === 'files' ? lastEditorSurfaceRef.current : editorMode}
+            mode={editorMode}
             onChange={(next) => switchEditorMode(next, editorMode, edRef, htmlValue, setHtmlValue, setEditorMode)}
-            disabledValues={editorMode === 'files' ? ['html'] : []}
+            withFiles={!isNew}
           />
-          {!isNew && (
-            <Button
-              variant={editorMode === 'files' ? 'primary' : 'secondary'}
-              size="sm"
-              aria-pressed={editorMode === 'files'}
-              onClick={() => setEditorMode((m) => (m === 'files' ? lastEditorSurfaceRef.current : 'files'))}
-            >
-              Files
-            </Button>
-          )}
           {editorMode === 'html' && (
             <Button
               variant="secondary"

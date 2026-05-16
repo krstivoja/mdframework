@@ -7,6 +7,11 @@ layout: default
 
 All notable changes to MD Framework are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.65] — 2026-05-16
+
+### Changed
+- **Files goes back inside the editor toggle as a fourth tab** (`WYSIWYG / Markdown / HTML / Files`). The sibling-button variant from 0.0.63 made the active state hard to read — two things visually highlighted at once. The Format button stays on the right via `ml-auto`. HTML is no longer disabled while in Files view (clicking the HTML tab now exits Files into HTML directly, same as clicking any other tab).
+
 ## [0.0.64] — 2026-05-16
 
 ### Changed
@@ -220,6 +225,7 @@ All notable changes to MD Framework are documented here. The format is based on 
 - Admin UI at `/admin/` with EasyMDE editor, image uploads, CSRF protection, bcrypt-hashed credentials in `.env`.
 - PHP template system with `render()` helper and `_layout.php` output-buffer pattern.
 
+[0.0.65]: https://github.com/krstivoja/mdframework/releases/tag/0.0.65
 [0.0.64]: https://github.com/krstivoja/mdframework/releases/tag/0.0.64
 [0.0.63]: https://github.com/krstivoja/mdframework/releases/tag/0.0.63
 [0.0.62]: https://github.com/krstivoja/mdframework/releases/tag/0.0.62
