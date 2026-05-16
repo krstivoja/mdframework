@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api.js';
-import { appendBlock, findById, makeId, moveById, removeById, updateById } from '../../lib/blockHelpers.js';
+import {
+  appendBlock,
+  findById,
+  insertBlockAt,
+  makeId,
+  moveById,
+  moveToTarget,
+  removeById,
+  updateById,
+} from '../../lib/blockHelpers.js';
 import BlockInspector from './BlockInspector.jsx';
 import BlockPalette from './BlockPalette.jsx';
 import CodePanel from './CodePanel.jsx';
@@ -12,10 +21,10 @@ import VisualCanvas from './VisualCanvas.jsx';
 // Owns the block tree as controlled state; the parent (PageEditor) reads
 // `tree` and feeds it to the save mutation as the `blocks` field.
 //
-// v1 deliberately avoids drag/drop, cross-parent reordering, and inline
-// canvas editing — the inspector handles all field edits, the canvas
-// handles selection + move/delete + nesting visualization, the palette
-// adds blocks. Plenty for a real first pass; everything above is polish.
+// Drag/drop on the List view handles reordering and cross-parent nesting:
+// drag a row to move an existing block, drag a palette item to create one,
+// drop position (before / inside / after) comes from the cursor's vertical
+// position on the target row.
 export default function BlockComposer({ tree, onChange, pageMeta }) {
   const [selectedId, setSelectedId] = useState(null);
   const [leftTab, setLeftTab] = useState('palette');
@@ -91,13 +100,49 @@ export default function BlockComposer({ tree, onChange, pageMeta }) {
     onChange(appendBlock(tree, paragraph, parentId));
   }, [tree, registry, onChange]);
 
+  // Drag-drop targets: insert a new block from the palette, or move an
+  // existing block. `targetId === null` means "drop onto the tree root".
+  // Both helpers refuse self-drops and descendant-cycles.
+  const insertAt = useCallback((def, targetId, position) => {
+    onChange(insertBlockAt(tree, def, targetId, position));
+  }, [tree, onChange]);
+
+  const moveTo = useCallback((sourceId, targetId, position) => {
+    onChange(moveToTarget(tree, sourceId, targetId, position));
+  }, [tree, onChange]);
+
+  // While a palette drag is in flight, the left column needs to show a
+  // drop target — flip to the List-view tab. We remember the previous tab
+  // so we can flip back when the drag ends, which keeps the click-to-add
+  // workflow unbroken when the user changes their mind mid-drag.
+  useEffect(() => {
+    function onDragEnd() { setLeftTab((t) => (t === '__list_during_drag' ? 'palette' : t)); }
+    function onDragStart(e) {
+      const types = e.dataTransfer?.types;
+      if (types && Array.from(types).includes('application/x-fp-block-slug')) {
+        setLeftTab((t) => (t === 'palette' ? '__list_during_drag' : t));
+      }
+    }
+    window.addEventListener('dragstart', onDragStart);
+    window.addEventListener('dragend', onDragEnd);
+    return () => {
+      window.removeEventListener('dragstart', onDragStart);
+      window.removeEventListener('dragend', onDragEnd);
+    };
+  }, []);
+
   return (
     <div className="grid h-full min-h-0 flex-1 grid-cols-[260px_minmax(0,1fr)_300px]">
       {/* Left column: tabbed Add-block / List-view */}
       <aside className="flex min-h-0 flex-col overflow-hidden border-r border-zinc-200 bg-white">
         <div className="flex border-b border-zinc-100">
           <LeftTab active={leftTab === 'palette'} onClick={() => setLeftTab('palette')}>Add</LeftTab>
-          <LeftTab active={leftTab === 'list'}    onClick={() => setLeftTab('list')}>List view</LeftTab>
+          <LeftTab
+            active={leftTab === 'list' || leftTab === '__list_during_drag'}
+            onClick={() => setLeftTab('list')}
+          >
+            List view
+          </LeftTab>
         </div>
         {leftTab === 'palette' ? (
           <BlockPalette blocks={registry} onAdd={addBlock} addingTo={addingTo} />
@@ -107,6 +152,8 @@ export default function BlockComposer({ tree, onChange, pageMeta }) {
             registry={registry}
             selectedId={selectedId}
             onSelect={setSelectedId}
+            onMoveBlock={moveTo}
+            onInsertBlock={insertAt}
           />
         )}
       </aside>

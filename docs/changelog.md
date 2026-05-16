@@ -7,6 +7,14 @@ layout: default
 
 All notable changes to FrontPress Studio are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.69] — 2026-05-17
+
+### Added
+- **Drag-and-drop in the BlockComposer List view.** Drag any list row to move that block, or drag from the palette to insert a new one. Drop position derives from the cursor's vertical position on the target row: top quarter inserts before, bottom quarter inserts after, the middle (on container blocks only — section / columns) drops inside as a new last child. Empty space at the root of the list also accepts drops. A blue line at the matching edge previews the drop position before you release; an outline highlights the row for "inside". Self-drops and any move that would put a block inside its own descendant are silently refused so the tree can't be orphaned. Dragging from the palette while the Add tab is showing temporarily switches the left column to the List view (and switches back on drag end) so there's always a visible target.
+
+### Changed
+- `lib/blockHelpers.js` gains `insertBlockAt`, `moveToTarget`, and `isDescendant` exports; the BlockComposer comment that previously called drag/drop "out of scope for v1" is updated.
+
 ## [0.0.68] — 2026-05-17
 
 ### Added

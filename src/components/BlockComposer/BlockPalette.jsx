@@ -1,9 +1,14 @@
 import { useMemo } from 'react';
 
+// MIME used for drag-from-palette payloads. The ListView reads it on drop
+// to distinguish "create a new block" from "move an existing block" (the
+// latter uses application/x-fp-block-id).
+export const PALETTE_DND_MIME = 'application/x-fp-block-slug';
+
 // Left column of the block composer. Lists every block in the framework's
-// registry, grouped by category. Clicking a block appends it to the tree
-// root (or to the currently-selected container, if one is selected and
-// hasChildren is true). v1 has no drag/drop; click-to-add is good enough.
+// registry, grouped by category. Two ways to add: click to append at the
+// root / inside the selected container; or drag a row into the List view
+// for precise placement (before / after / inside a specific target).
 export default function BlockPalette({ blocks, onAdd, addingTo }) {
   const grouped = useMemo(() => {
     const out = {};
@@ -34,8 +39,13 @@ export default function BlockPalette({ blocks, onAdd, addingTo }) {
                 <li key={b.slug}>
                   <button
                     type="button"
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData(PALETTE_DND_MIME, b.slug);
+                      e.dataTransfer.effectAllowed = 'copy';
+                    }}
                     onClick={() => onAdd(b)}
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-zinc-50"
+                    className="flex w-full cursor-grab items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-zinc-50 active:cursor-grabbing"
                   >
                     <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-zinc-50 font-mono text-sm text-zinc-700">
                       {b.icon || b.slug.charAt(0).toUpperCase()}
