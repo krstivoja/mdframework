@@ -1,8 +1,29 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../../lib/api.js';
 import { useAuth } from '../../lib/auth.jsx';
 import { Alert, Button, Card, Field, Input } from '../../components/ui/index.js';
+
+// Mirrors the server-side blocklist in AuthController::password — keep
+// the two in sync so the UI's "Not a common password" check matches what
+// the API actually rejects.
+const COMMON_PASSWORDS = new Set([
+  'admin', 'password', '12345678', 'qwertyui', 'iloveyou', 'changeme', 'admin123',
+]);
+
+function evaluateStrength(value) {
+  return {
+    length: value.length >= 8,
+    variety: /[a-zA-Z]/.test(value) && /[^a-zA-Z]/.test(value),
+    notCommon: value.length >= 8 && !COMMON_PASSWORDS.has(value.toLowerCase()),
+  };
+}
+
+const REQUIREMENTS = [
+  { key: 'length',    label: 'At least 8 characters' },
+  { key: 'variety',   label: 'Mix of letters and numbers (or symbols)' },
+  { key: 'notCommon', label: 'Not a common default password' },
+];
 
 // Rotate the admin password. The current-password challenge is the second
 // factor — a hijacked session can't quietly change credentials without it.
@@ -15,6 +36,7 @@ export default function Security() {
   const [confirmation, setConfirmation] = useState('');
   const [localError, setLocalError] = useState('');
   const [done, setDone] = useState(false);
+  const strength = useMemo(() => evaluateStrength(next), [next]);
 
   const change = useMutation({
     mutationFn: () => api.post('/password', { current, next }),
@@ -69,14 +91,45 @@ export default function Security() {
           />
         </Field>
 
-        <Field label="New password" hint="At least 8 characters.">
+        <Field label="New password">
           <Input
             type="password"
             autoComplete="new-password"
             value={next}
             onChange={(e) => setNext(e.target.value)}
+            aria-describedby="password-requirements"
             required
           />
+          <ul
+            id="password-requirements"
+            className="mt-2 space-y-1 text-[12px]"
+            aria-live="polite"
+          >
+            {REQUIREMENTS.map(({ key, label }) => {
+              const met = strength[key];
+              return (
+                <li
+                  key={key}
+                  className={`flex items-center gap-2 ${met ? 'text-emerald-700' : 'text-zinc-500'}`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
+                      met ? 'bg-emerald-100 text-emerald-700' : 'border border-zinc-300 text-zinc-400'
+                    }`}
+                  >
+                    {met ? (
+                      <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 8.5l3 3 7-7" />
+                      </svg>
+                    ) : null}
+                  </span>
+                  <span className="sr-only">{met ? 'Requirement met:' : 'Requirement not yet met:'}</span>
+                  <span>{label}</span>
+                </li>
+              );
+            })}
+          </ul>
         </Field>
 
         <Field label="Confirm new password">

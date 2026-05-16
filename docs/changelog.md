@@ -7,6 +7,12 @@ layout: default
 
 All notable changes to MD Framework are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.57] — 2026-05-16
+
+### Added
+- **Live password-requirements checklist on the Security settings screen.** Below the "New password" input, three items show what's expected and tick off (filled emerald circle with a checkmark) as the input matches each rule, in real time as the operator types. Items: "At least 8 characters", "Mix of letters and numbers (or symbols)", "Not a common default password". The list is `aria-live="polite"` and linked to the input via `aria-describedby` so screen readers announce each requirement met.
+- **Common-defaults blocklist on the server.** `AuthController::password` now rejects `admin`, `password`, `12345678`, `qwertyui`, `iloveyou`, `changeme`, and `admin123` (case-insensitive) with the message *"Pick something less common than that."* The checklist's "Not a common default password" item mirrors the same set so what the UI shows as acceptable is exactly what the API accepts. Kept short on purpose — full breach-corpus checking belongs in a separate Have-I-Been-Pwned integration.
+
 ## [0.0.56] — 2026-05-16
 
 ### Fixed
@@ -176,6 +182,7 @@ All notable changes to MD Framework are documented here. The format is based on 
 - Admin UI at `/admin/` with EasyMDE editor, image uploads, CSRF protection, bcrypt-hashed credentials in `.env`.
 - PHP template system with `render()` helper and `_layout.php` output-buffer pattern.
 
+[0.0.57]: https://github.com/krstivoja/mdframework/releases/tag/0.0.57
 [0.0.56]: https://github.com/krstivoja/mdframework/releases/tag/0.0.56
 [0.0.55]: https://github.com/krstivoja/mdframework/releases/tag/0.0.55
 [0.0.54]: https://github.com/krstivoja/mdframework/releases/tag/0.0.54

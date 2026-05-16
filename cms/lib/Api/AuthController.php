@@ -82,8 +82,13 @@ class AuthController
         if (strlen($next) < 8) {
             \json_response(['ok' => false, 'error' => 'New password should be at least 8 characters.'], 400);
         }
-        if ($next === 'admin') {
-            \json_response(['ok' => false, 'error' => 'Pick something other than the default.'], 400);
+        // Tiny blocklist of obvious defaults. The client surfaces these as a
+        // checklist item; the server enforces the same list so curl users
+        // can't bypass the UI. Kept short on purpose — full breach-corpus
+        // checks belong in a separate Have-I-Been-Pwned-style integration.
+        $blocked = ['admin', 'password', '12345678', 'qwertyui', 'iloveyou', 'changeme', 'admin123'];
+        if (in_array(strtolower($next), $blocked, true)) {
+            \json_response(['ok' => false, 'error' => 'Pick something less common than that.'], 400);
         }
 
         $hash = (string)($config['ADMIN_PASS_HASH'] ?? '');
