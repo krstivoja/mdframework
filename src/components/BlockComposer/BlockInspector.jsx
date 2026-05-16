@@ -1,4 +1,5 @@
 import { Field, Input, Select, Textarea } from '../ui/index.js';
+import CodeEditor from '../CodeEditor.jsx';
 
 // Right column: edits the selected block's fields. Renders a typed control
 // per field — text / textarea / select / color. Updates flow up through
@@ -58,6 +59,18 @@ export default function BlockInspector({ block, def, onFieldChange, onRemove }) 
 
 function FieldControl({ field, value, onChange }) {
   const type = field.type || 'text';
+  if (type === 'code') {
+    return (
+      <div className="h-64 overflow-hidden rounded-md border border-zinc-200">
+        <CodeEditor
+          value={value || ''}
+          onChange={onChange}
+          language={field.language || 'html'}
+          className="h-full"
+        />
+      </div>
+    );
+  }
   if (type === 'textarea') {
     return (
       <Textarea

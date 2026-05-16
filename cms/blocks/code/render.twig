@@ -1,0 +1,4 @@
+{# Code block — actual rendering is special-cased in BlockRenderer so the
+   user's `data.source` is compiled as a Twig template at request time.
+   This stub is only reached if the special case ever misfires. #}
+{{ data.source|raw }}

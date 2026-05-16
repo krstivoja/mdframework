@@ -156,4 +156,53 @@ class BlockRendererTest extends TestCase
         $this->assertTrue($blocks['columns']['hasChildren']);
         $this->assertFalse($blocks['heading']['hasChildren']);
     }
+
+    public function testCodeBlockCompilesTwigSourceAtRenderTime(): void
+    {
+        $out = $this->renderer->render(
+            [['type' => 'code', 'data' => ['source' => '<span>Hello, {{ page.title }}!</span>']]],
+            ['title' => 'World'],
+        );
+        $this->assertStringContainsString('<span>Hello, World!</span>', $out);
+    }
+
+    public function testCodeBlockEmptySourceProducesNothingInPublic(): void
+    {
+        $out = $this->renderer->render(
+            [['type' => 'code', 'data' => ['source' => '']]],
+            [],
+        );
+        $this->assertSame('', trim($out));
+    }
+
+    public function testCodeBlockTwigErrorRendersAsHtmlCommentInPublic(): void
+    {
+        $out = $this->renderer->render(
+            [['type' => 'code', 'data' => ['source' => '{% for x in %}']]],
+            [],
+        );
+        $this->assertStringContainsString('<!-- code block error:', $out);
+    }
+
+    public function testCodeBlockTwigErrorRendersAsRedPanelInEditor(): void
+    {
+        $this->renderer->setEditorMode(true);
+        $out = $this->renderer->render(
+            [['id' => 'b-1', 'type' => 'code', 'data' => ['source' => '{% for x in %}']]],
+            [],
+        );
+        $this->assertStringContainsString('Twig error:', $out);
+        $this->assertStringContainsString('<pre', $out);
+    }
+
+    public function testCodeBlockOutputDoesNotAutoescape(): void
+    {
+        // The user is writing raw HTML; <strong> must survive intact.
+        $out = $this->renderer->render(
+            [['type' => 'code', 'data' => ['source' => '<strong>bold</strong>']]],
+            [],
+        );
+        $this->assertStringContainsString('<strong>bold</strong>', $out);
+        $this->assertStringNotContainsString('&lt;strong&gt;', $out);
+    }
 }

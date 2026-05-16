@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace FrontPress;
 
+use Throwable;
 use Twig\Environment;
+use Twig\Loader\ArrayLoader;
 use Twig\Loader\FilesystemLoader;
+use Twig\TwigFunction;
 
 // (no top-level cache — each block builds its own short-lived Twig env)
 
@@ -67,6 +70,16 @@ final class BlockRenderer
         }
 
         $data = is_array($block['data'] ?? null) ? $block['data'] : [];
+
+        // Code block — special-cased so the user's Twig source can be
+        // compiled at render time. Skip the meta interpolation pass for
+        // `source`: Twig will resolve `{{ }}` itself, and pre-substituting
+        // would clobber real Twig variables like {{ post.title }}.
+        if ($type === 'code') {
+            $html = $this->renderCode((string)($data['source'] ?? ''), $page);
+            return $this->maybeWrap($block, $type, $def, $html);
+        }
+
         $data = $this->interpolate($data, $page);
 
         $children = '';
@@ -92,16 +105,80 @@ final class BlockRenderer
             'page'     => $page,
         ]);
 
-        if ($this->editorMode) {
-            $id   = htmlspecialchars((string)($block['id'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $slug = htmlspecialchars($type, ENT_QUOTES, 'UTF-8');
-            $hasC = !empty($def['hasChildren']) ? '1' : '0';
-            // Wrapper carries the metadata the canvas script needs to map
-            // a click back to the block id and decide whether the block
-            // accepts new children.
-            return '<div class="fp-block" data-block-id="' . $id . '" data-block-type="' . $slug . '" data-block-container="' . $hasC . '">' . $html . '</div>';
+        return $this->maybeWrap($block, $type, $def, $html);
+    }
+
+    /**
+     * Compile and execute the user's Twig source against the page context.
+     * Errors render as a visible block (red panel in editor, HTML comment
+     * in production) — never silent. Same helpers as the host template
+     * (e, partial, asset_url, paginate, slug_url, inspect, seo_head) are
+     * registered so power users can write `{{ partial('header') }}` etc.
+     *
+     * Autoescape is OFF — code blocks are explicit raw HTML by design.
+     *
+     * @param array<string, mixed> $page
+     */
+    private function renderCode(string $source, array $page): string
+    {
+        if ($source === '') {
+            return $this->editorMode
+                ? '<div style="padding:1rem;color:#999;border:1px dashed #ccc">Empty code block — edit in inspector.</div>'
+                : '';
         }
-        return $html;
+        try {
+            $loader = new ArrayLoader(['__code' => $source]);
+            $twig   = new Environment($loader, ['autoescape' => false, 'cache' => false]);
+            self::registerHelpers($twig);
+            return $twig->render('__code', ['page' => $page]);
+        } catch (Throwable $e) {
+            $msg = htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
+            return $this->editorMode
+                ? '<pre style="margin:0;padding:.75rem;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:4px;font:12px ui-monospace,monospace;white-space:pre-wrap">Twig error: ' . $msg . '</pre>'
+                : '<!-- code block error: ' . $msg . ' -->';
+        }
+    }
+
+    /**
+     * Register the same helper surface the host theme has. Defined in
+     * bootstrap.php's template_helpers and globals, so they're always
+     * loaded by the time a code block renders.
+     */
+    private static function registerHelpers(Environment $twig): void
+    {
+        $isSafe = ['is_safe' => ['html']];
+        $twig->addFunction(new TwigFunction('e',         'e'));
+        $twig->addFunction(new TwigFunction('asset_url', 'asset_url'));
+        $twig->addFunction(new TwigFunction('slug_url',  'slug_url'));
+        $twig->addFunction(new TwigFunction('paginate',  'paginate', $isSafe));
+        $twig->addFunction(new TwigFunction('inspect',   'inspect',  $isSafe));
+        $twig->addFunction(new TwigFunction('seo_head',  'seo_head', $isSafe));
+        $twig->addFunction(new TwigFunction('partial', function (string $name, array $vars = []): string {
+            ob_start();
+            partial($name, $vars);
+            return (string)ob_get_clean();
+        }, $isSafe));
+        // `posts()` is registered by bootstrap.php for the host site; it
+        // may not be loaded in unit tests so guard this one specifically.
+        if (function_exists('posts')) {
+            $twig->addFunction(new TwigFunction('posts', 'posts'));
+        }
+    }
+
+    /**
+     * Wrap the rendered block in `<div class="fp-block" …>` when we're
+     * rendering for the visual canvas; pass through unchanged for public.
+     *
+     * @param array<string, mixed> $block
+     * @param array<string, mixed> $def
+     */
+    private function maybeWrap(array $block, string $type, array $def, string $html): string
+    {
+        if (!$this->editorMode) return $html;
+        $id   = htmlspecialchars((string)($block['id'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $slug = htmlspecialchars($type, ENT_QUOTES, 'UTF-8');
+        $hasC = !empty($def['hasChildren']) ? '1' : '0';
+        return '<div class="fp-block" data-block-id="' . $id . '" data-block-type="' . $slug . '" data-block-container="' . $hasC . '">' . $html . '</div>';
     }
 
     /**
