@@ -18,6 +18,7 @@ const SiteSettings = lazy(() => import('./screens/Settings/SiteSettings.jsx'));
 const Fields       = lazy(() => import('./screens/Settings/Fields/index.jsx'));
 const Themes       = lazy(() => import('./screens/Settings/Themes.jsx'));
 const Security     = lazy(() => import('./screens/Settings/Security.jsx'));
+const ThemeReference = lazy(() => import('./screens/Settings/ThemeReference.jsx'));
 
 export default function App() {
   const { status, user } = useAuth();
@@ -42,8 +43,9 @@ export default function App() {
             <Route path="/settings"  element={<Lazy><Settings /></Lazy>}>
               <Route index           element={<Lazy><SiteSettings /></Lazy>} />
               <Route path="fields"   element={<Lazy><Fields /></Lazy>} />
-              <Route path="themes"   element={<Lazy><Themes /></Lazy>} />
-              <Route path="security" element={<Lazy><Security /></Lazy>} />
+              <Route path="themes"    element={<Lazy><Themes /></Lazy>} />
+              <Route path="reference" element={<Lazy><ThemeReference /></Lazy>} />
+              <Route path="security"  element={<Lazy><Security /></Lazy>} />
             </Route>
             <Route path="/:folder" element={<PagesList />} />
             <Route path="*" element={<NotFound />} />
