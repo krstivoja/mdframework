@@ -41,6 +41,10 @@ config.php
 # Excluded so a dev install's content/uploads doesn't ship in the zip.
 /site/
 
+# Local Sites recreates this dir with a MySQL dump regardless of whether
+# the framework uses SQL. mdframework is flat-file only — never ship it.
+/sql/
+
 # Local build / dev helpers
 /scripts/
 

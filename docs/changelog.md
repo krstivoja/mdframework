@@ -7,6 +7,11 @@ layout: default
 
 All notable changes to MD Framework are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.53] — 2026-05-16
+
+### Fixed
+- **Removed `sql/local.sql` from the repo and the release zip.** Local Sites auto-generates a MySQL dump for any site it manages, regardless of whether the framework uses a database. mdframework is flat-file (`.md` files only) and has no database, so this 117 KB file had no business being tracked or shipped. The `0.0.52` zip contained Local's default WordPress test fixtures (the `dev` user with a hashed default password, an "Hello World" post, etc.) — annoying clutter, not real-world credentials. `sql/` is now in both `.gitignore` and `.distignore`.
+
 ## [0.0.52] — 2026-05-16
 
 ### Changed
@@ -148,5 +153,6 @@ All notable changes to MD Framework are documented here. The format is based on 
 - Admin UI at `/admin/` with EasyMDE editor, image uploads, CSRF protection, bcrypt-hashed credentials in `.env`.
 - PHP template system with `render()` helper and `_layout.php` output-buffer pattern.
 
+[0.0.53]: https://github.com/krstivoja/mdframework/releases/tag/0.0.53
 [0.0.52]: https://github.com/krstivoja/mdframework/releases/tag/0.0.52
 [1.0.0]: https://github.com/krstivoja/mdframework/releases/tag/v1.0.0

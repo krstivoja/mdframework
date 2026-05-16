@@ -25,6 +25,11 @@ site/
 # ──────────────────────────────────────────────────────────────────
 config.php
 
+# Local Sites recreates a MySQL dump at /sql/local.sql for any site it
+# manages, regardless of whether the framework uses SQL. mdframework is
+# flat-file only — never ship this in a release zip or commit it to git.
+sql/
+
 # ──────────────────────────────────────────────────────────────────
 # Tool caches & local-only output
 # ──────────────────────────────────────────────────────────────────
