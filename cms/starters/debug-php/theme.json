@@ -1,0 +1,7 @@
+{
+  "name": "Debug (PHP)",
+  "version": "0.1.0",
+  "description": "Developer reference theme. Every route renders the variables and helpers it received so theme authors can see what's available before writing real templates. Install it side-by-side with your real theme, switch to it, hit a URL, switch back.",
+  "author": "MD Framework",
+  "engine": "php"
+}

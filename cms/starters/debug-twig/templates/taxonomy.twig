@@ -1,0 +1,14 @@
+{{ partial('header', { page_title: 'Taxonomy route — ' ~ (taxonomy|default('?')) ~ '/' ~ (term|default('?')), route_type: 'taxonomy' }) }}
+
+<h2>Route variables</h2>
+{{ inspect(taxonomy, 'taxonomy')|raw }}
+{{ inspect(term, 'term')|raw }}
+{{ inspect(label, 'label')|raw }}
+{{ inspect(posts, 'posts')|raw }}
+{{ inspect(page, 'page')|raw }}
+{{ inspect(total_pages, 'total_pages')|raw }}
+
+<h2>slug_url(label, taxonomy) example</h2>
+<p><code class="inline">{{ slug_url(label|default(''), taxonomy|default('categories')) }}</code></p>
+
+{{ partial('footer') }}

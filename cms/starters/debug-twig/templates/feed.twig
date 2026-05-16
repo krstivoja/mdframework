@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Feed route variables:
+    title         string  feed title
+    feed_url      string  absolute URL of this feed
+    site_url      string  absolute URL of the site root
+    updated       int     unix timestamp — most recent item
+    items[]       array   each: { title, absolute_url, mtime, date }
+-->
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>{{ title }}</title>
+  <link href="{{ feed_url }}" rel="self"/>
+  <link href="{{ site_url }}"/>
+  <updated>{{ updated|date('c') }}</updated>
+  <id>{{ feed_url }}</id>
+  {% for item in items %}
+  <entry>
+    <title>{{ item.title }}</title>
+    <link href="{{ item.absolute_url }}"/>
+    <id>{{ item.absolute_url }}</id>
+    <updated>{{ item.mtime|date('c') }}</updated>
+    {% if item.date %}<published>{{ item.date }}</published>{% endif %}
+  </entry>
+  {% endfor %}
+</feed>

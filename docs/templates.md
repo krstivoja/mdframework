@@ -69,6 +69,7 @@ Defined in `cms/lib/template_helpers.php`, registered as Twig functions of the s
 | `asset_url($path)` | `string` | Prefix `/assets/` — the active theme's `assets/` is symlinked there. |
 | `paginate($page, $totalPages, $baseUrl)` | `string` (HTML) | Returns prev / "Page X of Y" / next nav block. Empty when `$totalPages <= 1`. Twig: pipe through `\|raw`. |
 | `slug_url($term, $taxonomy='categories')` | `string` | URL for a taxonomy term archive (`/categories/php`). Slugifies `$term` first. |
+| `inspect($value, $label='')` | `string` (HTML) | Pretty-prints any value as a labelled, collapsible dump for use while building a theme. Twig: pipe through `\|raw`. The **Debug (Twig)** / **Debug (PHP)** starters under *Settings → Themes* install a theme made entirely of `inspect()` dumps — switch to it for a few minutes to see exactly what every route hands your templates. |
 
 Plus three globals defined in `bootstrap.php`:
 

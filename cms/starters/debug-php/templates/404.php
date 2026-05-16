@@ -1,0 +1,8 @@
+<?php partial('header', ['page_title' => '404 route', 'route_type' => '404']); ?>
+
+<h2>Route variables</h2>
+<?= inspect($url ?? null, 'url') ?>
+
+<p style="margin-top:1rem">The 404 template receives just the original request <code class="inline">url</code> — handy if you want to suggest a search or log the miss.</p>
+
+<?php partial('footer'); ?>
