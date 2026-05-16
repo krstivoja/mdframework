@@ -3,7 +3,7 @@ import { useAuth } from '../lib/auth.jsx';
 import { useFolders } from '../lib/hooks.js';
 import { cap } from '../lib/utils.js';
 import SidebarLink from './SidebarLink.jsx';
-import { IconBackup, IconCog, IconFolder, IconImage } from './icons.jsx';
+import { IconBackup, IconBrush, IconCog, IconFolder, IconImage } from './icons.jsx';
 
 // Sidebar — logo, divider-separated sections (folders / media / settings /
 // backup), and a simple "Hi {user} — Log out" footer. No group labels.
@@ -30,6 +30,7 @@ export default function Sidebar() {
 
         <Section>
           <SidebarLink to="/media" icon={IconImage}>Global media</SidebarLink>
+          <SidebarLink to="/theme-editor" icon={IconBrush}>Theme editor</SidebarLink>
         </Section>
 
         <Divider />
