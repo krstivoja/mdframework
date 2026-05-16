@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useParams } from 'react-router-dom';
 import { useAuth } from './lib/auth.jsx';
 
 import Protected from './components/Protected.jsx';
@@ -50,10 +50,10 @@ export default function App() {
           </Route>
 
           <Route path="/new/:folder" element={<PostTypeShell />}>
-            <Route index element={<Lazy><PageEditor /></Lazy>} />
+            <Route index element={<Lazy><KeyedPageEditor /></Lazy>} />
           </Route>
           <Route path="/:folder/:slug" element={<PostTypeShell />}>
-            <Route index element={<Lazy><PageEditor /></Lazy>} />
+            <Route index element={<Lazy><KeyedPageEditor /></Lazy>} />
           </Route>
         </Route>
       </Route>
@@ -63,6 +63,20 @@ export default function App() {
 
 function Lazy({ children }) {
   return <Suspense fallback={<RouteSkeleton />}>{children}</Suspense>;
+}
+
+// Force a fresh PageEditor instance per post. React Router reuses the
+// same component instance when only URL params change, so switching
+// posts (e.g. clicking another item in the sidebar) didn't re-init the
+// Toast UI editor — its content stayed pinned to the first post you
+// opened. Keying on folder + slug remounts the editor on each post.
+// `new` pages get a per-folder key so /new/blog → /new/pages also
+// remounts. Saves that don't change the slug are unaffected (no path
+// change, no key change, no remount — cursor preserved).
+function KeyedPageEditor() {
+  const { folder = '', slug } = useParams();
+  const key = slug ? `edit:${folder}/${slug}` : `new:${folder}`;
+  return <PageEditor key={key} />;
 }
 
 function RouteSkeleton() {

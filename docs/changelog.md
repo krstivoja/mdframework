@@ -7,6 +7,11 @@ layout: default
 
 All notable changes to MD Framework are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.60] — 2026-05-16
+
+### Fixed
+- **Switching between posts in the editor showed the previous post's body until a hard reload.** React Router reuses the same `<PageEditor />` instance when only URL params change (`/admin/blog/post-a` → `/admin/blog/post-b` stays on the same component), and `useToastUiEditor` is deliberately a single-mount hook — once initialised it never reads `initialBody` again. So navigating to a different post never re-fed the Toast UI editor; you had to hit reload to see the new content. Wrapped `<PageEditor />` in a tiny `<KeyedPageEditor />` route element that derives a React `key` from `folder` + `slug` (or `folder` + the literal `new` for the create flow). The component now remounts when you switch posts, the editor re-initialises with the new body, and refetches after a same-slug save are still untouched (path doesn't change → key doesn't change → cursor stays where it is).
+
 ## [0.0.59] — 2026-05-16
 
 ### Fixed
@@ -192,6 +197,7 @@ All notable changes to MD Framework are documented here. The format is based on 
 - Admin UI at `/admin/` with EasyMDE editor, image uploads, CSRF protection, bcrypt-hashed credentials in `.env`.
 - PHP template system with `render()` helper and `_layout.php` output-buffer pattern.
 
+[0.0.60]: https://github.com/krstivoja/mdframework/releases/tag/0.0.60
 [0.0.59]: https://github.com/krstivoja/mdframework/releases/tag/0.0.59
 [0.0.58]: https://github.com/krstivoja/mdframework/releases/tag/0.0.58
 [0.0.57]: https://github.com/krstivoja/mdframework/releases/tag/0.0.57
