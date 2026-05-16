@@ -145,14 +145,70 @@ function render(string $template, array $vars = []): void
     if (is_file($php)) {
         extract($vars, EXTR_SKIP);
         require $php;
+        admin_edit_button();
         return;
     }
     $twig = "$dir/$template.twig";
     if (is_file($twig)) {
         MD\TemplateRenderer::instance()->render("$template.twig", $vars);
+        admin_edit_button();
         return;
     }
     throw new RuntimeException("Template not found: $template (looked for $php and $twig)");
+}
+
+/**
+ * Render a floating "Edit" link in the bottom-right corner of the public
+ * site when the operator is logged in and the current route resolves to
+ * an editable post/page. Tapping it deep-links into the admin editor for
+ * that file. Quietly no-ops on non-editable routes (feeds, sitemap,
+ * taxonomy archives, real 404s where `admin_edit_path` is null) and for
+ * anonymous visitors.
+ *
+ * Styles are inlined so the button is independent of the active theme's
+ * CSS — themes don't need to opt in and can't accidentally break it.
+ */
+function admin_edit_button(): void
+{
+    if (empty($GLOBALS['admin_logged_in']) || empty($GLOBALS['admin_edit_path'])) {
+        return;
+    }
+    $path = (string)$GLOBALS['admin_edit_path'];
+    // rawurlencode each path segment so spaces / non-ASCII slugs survive
+    // the round-trip into React Router.
+    $url  = '/admin/' . implode('/', array_map('rawurlencode', explode('/', $path)));
+    $href = htmlspecialchars($url, ENT_QUOTES);
+    ?>
+<style>
+  .md-admin-edit-btn {
+    position: fixed; right: 16px; bottom: 16px; z-index: 2147483000;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: 999px;
+    background: #18181b; color: #fafafa;
+    font: 500 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    text-decoration: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25), 0 0 0 1px rgba(255,255,255,.06) inset;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .md-admin-edit-btn:hover, .md-admin-edit-btn:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 28px rgba(0,0,0,.32), 0 0 0 1px rgba(255,255,255,.08) inset;
+    color: #fafafa;
+    outline: none;
+  }
+  .md-admin-edit-btn:focus-visible {
+    box-shadow: 0 10px 28px rgba(0,0,0,.32), 0 0 0 2px #fafafa, 0 0 0 4px #18181b;
+  }
+  @media print { .md-admin-edit-btn { display: none; } }
+</style>
+<a class="md-admin-edit-btn" href="<?= $href ?>" rel="noopener">
+  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 20h9"></path>
+    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
+  </svg>
+  Edit
+</a>
+<?php
 }
 
 /**
