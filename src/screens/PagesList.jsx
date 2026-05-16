@@ -76,6 +76,12 @@ export default function PagesList() {
     window.location.href = `/admin/api/pages-export${q}`;
   }
 
+  function exportSelected() {
+    if (visibleSelected.length === 0) return;
+    const paths = visibleSelected.join(',');
+    window.location.href = `/admin/api/pages-export?paths=${encodeURIComponent(paths)}`;
+  }
+
   const importMut = useMutation({
     mutationFn: async (files) => {
       const fd = new FormData();
@@ -206,6 +212,7 @@ export default function PagesList() {
           </span>
           <div className="flex gap-2">
             <Button variant="secondary" size="sm" onClick={() => setSelected(new Set())}>Clear</Button>
+            <Button variant="secondary" size="sm" onClick={exportSelected}>Download selected</Button>
             <Button variant="danger" size="sm" onClick={bulkDelete}>Delete selected</Button>
           </div>
         </div>
