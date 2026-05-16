@@ -1,2 +1,2 @@
 {% set align = data.align|default('left') in ['left','center','right','justify'] ? data.align|default('left') : 'left' %}
-<p style="text-align:{{ align }}">{{ data.text|default('')|nl2br }}</p>
+<p style="text-align:{{ align }}" data-fp-text="text">{{ data.text|default('')|nl2br }}</p>

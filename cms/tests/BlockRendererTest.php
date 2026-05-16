@@ -29,7 +29,11 @@ class BlockRendererTest extends TestCase
         $out = $this->renderer->render([
             ['type' => 'heading', 'data' => ['text' => 'Hello', 'level' => 'h1', 'align' => 'center']],
         ]);
-        $this->assertStringContainsString('<h1 style="text-align:center">Hello</h1>', $out);
+        $this->assertStringContainsString('<h1', $out);
+        $this->assertStringContainsString('text-align:center', $out);
+        $this->assertStringContainsString('>Hello</h1>', $out);
+        // data-fp-text marks the text node contenteditable in the visual canvas.
+        $this->assertStringContainsString('data-fp-text="text"', $out);
     }
 
     public function testParagraphBlockRenders(): void
@@ -37,7 +41,30 @@ class BlockRendererTest extends TestCase
         $out = $this->renderer->render([
             ['type' => 'paragraph', 'data' => ['text' => 'A test paragraph.']],
         ]);
-        $this->assertStringContainsString('<p style="text-align:left">A test paragraph.</p>', $out);
+        $this->assertStringContainsString('<p', $out);
+        $this->assertStringContainsString('text-align:left', $out);
+        $this->assertStringContainsString('>A test paragraph.</p>', $out);
+    }
+
+    public function testEditorModeWrapsBlocksWithDataAttributes(): void
+    {
+        $this->renderer->setEditorMode(true);
+        $out = $this->renderer->render([
+            ['id' => 'b-1', 'type' => 'heading', 'data' => ['text' => 'Hi', 'level' => 'h2']],
+        ]);
+        $this->assertStringContainsString('class="fp-block"',          $out);
+        $this->assertStringContainsString('data-block-id="b-1"',        $out);
+        $this->assertStringContainsString('data-block-type="heading"',  $out);
+        $this->assertStringContainsString('data-block-container="0"',   $out);
+    }
+
+    public function testPublicModeOmitsEditorWrappers(): void
+    {
+        $out = $this->renderer->render([
+            ['id' => 'b-1', 'type' => 'heading', 'data' => ['text' => 'Hi', 'level' => 'h2']],
+        ]);
+        $this->assertStringNotContainsString('data-block-id', $out);
+        $this->assertStringNotContainsString('fp-block',      $out);
     }
 
     public function testUnknownBlockRendersAsComment(): void

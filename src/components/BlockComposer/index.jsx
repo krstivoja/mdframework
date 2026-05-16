@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api, getCsrf } from '../../lib/api.js';
+import { api } from '../../lib/api.js';
 import { appendBlock, findById, makeId, moveById, removeById, updateById } from '../../lib/blockHelpers.js';
-import BlockCanvas from './BlockCanvas.jsx';
 import BlockInspector from './BlockInspector.jsx';
 import BlockPalette from './BlockPalette.jsx';
+import VisualCanvas from './VisualCanvas.jsx';
 
 // Three-pane page-builder surface: Palette | Canvas | Inspector.
 // Owns the block tree as controlled state; the parent (PageEditor) reads
@@ -75,10 +75,18 @@ export default function BlockComposer({ tree, onChange, pageMeta }) {
     onChange(updateById(tree, id, (b) => ({ ...b, data: { ...b.data, [name]: value } })));
   }, [tree, onChange]);
 
-  // Live preview at the bottom of the canvas — POST the full tree to the
-  // server renderer, get HTML back, drop it into an isolated <iframe>.
-  // Debounced so typing in a text field doesn't fire a request per keystroke.
-  const previewHtml = useLivePreview(tree, pageMeta);
+  // Inline text edit: the canvas posts back the new text on blur.
+  const onTextEdit = useCallback((id, field, value) => {
+    onChange(updateById(tree, id, (b) => ({ ...b, data: { ...b.data, [field]: value } })));
+  }, [tree, onChange]);
+
+  // "+ child" on a selected container — adds a paragraph by default; the
+  // user can swap it from the palette afterward.
+  const onAddChild = useCallback((parentId) => {
+    const paragraph = registry.find((r) => r.slug === 'paragraph');
+    if (!paragraph) return;
+    onChange(appendBlock(tree, paragraph, parentId));
+  }, [tree, registry, onChange]);
 
   return (
     <div className="grid h-full min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)_280px]">
@@ -87,27 +95,17 @@ export default function BlockComposer({ tree, onChange, pageMeta }) {
         onAdd={addBlock}
         addingTo={addingTo}
       />
-      <div className="grid min-h-0 grid-rows-[minmax(0,1fr)_minmax(180px,40%)]">
-        <BlockCanvas
-          tree={tree}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          onMove={moveBlock}
-          onRemove={removeBlock}
-          registry={registry}
-        />
-        <div className="border-t border-zinc-200 bg-white">
-          <div className="border-b border-zinc-100 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-zinc-500">
-            Preview
-          </div>
-          <iframe
-            title="Live block preview"
-            srcDoc={previewHtml}
-            sandbox="allow-same-origin"
-            className="h-full w-full"
-          />
-        </div>
-      </div>
+      <VisualCanvas
+        tree={tree}
+        pageMeta={pageMeta}
+        selectedId={selectedId}
+        selectedDef={selectedDef}
+        onSelect={setSelectedId}
+        onTextEdit={onTextEdit}
+        onMove={moveBlock}
+        onRemove={removeBlock}
+        onAddChild={onAddChild}
+      />
       <BlockInspector
         block={selected?.block || null}
         def={selectedDef}
@@ -116,36 +114,4 @@ export default function BlockComposer({ tree, onChange, pageMeta }) {
       />
     </div>
   );
-}
-
-function useLivePreview(tree, pageMeta) {
-  const [html, setHtml] = useState('');
-  useEffect(() => {
-    const t = setTimeout(async () => {
-      try {
-        const res = await fetch('/admin/api/blocks/render', {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrf() },
-          body: JSON.stringify({ blocks: tree, page: pageMeta || {} }),
-        });
-        const data = await res.json();
-        if (data.ok) setHtml(wrapPreview(data.html || '<p style="color:#999;padding:1rem">Empty</p>'));
-      } catch { /* leave previous */ }
-    }, 300);
-    return () => clearTimeout(t);
-  }, [tree, pageMeta]);
-  return html;
-}
-
-function wrapPreview(inner) {
-  // Minimal HTML document so the preview iframe renders with sane defaults
-  // and a system font stack. Active theme styles aren't pulled in here —
-  // for now the canvas previews each block in isolation; refining to the
-  // theme's actual CSS context is a follow-up.
-  return `<!doctype html><html><head><meta charset="utf-8"><style>
-    body { font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; margin: 0; padding: 1rem; color: #18181b; }
-    h1, h2, h3, h4, h5, h6 { margin: .75rem 0 .5rem; }
-    p { margin: 0 0 .75rem; line-height: 1.5; }
-  </style></head><body>${inner}</body></html>`;
 }

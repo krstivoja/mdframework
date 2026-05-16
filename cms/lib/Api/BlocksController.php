@@ -65,6 +65,7 @@ class BlocksController
         $page   = is_array($body['page']   ?? null) ? $body['page']   : [];
 
         $renderer = new BlockRenderer(self::registry($config));
+        $renderer->setEditorMode(true);
         \json_response([
             'ok'   => true,
             'html' => $renderer->render($blocks, $page),

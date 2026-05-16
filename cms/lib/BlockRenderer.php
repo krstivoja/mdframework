@@ -26,7 +26,20 @@ defined('FRONTPRESS_BOOT') || exit;
  */
 final class BlockRenderer
 {
+    private bool $editorMode = false;
+
     public function __construct(private BlockRegistry $registry) {}
+
+    /**
+     * Editor mode wraps every block in
+     * `<div data-block-id="…" data-block-type="…" class="fp-block">` so
+     * the visual canvas can find and select it. The public renderer
+     * leaves this off — production HTML has no extra wrappers.
+     */
+    public function setEditorMode(bool $on): void
+    {
+        $this->editorMode = $on;
+    }
 
     /**
      * @param list<array<string, mixed>> $blocks
@@ -73,11 +86,22 @@ final class BlockRenderer
         $loader = new FilesystemLoader(dirname($tplFile));
         $twig   = new Environment($loader, ['autoescape' => 'html', 'cache' => false]);
 
-        return $twig->render(basename($tplFile), [
+        $html = $twig->render(basename($tplFile), [
             'data'     => $data,
             'children' => $children,
             'page'     => $page,
         ]);
+
+        if ($this->editorMode) {
+            $id   = htmlspecialchars((string)($block['id'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $slug = htmlspecialchars($type, ENT_QUOTES, 'UTF-8');
+            $hasC = !empty($def['hasChildren']) ? '1' : '0';
+            // Wrapper carries the metadata the canvas script needs to map
+            // a click back to the block id and decide whether the block
+            // accepts new children.
+            return '<div class="fp-block" data-block-id="' . $id . '" data-block-type="' . $slug . '" data-block-container="' . $hasC . '">' . $html . '</div>';
+        }
+        return $html;
     }
 
     /**
