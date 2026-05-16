@@ -3,7 +3,7 @@
 ## File size budget
 
 **No source file over 300 lines.** Applies to `.js`, `.jsx`, and `.php` under
-`app/src/` and `app/cms/lib/`. Excluded: generated files (`app/admin-assets/`),
+`app/src/` and `app/cms/lib/`. Excluded: generated files (`app/admin/assets/`),
 vendored code, theme templates.
 
 When a file approaches the limit, split it. Patterns the codebase has already

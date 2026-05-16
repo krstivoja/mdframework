@@ -37,9 +37,13 @@ function phpHotFile() {
 
 export default defineConfig(({ command }) => ({
   plugins: [react(), tailwindcss(), phpHotFile()],
-  base: command === 'build' ? '/admin-assets/' : '/',
+  base: command === 'build' ? '/admin/assets/' : '/',
   build: {
-    outDir: path.resolve(__dirname, '../admin-assets'),
+    outDir: path.resolve(__dirname, '../admin/assets'),
+    // Drop the inner `assets/` subdir Vite adds by default — hashed files
+    // land directly under outDir so URLs are `/admin/assets/main-XXX.js`
+    // rather than `/admin/assets/assets/main-XXX.js`.
+    assetsDir: '',
     emptyOutDir: true,
     manifest: true,
     rollupOptions: {

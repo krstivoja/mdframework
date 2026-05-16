@@ -14,7 +14,7 @@
 
 $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
 
-// Real files (assets, /admin-assets/*) → let the server serve them
+// Real files (assets, /admin/assets/*) → let the server serve them
 if ($uri !== '/' && file_exists(__DIR__ . $uri) && !is_dir(__DIR__ . $uri)) {
     return false;
 }

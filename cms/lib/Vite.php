@@ -12,7 +12,7 @@ defined('MD_BOOT') || exit;
  * Dev mode is detected by the presence of `.vite-hot` in the JS source root
  * (`app/src/`), which the Vite dev server writes on `listening` and removes
  * on shutdown. Production mode reads the manifest from the build output dir
- * under `app/admin-assets/`.
+ * under `app/admin/assets/`.
  */
 class Vite
 {
@@ -20,7 +20,7 @@ class Vite
     private string $manifestFile;
     private string $publicBase;
 
-    public function __construct(string $srcRoot, string $adminAssetsRoot, string $publicBase = '/admin-assets/')
+    public function __construct(string $srcRoot, string $adminAssetsRoot, string $publicBase = '/admin/assets/')
     {
         $this->hotFile      = $srcRoot . '/.vite-hot';
         $this->manifestFile = $adminAssetsRoot . '/.vite/manifest.json';

@@ -166,10 +166,10 @@ npm run dev    # Vite dev server on :5173 with HMR
 Then load `http://<your-host>/admin/` in a browser. The PHP shell auto-detects the dev server (via the `app/src/.vite-hot` file Vite writes on listen) and injects script tags pointing to `localhost:5173`. React Fast Refresh + Tailwind hot-reload work without reload.
 
 ```bash
-npm run build  # Outputs hashed assets + manifest to app/admin-assets/
+npm run build  # Outputs hashed assets + manifest to app/admin/assets/
 ```
 
-In production (no dev server), PHP reads `app/admin-assets/.vite/manifest.json` and emits the hashed `<script>`/`<link>` tags.
+In production (no dev server), PHP reads `app/admin/assets/.vite/manifest.json` and emits the hashed `<script>`/`<link>` tags.
 
 If a stale `.vite-hot` file ever points to a dead dev server (e.g. after an ungraceful Vite shutdown), delete it: `rm app/src/.vite-hot`. The PHP shell will fall back to the production manifest.
 

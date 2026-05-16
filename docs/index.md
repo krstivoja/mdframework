@@ -26,7 +26,8 @@ public_html/
 ├── admin.php
 ├── bootstrap.php
 ├── cms/
-├── admin-assets/
+├── admin/
+│   └── assets/
 └── site/
 ```
 
@@ -47,10 +48,10 @@ The admin UI is a React app built with Vite. To work on it locally:
 cd src
 npm install
 npm run dev    # HMR on localhost:5173 — visit /admin/ on your PHP host
-npm run build  # production assets to ../admin-assets/
+npm run build  # production assets to ../admin/assets/
 ```
 
-Production deployments need the prebuilt `admin-assets/` directory present; the release zip ships it pre-built, so this only matters for source installs.
+Production deployments need the prebuilt `admin/assets/` directory present; the release zip ships it pre-built, so this only matters for source installs.
 
 ## Directory structure
 
@@ -66,7 +67,9 @@ app/                          # ← also the web root (DocumentRoot)
 ├── .env                      # Git-ignored — admin credentials (DENIED via .htaccess)
 ├── .env.example
 ├── assets/                   # Symlink → site/themes/<active>/assets
-├── admin-assets/             # Built admin SPA bundle (Vite manifest + hashed assets)
+├── admin/                    # Admin entry point + built SPA bundle
+│   ├── index.php             # /admin/ front controller
+│   └── assets/               # Built admin SPA bundle (Vite manifest + hashed assets)
 │
 ├── cms/                      # Framework code + admin app + starter assets (DENIED)
 │   ├── composer.json
