@@ -200,8 +200,8 @@ export default function PagesList() {
       )}
 
       {visibleSelected.length > 0 && (
-        <div className="flex items-center justify-between gap-3 border-b border-zinc-100 bg-zinc-50 px-6 py-2 text-[12px]">
-          <span className="font-medium text-zinc-700">
+        <div className="flex items-center justify-between gap-3 border-b border-zinc-100 bg-blue-600 text-white px-6 py-2 text-[12px]">
+          <span className="font-medium">
             {visibleSelected.length} selected
           </span>
           <div className="flex gap-2">

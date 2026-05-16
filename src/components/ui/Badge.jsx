@@ -1,7 +1,7 @@
 // Mirrors dsystem `.badge` — pill (border-radius: 999px), 11px/600 letters.
 // Tones map to dsystem variants: live → primary; draft → surface-2.
 const tones = {
-  live:      'bg-zinc-900 text-white',
+  live:      'bg-green-50 text-green-900',
   published: 'bg-zinc-900 text-white',
   active:    'bg-zinc-900 text-white',
   draft:     'border border-zinc-200 bg-zinc-100 text-zinc-700',

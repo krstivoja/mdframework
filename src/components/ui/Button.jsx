@@ -7,7 +7,7 @@ const variants = {
   primary:        'border-zinc-900 bg-zinc-900 text-white hover:bg-zinc-800 hover:border-zinc-800',
   secondary:      'border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-100',
   ghost:          'border-transparent bg-transparent text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900',
-  danger:         'border-red-600 bg-red-600 text-white hover:bg-red-700 hover:border-red-700',
+  danger:         'border-zinc-200 hover:bg-red-700 hover:border-red-700 hover:text-white',
   'danger-outline': 'border-red-300 bg-white text-red-600 hover:border-red-400 hover:bg-red-50',
   // Text-only variants — no border, no padding box.
   link:        'text-zinc-700 hover:underline',
