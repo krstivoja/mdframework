@@ -142,19 +142,51 @@ function render(string $template, array $vars = []): void
 {
     $dir = $GLOBALS['md_template_dir'];
     $php = "$dir/$template.php";
+    $twig = "$dir/$template.twig";
+
+    if (!is_file($php) && !is_file($twig)) {
+        throw new RuntimeException("Template not found: $template (looked for $php and $twig)");
+    }
+
+    // Buffer the rendered output so we can inject SEO tags into <head>
+    // before flushing. Templates that don't produce HTML (feed.* writes
+    // Atom XML and sets its own Content-Type) won't contain `</head>` and
+    // pass through untouched.
+    ob_start();
     if (is_file($php)) {
         extract($vars, EXTR_SKIP);
         require $php;
-        admin_edit_button();
-        return;
-    }
-    $twig = "$dir/$template.twig";
-    if (is_file($twig)) {
+    } else {
         MD\TemplateRenderer::instance()->render("$template.twig", $vars);
-        admin_edit_button();
-        return;
     }
-    throw new RuntimeException("Template not found: $template (looked for $php and $twig)");
+    $body = (string)ob_get_clean();
+
+    $body = inject_seo($body, $template, $vars);
+
+    echo $body;
+    admin_edit_button();
+}
+
+/**
+ * Inject the framework-built SEO block into the rendered HTML right before
+ * `</head>`. If the body is not HTML (no </head>), pass through untouched.
+ *
+ * @param array<string, mixed> $vars
+ */
+function inject_seo(string $body, string $template, array $vars): string
+{
+    $headClose = stripos($body, '</head>');
+    if ($headClose === false) {
+        return $body;
+    }
+    $config = $GLOBALS['md_config'] ?? null;
+    $configArr = ($config && method_exists($config, 'all')) ? $config->all() : [];
+    $url       = (string)($_SERVER['REQUEST_URI'] ?? '/');
+    $tags      = MD\Seo::tagsFor($template, $vars, $configArr, parse_url($url, PHP_URL_PATH) ?: '/');
+    if ($tags === '') {
+        return $body;
+    }
+    return substr($body, 0, $headClose) . $tags . substr($body, $headClose);
 }
 
 /**

@@ -83,12 +83,51 @@ class SettingsController
             'max_height' => max(0, min(20000, (int)($body['uploads']['max_height'] ?? 0))),
         ];
 
+        // SEO toggles + defaults. Only persist when the payload mentions
+        // them — front-end can save Site / Fields / Uploads independently
+        // without zeroing the SEO block.
+        $existingSeo = (array)($cfg->all()['seo'] ?? []);
+        $seo = $existingSeo;
+        if (is_array($body['seo'] ?? null)) {
+            $in = $body['seo'];
+            $seo = [
+                'enabled'        => self::flag($in, 'enabled',       $existingSeo['enabled']       ?? true),
+                'opengraph'      => self::flag($in, 'opengraph',     $existingSeo['opengraph']     ?? true),
+                'twitter_card'   => self::flag($in, 'twitter_card',  $existingSeo['twitter_card']  ?? true),
+                'json_ld'        => self::flag($in, 'json_ld',       $existingSeo['json_ld']       ?? true),
+                'indexable'      => self::flag($in, 'indexable',     $existingSeo['indexable']     ?? true),
+                'twitter_handle' => trim((string)($in['twitter_handle'] ?? $existingSeo['twitter_handle'] ?? '')),
+                'default_image'  => trim((string)($in['default_image']  ?? $existingSeo['default_image']  ?? '')),
+                'locale'         => trim((string)($in['locale']         ?? $existingSeo['locale']         ?? 'en_US')),
+            ];
+        }
+
         $cfg->save(array_merge($cfg->all(), [
             'site'       => $site,
             'taxonomies' => $taxonomies,
             'uploads'    => $uploads,
+            'seo'        => $seo,
         ]));
 
         \json_response(['ok' => true, 'settings' => $cfg->all()]);
+    }
+
+    /**
+     * Read a boolean toggle out of a settings payload — accept true/false,
+     * 1/0, "1"/"0", "on"/"off" so JSON-from-React and form-submit both work.
+     *
+     * @param array<string, mixed> $payload
+     */
+    private static function flag(array $payload, string $key, bool $default): bool
+    {
+        if (!array_key_exists($key, $payload)) return $default;
+        $v = $payload[$key];
+        if (is_bool($v)) return $v;
+        if (is_int($v))  return $v !== 0;
+        if (is_string($v)) {
+            $l = strtolower(trim($v));
+            return $l !== '' && !in_array($l, ['0', 'false', 'off', 'no'], true);
+        }
+        return $default;
     }
 }

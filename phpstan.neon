@@ -3,7 +3,7 @@ parameters:
     paths:
         - bootstrap.php
         - index.php
-        - admin.php
+        - admin/index.php
         - router.php
         - cms/lib
         - cms/tests
@@ -11,7 +11,7 @@ parameters:
         - cms/vendor
         - src/node_modules
         - site
-        - admin-assets
+        - admin/assets
     bootstrapFiles:
         - cms/vendor/autoload.php
     ignoreErrors:
