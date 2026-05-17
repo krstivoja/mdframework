@@ -178,23 +178,6 @@ class PagesController
             unset($meta['draft']);
         }
 
-        // Editor mode + block tree. `mode: blocks` opts the page into the
-        // visual page builder — `blocks` is a JSON tree consumed by the
-        // public-side BlockRenderer at request time. Clearing `mode` falls
-        // back to markdown (the body field still drives rendering).
-        if (array_key_exists('mode', $input)) {
-            $mode = strtolower(trim((string)$input['mode']));
-            if ($mode === 'blocks') {
-                $meta['mode']   = 'blocks';
-                $meta['blocks'] = is_array($input['blocks'] ?? null) ? $input['blocks'] : [];
-            } else {
-                unset($meta['mode'], $meta['blocks']);
-            }
-        } elseif (array_key_exists('blocks', $input) && is_array($input['blocks'])) {
-            // Allow explicit blocks updates without re-sending mode.
-            $meta['blocks'] = $input['blocks'];
-        }
-
         // Per-post template override — empty string clears the key so the
         // public renderer falls back to the route-type default (post / page).
         // The submitted name must match a real, user-selectable template in the

@@ -1,5 +1,0 @@
-{% set count = data.count|default('2') %}
-{% set gap = { sm: '.75rem', md: '1.5rem', lg: '2.5rem' }[data.gap|default('md')]|default('1.5rem') %}
-<div{% if data.htmlId %} id="{{ data.htmlId }}"{% endif %}{% if data.htmlClass %} class="{{ data.htmlClass }}"{% endif %} style="display:grid;grid-template-columns:repeat({{ count }}, minmax(0,1fr));gap:{{ gap }}">
-  {{ children|raw }}
-</div>

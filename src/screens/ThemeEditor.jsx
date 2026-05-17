@@ -1,28 +1,14 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
 import { useToast } from '../lib/toast.jsx';
-import { Button } from '../components/ui/index.js';
 import FileTree from '../components/ThemeEditor/FileTree.jsx';
 import EditorPane from '../components/ThemeEditor/EditorPane.jsx';
 import PreviewPane from '../components/ThemeEditor/PreviewPane.jsx';
-import VisualBlocksPane from '../components/ThemeEditor/VisualBlocksPane.jsx';
 
-// GrapesJS pulls in a 15MB dependency tree — only load it when the user
-// opens a `.html` file. Twig / PHP / CSS workflows never pay for it.
-const VisualEditorPane = lazy(() => import('../components/ThemeEditor/VisualEditorPane.jsx'));
-
-// File extensions that the visual page builder owns. The on-disk format is
-// JSON ({ blocks: [...] }); the editor surface is the BlockComposer.
-const VISUAL_EXT = '.fp.json';
-
-// Theme editor — three surfaces depending on the selected file:
-//   *.fp.json  → BlockComposer (visual page builder, JSON tree on disk)
-//   *.html     → GrapesJS visual editor (lazy-loaded)
-//   anything   → CodeMirror + iframe preview
-//
-// Buffers (path → current text/tree) live here so switching files doesn't
-// nuke unsaved work. `dirty` tracks which buffers diverged from the
+// Theme editor — single surface: CodeMirror on the left, iframe preview on
+// the right. Buffers (path → current text) live here so switching files
+// doesn't nuke unsaved work. `dirty` tracks which buffers diverged from the
 // last-saved server state. `previewVersion` bumps on save so the iframe
 // cache-busts and reloads with the new bundle.
 export default function ThemeEditor() {
@@ -74,52 +60,6 @@ export default function ThemeEditor() {
     onError: (err) => toast.show(err.message || "Couldn't save.", { tone: 'error' }),
   });
 
-  // Create a fresh visual template. Prompts for a name; lands in templates/.
-  const newVisual = useMutation({
-    mutationFn: async () => {
-      const raw = window.prompt('Name for visual template (e.g. hero, landing, _cta):');
-      if (!raw) return null;
-      const slug = raw.trim().replace(/[^A-Za-z0-9._-]/g, '');
-      if (!slug) throw new Error('Invalid name.');
-      const path = `templates/${slug}${slug.endsWith(VISUAL_EXT) ? '' : VISUAL_EXT}`;
-      const initial = JSON.stringify({ blocks: [] }, null, 2);
-      await api.put('/theme/file', { path, contents: initial });
-      return path;
-    },
-    onSuccess: (path) => {
-      if (!path) return;
-      qc.invalidateQueries({ queryKey: ['theme-tree'] });
-      setCurrentPath(path);
-      toast.show(`Created ${path}.`, { duration: 1800 });
-    },
-    onError: (err) => toast.show(err.message || "Couldn't create.", { tone: 'error' }),
-  });
-
-  // One-way conversion: take the current .twig/.php/.html buffer, parse
-  // HTML structure into blocks via /admin/api/blocks/import, write a
-  // .fp.json sibling, jump into it. Original file untouched.
-  const convertToVisual = useMutation({
-    mutationFn: async () => {
-      const source = buffers[currentPath] ?? '';
-      const { blocks } = await api.post('/blocks/import', { source });
-      const newPath = currentPath.replace(/\.(twig|php|html)$/i, VISUAL_EXT);
-      if (newPath === currentPath) {
-        throw new Error("Couldn't derive a .fp.json path from this file.");
-      }
-      await api.put('/theme/file', {
-        path: newPath,
-        contents: JSON.stringify({ blocks }, null, 2),
-      });
-      return newPath;
-    },
-    onSuccess: (path) => {
-      qc.invalidateQueries({ queryKey: ['theme-tree'] });
-      setCurrentPath(path);
-      toast.show(`Converted to ${path}. Original kept.`, { duration: 2400 });
-    },
-    onError: (err) => toast.show(err.message || "Couldn't convert.", { tone: 'error' }),
-  });
-
   const dirtySet = useMemo(() => {
     const out = new Set();
     for (const p of Object.keys(buffers)) {
@@ -140,10 +80,6 @@ export default function ThemeEditor() {
     setHover(className ? `<${tag} class="${className}">` : `<${tag}>`);
   }, []);
 
-  // Branch on extension. Order matters: .fp.json before .html.
-  const isVisualBlocks = currentPath.toLowerCase().endsWith(VISUAL_EXT);
-  const isVisualHtml   = !isVisualBlocks && currentPath.toLowerCase().endsWith('.html');
-
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col">
       <header className="flex items-center justify-between gap-3 border-b border-zinc-200 bg-white px-6 py-3">
@@ -154,74 +90,28 @@ export default function ThemeEditor() {
             {hover && <span className="ml-2 font-mono text-[11px] text-amber-700">{hover}</span>}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {/^.+\.(twig|php|html)$/i.test(currentPath) && (
-            <Button
-              variant="secondary"
-              onClick={() => convertToVisual.mutate()}
-              disabled={convertToVisual.isPending}
-              title="Parse the HTML structure of this file into blocks. Writes a .fp.json sibling; original file is untouched."
-            >
-              {convertToVisual.isPending ? 'Converting…' : 'Convert to visual'}
-            </Button>
-          )}
-          <Button onClick={() => newVisual.mutate()} disabled={newVisual.isPending}>
-            {newVisual.isPending ? 'Creating…' : '+ New visual template'}
-          </Button>
-        </div>
       </header>
 
-      <div className={`grid min-h-0 flex-1 ${isVisualBlocks ? 'grid-cols-[240px_minmax(0,1fr)]' : isVisualHtml ? 'grid-cols-[240px_minmax(0,1fr)]' : 'grid-cols-[240px_minmax(0,1fr)_minmax(0,1fr)]'}`}>
+      <div className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)_minmax(0,1fr)]">
         <FileTree
           entries={tree.data?.entries}
           currentPath={currentPath}
           dirty={dirtySet}
           onSelect={selectFile}
         />
-
-        {isVisualBlocks ? (
-          <VisualBlocksPane
-            currentPath={currentPath}
-            buffer={buffers[currentPath]}
-            saved={savedAt[currentPath]}
-            loading={file.isLoading}
-            saving={save.isPending}
-            error={file.error?.message || save.error?.message}
-            onChange={updateBuffer}
-            onSave={() => save.mutate()}
-          />
-        ) : isVisualHtml ? (
-          <Suspense fallback={<div className="p-6 text-sm text-zinc-500">Loading visual editor…</div>}>
-            <VisualEditorPane
-              path={currentPath}
-              contents={buffers[currentPath] ?? ''}
-              loading={file.isLoading}
-              error={file.error?.message}
-              dirty={dirtySet.has(currentPath)}
-              saving={save.isPending}
-              saveError={save.error?.message}
-              onChange={updateBuffer}
-              onSave={() => save.mutate()}
-            />
-          </Suspense>
-        ) : (
-          <>
-            <EditorPane
-              path={currentPath}
-              contents={buffers[currentPath] ?? ''}
-              loading={file.isLoading}
-              error={file.error?.message}
-              dirty={dirtySet.has(currentPath)}
-              saving={save.isPending}
-              saveError={save.error?.message}
-              onChange={updateBuffer}
-              onSave={() => save.mutate()}
-            />
-            <PreviewPane version={previewVersion} onHover={onHover} />
-          </>
-        )}
+        <EditorPane
+          path={currentPath}
+          contents={buffers[currentPath] ?? ''}
+          loading={file.isLoading}
+          error={file.error?.message}
+          dirty={dirtySet.has(currentPath)}
+          saving={save.isPending}
+          saveError={save.error?.message}
+          onChange={updateBuffer}
+          onSave={() => save.mutate()}
+        />
+        <PreviewPane version={previewVersion} onHover={onHover} />
       </div>
     </div>
   );
 }
-

@@ -13,7 +13,6 @@ import CodeEditor from '../components/CodeEditor.jsx';
 import EditorImageMenu from '../components/EditorImageMenu.jsx';
 import EditorModeToggle, { switchEditorMode } from '../components/EditorModeToggle.jsx';
 import FilesPanel from '../components/FilesPanel.jsx';
-import BlockComposer from '../components/BlockComposer/index.jsx';
 import MediaPicker from '../components/MediaPicker.jsx';
 import PageEditorSidebar from '../components/PageEditorSidebar.jsx';
 
@@ -98,11 +97,6 @@ export default function PageEditor() {
     }
   }, [bodyReady, isNew, data]);
 
-  // Block-builder state. Hydrated from `meta.blocks` when the page is in
-  // `mode: blocks`; otherwise an empty tree the user starts composing into
-  // the moment they switch the editor to Blocks mode.
-  const [blocks, setBlocks] = useState([]);
-
   useEffect(() => {
     if (isNew) {
       setTitle('');
@@ -111,7 +105,6 @@ export default function PageEditor() {
       setStatus('published');
       setTemplate('');
       setTaxValues({});
-      setBlocks([]);
     } else if (data) {
       const rest = (data.path || '').split('/').slice(1).join('/');
       setTitle(data.meta?.title || '');
@@ -120,12 +113,6 @@ export default function PageEditor() {
       setStatus(data.meta?.draft ? 'draft' : 'published');
       setTemplate(data.meta?.template || '');
       setTaxValues(data.meta || {});
-      setBlocks(Array.isArray(data.meta?.blocks) ? data.meta.blocks : []);
-      // Auto-switch to Blocks mode when opening a block-mode page so the
-      // user lands on the surface they last saved with.
-      if (data.meta?.mode === 'blocks' && editorMode !== 'blocks') {
-        setEditorMode('blocks');
-      }
     }
     setDirty(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -202,7 +189,7 @@ export default function PageEditor() {
 
   const { save, del } = usePageMutations({
     isNew, path, folder, slug, title, status, template, taxValues,
-    editorMode, edRef, htmlValue, setDirty, blocks,
+    editorMode, edRef, htmlValue, setDirty,
   });
 
   if (!isNew && isLoading) return <div className="text-sm text-zinc-500">Loading…</div>;
@@ -229,7 +216,6 @@ export default function PageEditor() {
             mode={editorMode}
             onChange={(next) => switchEditorMode(next, editorMode, edRef, htmlValue, setHtmlValue, setEditorMode)}
             withFiles={!isNew}
-            withBlocks
           />
           {editorMode === 'html' && (
             <Button
@@ -261,7 +247,7 @@ export default function PageEditor() {
           <div
             ref={editorElRef}
             className="min-h-0 flex-1"
-            style={{ display: (editorMode === 'html' || editorMode === 'files' || editorMode === 'blocks') ? 'none' : 'flex' }}
+            style={{ display: (editorMode === 'html' || editorMode === 'files') ? 'none' : 'flex' }}
           />
           {editorMode === 'html' && (
             <CodeEditor
@@ -273,15 +259,6 @@ export default function PageEditor() {
           {editorMode === 'files' && (
             <div className="min-h-0 flex-1 overflow-y-auto p-4">
               <FilesPanel pagePath={path} />
-            </div>
-          )}
-          {editorMode === 'blocks' && (
-            <div className="min-h-0 flex-1 overflow-hidden">
-              <BlockComposer
-                tree={blocks}
-                pageMeta={{ ...taxValues, title }}
-                onChange={(next) => { setBlocks(next); setDirty(true); }}
-              />
             </div>
           )}
         </div>

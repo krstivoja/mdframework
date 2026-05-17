@@ -143,10 +143,9 @@ function render(string $template, array $vars = []): void
     $dir = $GLOBALS['fp_template_dir'];
     $php     = "$dir/$template.php";
     $twig    = "$dir/$template.twig";
-    $blocks  = "$dir/$template.fp.json";  // visual-builder template
 
-    if (!is_file($php) && !is_file($twig) && !is_file($blocks)) {
-        throw new RuntimeException("Template not found: $template (looked for $php, $twig, $blocks)");
+    if (!is_file($php) && !is_file($twig)) {
+        throw new RuntimeException("Template not found: $template (looked for $php, $twig)");
     }
 
     // Buffer the rendered output so we can inject SEO tags into <head>
@@ -163,17 +162,8 @@ function render(string $template, array $vars = []): void
     if (is_file($php)) {
         extract($vars, EXTR_SKIP);
         require $php;
-    } elseif (is_file($twig)) {
-        FrontPress\TemplateRenderer::instance()->render("$template.twig", $vars);
     } else {
-        // .fp.json — visual-builder template. JSON wraps the block tree;
-        // BlockRenderer walks it. Page meta (post / page route vars) drops
-        // into block scope as `page` so {{ meta.foo }} interpolation works.
-        $json     = json_decode((string)file_get_contents($blocks), true);
-        $tree     = is_array($json['blocks'] ?? null) ? $json['blocks'] : [];
-        $page     = is_array($vars['meta'] ?? null) ? $vars['meta'] : [];
-        $registry = new FrontPress\BlockRegistry(__DIR__ . '/cms/blocks');
-        echo (new FrontPress\BlockRenderer($registry))->render($tree, $page);
+        FrontPress\TemplateRenderer::instance()->render("$template.twig", $vars);
     }
     $body = (string)ob_get_clean();
 

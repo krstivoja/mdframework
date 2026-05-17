@@ -8,15 +8,12 @@ import { SegmentedControl } from './ui/index.js';
 // `withFiles=true` appends a "Files" tab that PageEditor renders as the
 // per-post attachments grid in the main editor pane. Hidden on /new/*
 // (no folder yet).
-export default function EditorModeToggle({ mode, onChange, withFiles = false, withBlocks = false }) {
+export default function EditorModeToggle({ mode, onChange, withFiles = false }) {
   const options = [
     { value: 'wysiwyg',  label: 'WYSIWYG'  },
     { value: 'markdown', label: 'Markdown' },
     { value: 'html',     label: 'HTML'     },
   ];
-  if (withBlocks) {
-    options.push({ value: 'blocks', label: 'Blocks' });
-  }
   if (withFiles) {
     options.push({ value: 'files', label: 'Files' });
   }

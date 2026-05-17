@@ -1,9 +1,0 @@
-{% set pad = data.padding|default('md') %}
-{% set padPx = { none: '0', sm: '1rem', md: '2rem', lg: '3rem', xl: '5rem' }[pad]|default('2rem') %}
-{% set maxw = data.maxWidth|default('full') %}
-{% set maxwPx = { full: '100%', wide: '1100px', narrow: '720px' }[maxw]|default('100%') %}
-<section{% if data.htmlId %} id="{{ data.htmlId }}"{% endif %}{% if data.htmlClass %} class="{{ data.htmlClass }}"{% endif %} style="padding:{{ padPx }} 1rem;{% if data.background %}background:{{ data.background }};{% endif %}">
-  <div style="max-width:{{ maxwPx }};margin:0 auto">
-    {{ children|raw }}
-  </div>
-</section>

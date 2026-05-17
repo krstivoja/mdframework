@@ -87,17 +87,14 @@ Plus three globals defined in `bootstrap.php`:
 1. `components/header.php`
 2. `components/header.twig`
 3. `components/header.html`
-4. `components/header.fp.json`
-5. `_header.php`
-6. `header.php`
-7. `_header.twig`
-8. `header.twig`
-9. `_header.html`
-10. `header.html`
-11. `_header.fp.json`
-12. `header.fp.json`
+4. `_header.php`
+5. `header.php`
+6. `_header.twig`
+7. `header.twig`
+8. `_header.html`
+9. `header.html`
 
-`.twig` partials are routed through `FrontPress\TemplateRenderer`. `.php` partials are `require`d with `$vars` extracted into local scope. `.html` partials are emitted verbatim — they're authored in the visual editor and carry no template logic, so `$vars` are ignored. `.fp.json` partials are visual-builder block trees (see [visual templates](#visual-templates-fpjson)) rendered through `FrontPress\BlockRenderer` with the host page's `meta` in scope.
+`.twig` partials are routed through `FrontPress\TemplateRenderer`. `.php` partials are `require`d with `$vars` extracted into local scope. `.html` partials are emitted verbatim — they carry no template logic, so `$vars` are ignored.
 
 Convention: prefix shared layout chunks with `_` (`_header`, `_footer`, `_nav`). The leading underscore marks them as "not a route template" — `ThemeService::listTemplates()` excludes them from the per-post template dropdown in the admin.
 
@@ -300,40 +297,6 @@ To opt out entirely, just delete the `.scss` files — the framework leaves your
 #### Compile errors
 
 A malformed `.scss` file logs to PHP's `error_log` (`FrontPress\ScssCompiler: failed compiling <path>: <message>`) and is skipped — the request still serves whatever `.css` is on disk, so a broken SCSS edit can't take down the public site. When CSS isn't updating as you expect, the PHP error log is the first place to look.
-
-## Visual templates (`.fp.json`)
-
-In addition to `.twig` and `.php` templates, themes can include `.fp.json` files — block trees authored in the admin's **Theme editor** with a visual page-builder UI (palette · canvas · inspector). On disk they look like:
-
-```json
-{
-  "blocks": [
-    { "type": "heading", "data": { "level": "h1", "text": "Welcome", "align": "left" } },
-    { "type": "paragraph", "data": { "text": "Hello world.", "align": "left" } }
-  ]
-}
-```
-
-`.fp.json` files are rendered server-side by `FrontPress\BlockRenderer`, which walks the tree and renders each node through the matching block's `cms/blocks/<type>/render.twig`. The host page's front matter is passed in as `page`, so blocks can reference `{{ page.title }}` or any custom meta key.
-
-Built-in block types: `heading`, `paragraph`, `image`, `section` (container), `columns`, and `code` (raw Twig/HTML escape hatch — the content is rendered through Twig with the same `page` scope, so Twig tags work). The registry lives at `cms/blocks/`; each block ships a `block.json` schema + `render.twig`.
-
-Use them three ways:
-
-1. **As a route template** — drop `templates/page.fp.json` (or any template name) into your theme. Resolution order is the same as PHP/Twig: PHP wins, then Twig, then `.fp.json`.
-2. **As a partial** — `partial('hero')` resolves `components/hero.fp.json` (see [partial resolution order](#partial-resolution-order)).
-3. **As a per-post override** — pages with `template: landing` in front matter pick up `templates/landing.fp.json` if present.
-
-### Convert from existing source
-
-In the Theme editor, opening any `.twig`, `.php`, or `.html` file shows a **Convert to visual** button. It parses the file's HTML structure (`FrontPress\BlockImporter`, backed by `DOMDocument`) into a block tree and writes a `.fp.json` sibling — the original file is untouched. Conversion is **one-way**:
-
-- Recognised HTML maps to first-class blocks: `<h1>`–`<h6>` → `heading`, `<p>` → `paragraph`, `<img>` / `<figure><img></figure>` → `image`, `<section>` / `<div>` → `section`.
-- Twig tags (`{% %}` / `{{ }}`) at the *top level* between sibling elements land in their own `code` block carrying the verbatim source.
-- Twig tags *inside* an element's text content are preserved as part of that block's text — they continue to evaluate at render time.
-- Anything else (lists, tables, custom elements) becomes a `code` block with the original outer HTML.
-
-There's no round-trip back to `.twig` — the `.fp.json` is the new source of truth. Inspect the conversion, tweak in the builder, save. Keep the `.twig` around as a reference or delete it once you're happy.
 
 ## Engine specifics
 

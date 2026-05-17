@@ -7,6 +7,13 @@ layout: default
 
 All notable changes to FrontPress Studio are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.70] — 2026-05-17
+
+### Removed
+- **The entire visual page-builder.** Block-builder backend (`FrontPress\BlockRegistry`, `BlockRenderer`, `BlockImporter`, `cms/blocks/` registry, `BlocksController`, `/admin/api/blocks*` routes), front-end (`BlockComposer` palette/canvas/inspector/list-view/code-panel, `VisualBlocksPane`, `blockHelpers.js`), the `.fp.json` template format, the **Convert to visual** + **+ New visual template** buttons in the Theme editor, the **Blocks** mode in the page editor, and the GrapesJS `.html` visual surface (`grapesjs` / `grapesjs-blocks-basic` removed from `package.json`). The Theme editor goes back to CodeMirror-only with a live preview iframe; the page editor goes back to WYSIWYG / Markdown / HTML / Files. `.html` partials still resolve verbatim in `partial()`; that's theme infrastructure independent of the editor surface.
+- Reasons: the round-trip between visual tree and `.twig`/`.php` source is lossy in ways that corrupt files on save (whitespace, comments, expression forms get rewritten), and a separate `.fp.json` file alongside the canonical `.twig` was a worse split than expected. CodeMirror + preview is the honest editing surface for templates that contain logic; reach for a static-site / dedicated-builder tool when you need a real visual builder.
+- Test suite: 175 → 148 tests (27 block-builder tests deleted along with their subjects).
+
 ## [0.0.69] — 2026-05-17
 
 ### Added

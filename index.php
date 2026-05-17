@@ -104,15 +104,6 @@ switch ($route['type']) {
             not_found($url);
             break;
         }
-        // Block-mode pages: front matter declares `mode: blocks` and a
-        // `blocks: [...]` JSON tree. Walk the tree through BlockRenderer
-        // and let the result fill the page template's `html` slot — the
-        // template doesn't need to know anything about blocks.
-        if (($data['meta']['mode'] ?? '') === 'blocks' && is_array($data['meta']['blocks'] ?? null)) {
-            $registry      = new FrontPress\BlockRegistry(__DIR__ . '/cms/blocks');
-            $renderer      = new FrontPress\BlockRenderer($registry);
-            $data['html']  = $renderer->render($data['meta']['blocks'], $data['meta']);
-        }
         $template = $route['type'];
         if (!empty($data['meta']['template'])) {
             $override = $themes->resolveTemplate((string)$data['meta']['template']);

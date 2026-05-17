@@ -1,3 +1,0 @@
-{% set tag = data.level|default('h2') in ['h1','h2','h3','h4','h5','h6'] ? data.level|default('h2') : 'h2' %}
-{% set align = data.align|default('left') in ['left','center','right'] ? data.align|default('left') : 'left' %}
-<{{ tag }}{% if data.htmlId %} id="{{ data.htmlId }}"{% endif %}{% if data.htmlClass %} class="{{ data.htmlClass }}"{% endif %} style="text-align:{{ align }}" data-fp-text="text">{{ data.text|default('') }}</{{ tag }}>
