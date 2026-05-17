@@ -1,12 +1,20 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../lib/api.js';
-import { Alert, Badge, Button, Card } from '../../components/ui/index.js';
+import { api, getCsrf } from '../../lib/api.js';
+import { useFileUpload } from '../../lib/hooks.js';
+import { Alert, Badge, Button, Card, Dropzone } from '../../components/ui/index.js';
 
 export default function Themes() {
   const qc = useQueryClient();
   const [error, setError] = useState(null);
+  const [notice, setNotice] = useState(null);
+  const [downloading, setDownloading] = useState(null);
+  const upload = useFileUpload({
+    endpoint: '/admin/api/themes/upload',
+    fileField: 'theme',
+    invalidate: [['themes']],
+  });
   const { data, isLoading } = useQuery({
     queryKey: ['themes'],
     queryFn: () => api.get('/themes'),
@@ -30,6 +38,60 @@ export default function Themes() {
     onError: (e) => setError(e.message),
   });
 
+  async function download(slug) {
+    setDownloading(slug);
+    setError(null);
+    try {
+      const res = await fetch('/admin/api/themes/download', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrf() },
+        body: JSON.stringify({ slug }),
+      });
+      if (!res.ok) {
+        // The server keeps JSON for errors and only switches to
+        // application/zip on success — peek at the content-type to
+        // surface a real message instead of "500 Internal Server Error".
+        const ct = res.headers.get('Content-Type') || '';
+        if (ct.includes('application/json')) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || `${res.status} ${res.statusText}`);
+        }
+        throw new Error(`${res.status} ${res.statusText}`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const cd = res.headers.get('Content-Disposition') || '';
+      const m = /filename="([^"]+)"/.exec(cd);
+      a.download = m ? m[1] : `theme-${slug}-${new Date().toISOString().slice(0, 10)}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setDownloading(null);
+    }
+  }
+
+  async function handleUpload(files) {
+    const file = files[0];
+    if (!file) return;
+    setError(null);
+    setNotice(null);
+    try {
+      const res = await upload.upload(file);
+      setNotice(
+        res.replaced
+          ? `Replaced theme "${res.slug}".`
+          : `Installed theme "${res.slug}".`
+      );
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
   if (isLoading) return <div className="text-sm text-zinc-500">Loading…</div>;
 
   return (
@@ -45,6 +107,7 @@ export default function Themes() {
       </div>
 
       {error && <Alert tone="error">{error}</Alert>}
+      {notice && <Alert tone="success">{notice}</Alert>}
 
       <Card title="Installed">
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -55,13 +118,23 @@ export default function Themes() {
                   <div className="font-medium">{t.name || t.slug}</div>
                   <EngineBadge engine={t.engine} />
                 </div>
-                {data.active === t.slug ? (
-                  <Badge tone="active">Active</Badge>
-                ) : (
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3">
+                  {data.active === t.slug ? (
+                    <Badge tone="active">Active</Badge>
+                  ) : (
                     <Button variant="link" size="sm" onClick={() => activate.mutate(t.slug)}>
                       Activate
                     </Button>
+                  )}
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() => download(t.slug)}
+                    disabled={downloading === t.slug}
+                  >
+                    {downloading === t.slug ? 'Downloading…' : 'Download'}
+                  </Button>
+                  {data.active !== t.slug && (
                     <Button
                       variant="link-danger"
                       size="sm"
@@ -73,13 +146,28 @@ export default function Themes() {
                     >
                       Delete
                     </Button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
               {t.description && <p className="mt-1 text-xs text-zinc-500">{t.description}</p>}
             </div>
           ))}
         </div>
+      </Card>
+
+      <Card title="Upload theme">
+        <p className="text-xs text-zinc-500">
+          Drop a theme .zip to install it. If a theme with the same folder name
+          is already installed, it will be replaced — useful for editing a
+          theme locally and dragging the updated zip back to swap it in.
+        </p>
+        <Dropzone
+          accept=".zip,application/zip"
+          disabled={upload.busy}
+          label={upload.busy ? 'Uploading…' : 'Drop a theme .zip here'}
+          buttonLabel="Choose file"
+          onFiles={handleUpload}
+        />
       </Card>
 
       <Card title="Starters">

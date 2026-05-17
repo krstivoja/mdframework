@@ -21,7 +21,13 @@ export default function ThemeBuilderPreview({ path, cacheBust, selectedBlock, on
     onPathChange?.(normalized);
   }
 
-  const src = `${path || '/'}${path?.includes('?') ? '&' : '?'}fp_builder=${cacheBust}`;
+  // `fp_admin_preview=1` tells the public-side render to wrap output
+  // with source-mapping HTML comments + a click-handler script. The
+  // server gates the feature on the admin session cookie, so this is
+  // a no-op for unauthenticated visitors.
+  const base = path || '/';
+  const sep = base.includes('?') ? '&' : '?';
+  const src = `${base}${sep}fp_admin_preview=1&fp_builder=${cacheBust}`;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-zinc-100">

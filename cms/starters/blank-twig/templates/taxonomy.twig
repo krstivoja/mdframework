@@ -1,5 +1,7 @@
-{{ partial('header', { page_title: (taxonomy == 'tags' ? 'Tag' : 'Category') ~ ': ' ~ label }) }}
+{% extends '_layout.twig' %}
+{% set page_title = (taxonomy == 'tags' ? 'Tag' : 'Category') ~ ': ' ~ label %}
 
+{% block content %}
 <h1>{{ (taxonomy == 'tags' ? 'Tag' : 'Category') }}: {{ label }}</h1>
 
 {% if posts is iterable and posts|length %}
@@ -16,5 +18,4 @@
 {% else %}
   <p>Nothing here.</p>
 {% endif %}
-
-{{ partial('footer') }}
+{% endblock %}

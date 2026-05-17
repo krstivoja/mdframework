@@ -64,6 +64,14 @@ if (!function_exists('partial')) {
         foreach ($candidates as [$rel, $kind]) {
             $path = "$dir/$rel";
             if (!is_file($path)) continue;
+            $preview = !empty($GLOBALS['fp_template_preview']);
+            // Wrap the partial's output with HTML-comment markers in
+            // preview mode so the iframe click handler can attribute
+            // clicks back to the source file via DOM walk.
+            if ($preview) {
+                $tplPath = "templates/" . htmlspecialchars($rel, ENT_QUOTES);
+                echo "<!--fp:src:{$tplPath}:start-->";
+            }
             if ($kind === 'twig') {
                 FrontPress\TemplateRenderer::instance()->render($rel, $vars);
             } elseif ($kind === 'html') {
@@ -71,6 +79,10 @@ if (!function_exists('partial')) {
             } else {
                 extract($vars, EXTR_SKIP);
                 require $path;
+            }
+            if ($preview) {
+                $tplPath = "templates/" . htmlspecialchars($rel, ENT_QUOTES);
+                echo "<!--fp:src:{$tplPath}:end-->";
             }
             return;
         }

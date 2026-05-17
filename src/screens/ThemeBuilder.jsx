@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
 import {
@@ -24,6 +24,7 @@ export default function ThemeBuilder() {
   const [selectedBlockId, setSelectedBlockId] = useState('');
   const [previewKey, setPreviewKey] = useState(Date.now());
   const [previewPath, setPreviewPath] = useState('/');
+  const previewPathTouched = useRef(false);
 
   const { data: themesData, isLoading: themesLoading } = useQuery({
     queryKey: ['themes'],
@@ -91,6 +92,36 @@ export default function ThemeBuilder() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [path, dirty, save]);
+
+  // When the open file changes, auto-pick a preview URL that exercises
+  // that template — unless the user has manually typed something in the
+  // preview input, in which case we leave their value alone.
+  useEffect(() => {
+    if (!path) return;
+    if (previewPathTouched.current) return;
+    const next = defaultPreviewPath(path);
+    if (next) setPreviewPath(next);
+  }, [path]);
+
+  // Iframe → parent click bridge. The public-side preview script sends
+  // `{ type: 'fp:select', path }` when the user clicks anything in the
+  // rendered preview. If the path matches an editable file in the
+  // current theme, switch to it.
+  useEffect(() => {
+    function onMessage(e) {
+      const data = e.data;
+      if (!data || data.type !== 'fp:select' || typeof data.path !== 'string') return;
+      if (!files.some((f) => f.path === data.path)) return;
+      if (path === data.path) return;
+      if (dirty && !confirm('Discard unsaved changes?')) return;
+      setPath(data.path);
+      setDraft('');
+      setDirty(false);
+      setSelectedBlockId('');
+    }
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [files, path, dirty]);
 
   function chooseTheme(next) {
     if (dirty && !confirm('Discard unsaved changes?')) return;
@@ -216,7 +247,10 @@ export default function ThemeBuilder() {
             path={previewPath}
             cacheBust={previewKey}
             selectedBlock={selectedBlock}
-            onPathChange={setPreviewPath}
+            onPathChange={(next) => {
+              previewPathTouched.current = true;
+              setPreviewPath(next);
+            }}
           />
         </div>
 
@@ -248,4 +282,22 @@ function preferredPath(files) {
     files[0]?.path ||
     ''
   );
+}
+
+// Best-effort guess at a public-site URL that will render the given
+// theme file. We don't try to look up real post / page slugs from the
+// API here — the preview input is still editable, so the user can
+// always override. The goal is just "give them a sensible default
+// when they switch files".
+function defaultPreviewPath(filePath) {
+  const name = filePath.split('/').pop()?.toLowerCase() || '';
+  if (/^post\.(twig|php)$/.test(name))     return '/blog'; // archive happens to render posts via partials in many themes
+  if (/^page\.(twig|php)$/.test(name))     return '/';
+  if (/^archive\.(twig|php)$/.test(name))  return '/blog';
+  if (/^taxonomy\.(twig|php)$/.test(name)) return '/categories/news';
+  if (/^feed\.(twig|php)$/.test(name))     return '/feed';
+  if (/^404\.(twig|php)$/.test(name))      return '/__fp_preview_404__';
+  if (/^_header\.(twig|php)$/.test(name))  return '/';
+  if (/^_footer\.(twig|php)$/.test(name))  return '/';
+  return '/';
 }

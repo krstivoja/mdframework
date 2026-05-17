@@ -84,7 +84,7 @@ It does not dismiss — the only way to clear it is to rotate the password under
 - **Create / edit / delete** any `.md` file
 - **Media library** — shared `site/uploads/` pool with previews, alt/caption sidecars; per-post uploads land in `site/content/<pagePath>/` next to the post's `.md` file. Empty state shows a labelled dropzone with allowed types (JPG · PNG · GIF · WebP · SVG · PDF · ZIP) and the live `uploads.max_mb` limit; dropping files there hands them straight to the upload dialog so the first upload is a single gesture.
 - **Settings** — site name, base path, taxonomies, upload limits
-- **Themes** — list installed themes, activate one, delete non-active ones, install from a starter. Each theme/starter card shows an **engine badge** (`twig` / `php`) sourced from `theme.json:engine` or auto-detected by [`ThemeService::detectEngine`](app/cms/lib/ThemeService.php) (counts top-level `.twig` vs `.php` files in the theme's `templates/` dir). Two starters ship by default: **Blank (Twig)** and **Blank (PHP)** — same look, different engine.
+- **Themes** — list installed themes, activate one, delete non-active ones, install from a starter, **download any theme as a `.zip`**, and **drag-and-drop a theme `.zip` to install or replace**. The upload flow round-trips: download a theme, edit it locally, drop the updated zip back to swap it in (the archive's top-level folder name is the slug; matching slugs replace, new slugs install fresh). Validation, atomic rename-aside, and rollback on failure live in [`ThemeArchiver`](app/cms/lib/ThemeArchiver.php) — extracted from `ThemeService` so it can be unit-tested in isolation. Each theme/starter card shows an **engine badge** (`twig` / `php`) sourced from `theme.json:engine` or auto-detected by [`ThemeService::detectEngine`](app/cms/lib/ThemeService.php) (counts top-level `.twig` vs `.php` files in the theme's `templates/` dir). Two starters ship by default: **Blank (Twig)** and **Blank (PHP)** — same look, different engine.
 - **Backup** — download/restore Full / Content / Settings ZIP archives
 - CSRF-protected on all state-changing requests (`X-CSRF-Token` header)
 - Session cookie auth — `HttpOnly`, `SameSite=Lax`
@@ -146,6 +146,9 @@ All endpoints accept and return JSON. Mutating requests must include the CSRF to
 | `POST` | `/admin/api/themes/activate` | Activate by slug |
 | `POST` | `/admin/api/themes/install` | Install a starter |
 | `POST` | `/admin/api/themes/replace` | Replace templates from a starter |
+| `POST` | `/admin/api/themes/download` | Download a theme as `.zip` (body `{ slug }`, returns binary) |
+| `POST` | `/admin/api/themes/upload` | Install or replace a theme from an uploaded `.zip` (multipart `theme` + optional `theme_slug`) |
+| `POST` | `/admin/api/themes/delete` | Delete a non-active theme by slug |
 | `GET`  | `/admin/api/backup` | Estimated archive sizes |
 | `POST` | `/admin/api/backup/download` | Download a `.zip` (returns binary) |
 | `POST` | `/admin/api/backup/restore` | Restore from uploaded `.zip` (multipart) |

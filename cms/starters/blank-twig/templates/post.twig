@@ -1,5 +1,7 @@
-{{ partial('header', { page_title: meta.title|default('Post'), meta: meta }) }}
+{% extends '_layout.twig' %}
+{% set page_title = meta.title|default('Post') %}
 
+{% block content %}
 <article>
   {% set featured = meta.image is iterable ? (meta.image|first) : meta.image %}
   {% if featured %}
@@ -11,5 +13,4 @@
   {% if meta.date %}<p class="archive-meta"><time>{{ meta.date }}</time></p>{% endif %}
   {{ html|raw }}
 </article>
-
-{{ partial('footer') }}
+{% endblock %}

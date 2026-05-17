@@ -1,8 +1,9 @@
-{{ partial('header', { page_title: meta.title|default('Page'), meta: meta }) }}
+{% extends '_layout.twig' %}
+{% set page_title = meta.title|default('Page') %}
 
+{% block content %}
 <article>
-  <h1>{{ meta.title|default('') }}</h1>
+  <h1 style="font-size:5rem;">{{ meta.title|default('') }}</h1>
   {{ html|raw }}
 </article>
-
-{{ partial('footer') }}
+{% endblock %}

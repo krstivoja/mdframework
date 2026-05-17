@@ -1,6 +1,8 @@
-{{ partial('header', { page_title: folder|default('Blog')|capitalize }) }}
+{% extends '_layout.twig' %}
+{% set page_title = (folder|default('Blog'))|capitalize %}
 
-<h1>{{ folder|default('Blog')|capitalize }}</h1>
+{% block content %}
+<h1 style="font-size: 5rem;">{{ folder|default('Blog')|capitalize }}</h1>
 
 {% if intro and intro.html %}<div>{{ intro.html|raw }}</div>{% endif %}
 
@@ -18,5 +20,4 @@
 {% else %}
   <p>No posts yet.</p>
 {% endif %}
-
-{{ partial('footer') }}
+{% endblock %}

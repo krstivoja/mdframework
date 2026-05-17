@@ -7,6 +7,20 @@ layout: default
 
 All notable changes to FrontPress Studio are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.76] — 2026-05-17
+
+### Added
+- **Click-in-preview → jump to file in the Theme Builder.** The preview iframe is now opened with `?fp_admin_preview=1`. On the server side, when this param is present AND the request carries a valid admin session, the renderer wraps each `partial()` call's output and the top-level template's output with `<!--fp:src:<path>:start-->` / `<!--fp:src:<path>:end-->` HTML comment markers, and appends a small click-handler script. Clicking anything in the rendered preview walks the DOM (balancing nested markers) to find the source file, then `postMessage`s the parent. The Theme Builder receives that and opens the matching file in the code panel + outline. Unauthenticated visitors visiting the same URL with the param ignore it — markers and script only emit for admins.
+- **Auto preview URL** in the Theme Builder. When the open file changes, the preview's URL field auto-derives a sensible default for that template kind (`post.twig` → `/blog`, `archive.twig` → `/blog`, `taxonomy.twig` → `/categories/news`, `feed.twig` → `/feed`, `404.twig` → forced 404, etc.). The user's manual edits to the field stick — the auto-derive only fires until the input is touched.
+
+### Changed
+- **Blank theme refactored to self-contained partials** so click-in-preview attribution works accurately. Old structure: `_header.twig` emitted `<!doctype>` through unclosed `<main>`; `_footer.twig` closed the tags. The browser's parser engulfed `_header.twig`'s end-marker inside the unclosed `<main>`, so clicks anywhere in main content mapped to `_header.twig`. New structure:
+  - `_layout.twig` (new) — owns the full document chrome (`<doctype>`, `<html>`, `<head>`, `<body>`, calls `partial('header')` + `partial('footer')`, wraps a `{% block content %}` inside `<main>`).
+  - `_header.twig` — just `<header>...</header>`.
+  - `_footer.twig` — just `<footer>...</footer>`.
+  - `post.twig` / `page.twig` / `archive.twig` / `taxonomy.twig` / `404.twig` — `{% extends '_layout.twig' %}` + `{% block content %}`. `feed.twig` left alone (XML output, different shape).
+- Mirrored to `cms/starters/blank-twig/templates/` so new themes installed from that starter get the well-formed structure automatically. `blank-php` starter still uses the split-partial pattern; refactoring that to a `_layout.php` ob_start pattern is a follow-up.
+
 ## [0.0.75] — 2026-05-17
 
 ### Changed

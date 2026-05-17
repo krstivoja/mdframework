@@ -45,7 +45,20 @@ class ThemesController
             \json_response(['ok' => false, 'error' => 'Method not allowed'], 405);
         }
 
+        // Multipart actions: don't try to JSON-decode the body — the file
+        // lives in $_FILES and the slug override (if any) in $_POST.
+        if ($action === 'upload') {
+            self::upload($themes, $config);
+            return;
+        }
+
         $body = Router::jsonBody();
+
+        if ($action === 'download') {
+            $slug = preg_replace('/[^a-z0-9_-]/', '', (string)($body['slug'] ?? ''));
+            self::download($slug, $config);
+            return;
+        }
 
         if ($action === 'activate') {
             $slug   = preg_replace('/[^a-z0-9_-]/', '', (string)($body['slug'] ?? ''));
@@ -101,6 +114,75 @@ class ThemesController
         }
 
         \json_response(['ok' => false, 'error' => 'Unknown theme action'], 404);
+    }
+
+    /** @param array<string, mixed> $config */
+    private static function download(string $slug, array $config): void
+    {
+        if ($slug === '') {
+            \json_response(['ok' => false, 'error' => 'Invalid theme slug'], 400);
+        }
+        $themesDir = $config['appRoot'] . '/site/themes';
+        $themeDir  = $themesDir . '/' . $slug;
+        $base      = realpath($themesDir);
+        $real      = realpath($themeDir);
+        if (!$real || !$base || !str_starts_with($real, $base . '/')) {
+            \json_response(['ok' => false, 'error' => 'Theme not found'], 404);
+        }
+
+        $tmp = tempnam(sys_get_temp_dir(), 'mdtheme_');
+        if ($tmp === false || !ServiceFactory::themeArchiver()->writeZip($real, $slug, $tmp)) {
+            if ($tmp) {
+                @unlink($tmp);
+            }
+            \json_response(['ok' => false, 'error' => 'Failed to write theme archive'], 500);
+        }
+
+        $stamp = date('Y-m-d');
+        // Router set Content-Type: application/json; strip it before
+        // streaming binary so browsers don't mis-sniff the response.
+        header_remove('Content-Type');
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment; filename="theme-' . $slug . '-' . $stamp . '.zip"');
+        header('Content-Length: ' . (string)filesize($tmp));
+        readfile($tmp);
+        @unlink($tmp);
+        exit;
+    }
+
+    /** @param array<string, mixed> $config */
+    private static function upload(ThemeService $themes, array $config): void
+    {
+        $file = $_FILES['theme'] ?? null;
+        if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            \json_response(['ok' => false, 'error' => 'No file uploaded'], 400);
+        }
+        if (!is_uploaded_file($file['tmp_name'])) {
+            \json_response(['ok' => false, 'error' => 'Invalid upload'], 400);
+        }
+
+        $slugOverride = isset($_POST['theme_slug']) ? (string)$_POST['theme_slug'] : null;
+        $themesDir    = $config['appRoot'] . '/site/themes';
+
+        $result = ServiceFactory::themeArchiver()->install($file['tmp_name'], $themesDir, $slugOverride);
+        if (!$result['ok']) {
+            \json_response(['ok' => false, 'error' => $result['error']], 400);
+        }
+
+        // If we just overwrote the active theme, its assets directory may
+        // have changed shape (symlink target stays the same string, but a
+        // missing assets/ would have broken `ensureAssetsLink`). Cheap to
+        // re-run either way.
+        if ($result['slug'] === $themes->active()) {
+            $themes->ensureAssetsLink();
+        }
+        self::clearCache($config);
+
+        \json_response([
+            'ok'       => true,
+            'slug'     => $result['slug'],
+            'replaced' => $result['replaced'],
+        ]);
     }
 
     /** @param callable(): array<string, mixed> $fn */

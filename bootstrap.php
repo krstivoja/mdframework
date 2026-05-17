@@ -158,6 +158,13 @@ function render(string $template, array $vars = []): void
     $GLOBALS['fp_current_template'] = $template;
     $GLOBALS['fp_current_vars']     = $vars;
 
+    // Admin Theme Builder asks for source-mapped preview chrome by sending
+    // `?fp_admin_preview=1`. We honour it only when the request also has
+    // a valid admin session, so visitors can't trigger the marker output
+    // on a live site by appending the query param.
+    $previewMode = !empty($_GET['fp_admin_preview']) && !empty($GLOBALS['admin_logged_in']);
+    $GLOBALS['fp_template_preview'] = $previewMode;
+
     ob_start();
     if (is_file($php)) {
         extract($vars, EXTR_SKIP);
@@ -167,12 +174,85 @@ function render(string $template, array $vars = []): void
     }
     $body = (string)ob_get_clean();
 
+    if ($previewMode) {
+        $tplPath = is_file($php) ? "templates/$template.php" : "templates/$template.twig";
+        // Wrap the whole rendered body so a click that lands outside any
+        // partial still maps back to the route template. Markers are HTML
+        // comments — invisible to the renderer, walkable from JS via
+        // `previousSibling` + `parentNode`.
+        $body = "<!--fp:src:" . htmlspecialchars($tplPath, ENT_QUOTES) . ":start-->\n"
+              . $body
+              . "\n<!--fp:src:" . htmlspecialchars($tplPath, ENT_QUOTES) . ":end-->";
+        $body = inject_preview_script($body);
+    }
+
     if (!FrontPress\Seo::wasEmittedThisRequest()) {
         $body = inject_seo($body, $template, $vars);
     }
 
     echo $body;
     admin_edit_button();
+}
+
+/**
+ * Append a small click-handler script to a preview-mode render. The
+ * script intercepts clicks, walks up the DOM to find the nearest
+ * `<!--fp:src:<path>:start-->` marker, and `postMessage`s the parent
+ * window with `{ type: 'fp:select', path }`. The Theme Builder's
+ * iframe parent receives that and opens the file in the code panel.
+ */
+function inject_preview_script(string $body): string
+{
+    $script = <<<'HTML'
+<script>(function () {
+  // Walk back through previous siblings looking for the nearest
+  // `fp:src:<path>:start` marker. We need to balance any `:end`
+  // markers we cross on the way: a sibling region's end means we
+  // should step past its matching start (it belongs to that
+  // already-closed sibling, not to us). When we run out of
+  // previous siblings, move up to the parent and repeat.
+  function findSrc(node) {
+    while (node) {
+      var sib = node.previousSibling;
+      var depth = 0;
+      while (sib) {
+        if (sib.nodeType === 8) {
+          var s = String(sib.nodeValue || '');
+          var endM = s.match(/^fp:src:(.+?):end$/);
+          var startM = endM ? null : s.match(/^fp:src:(.+?):start$/);
+          if (endM) {
+            depth += 1;
+          } else if (startM) {
+            if (depth === 0) return startM[1];
+            depth -= 1;
+          }
+        }
+        sib = sib.previousSibling;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+  document.addEventListener('click', function (e) {
+    var path = findSrc(e.target);
+    if (!path) return;
+    // Anchor/form clicks would otherwise leave the iframe; in preview
+    // mode the click is a selection action, not a navigation.
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      parent.postMessage({ type: 'fp:select', path: path }, '*');
+    } catch (_) {}
+  }, true);
+  // Subtle hover outline so the user can tell something is mappable.
+  var style = document.createElement('style');
+  style.textContent = '*:hover { outline: 1px dashed rgba(59,130,246,.4); outline-offset: 1px; cursor: crosshair; }';
+  document.head && document.head.appendChild(style);
+})();</script>
+HTML;
+    $bodyClose = stripos($body, '</body>');
+    if ($bodyClose === false) return $body . $script;
+    return substr($body, 0, $bodyClose) . $script . substr($body, $bodyClose);
 }
 
 /**

@@ -1,7 +1,8 @@
-{{ partial('header', { page_title: 'Not found' }) }}
+{% extends '_layout.twig' %}
+{% set page_title = 'Not found' %}
 
+{% block content %}
 <h1>404 — not found</h1>
 <p>The page <code>{{ url }}</code> doesn't exist.</p>
 <p><a href="/">Go home</a></p>
-
-{{ partial('footer') }}
+{% endblock %}
