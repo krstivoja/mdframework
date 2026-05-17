@@ -1,3 +1,4 @@
+import { Annotation } from '@codemirror/state';
 import { useEffect, useRef } from 'react';
 import { EditorState } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers, highlightActiveLine } from '@codemirror/view';
@@ -9,6 +10,12 @@ import {
   bracketMatching,
   indentOnInput,
 } from '@codemirror/language';
+
+// Annotation used to tag transactions where we (not the user) wrote the
+// new doc — file switch, mode swap, external buffer reset. The update
+// listener uses this to suppress onChange so the parent doesn't get
+// marked dirty by its own hydration.
+const SYNC_FROM_PROP = Annotation.define();
 
 /**
  * Thin React wrapper around a CodeMirror 6 EditorView. Used by PageEditor for
@@ -52,9 +59,16 @@ export default function CodeEditor({
         langExt,
         EditorView.lineWrapping,
         EditorView.updateListener.of((update) => {
-          if (update.docChanged) {
-            onChangeRef.current?.(update.state.doc.toString());
-          }
+          if (!update.docChanged) return;
+          // Skip transactions we dispatched ourselves to mirror a `value`
+          // prop change — otherwise the parent's hydration of a freshly-
+          // loaded file would round-trip back as "user edit" and trip the
+          // dirty flag the moment a file tab is clicked.
+          const fromProp = update.transactions.some(
+            (tr) => tr.annotation(SYNC_FROM_PROP),
+          );
+          if (fromProp) return;
+          onChangeRef.current?.(update.state.doc.toString());
         }),
       ],
     });
@@ -78,6 +92,7 @@ export default function CodeEditor({
     if (current === (value ?? '')) return;
     view.dispatch({
       changes: { from: 0, to: current.length, insert: value ?? '' },
+      annotations: SYNC_FROM_PROP.of(true),
     });
   }, [value]);
 

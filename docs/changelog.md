@@ -7,6 +7,11 @@ layout: default
 
 All notable changes to FrontPress Studio are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.74] — 2026-05-17
+
+### Fixed
+- **Switching files in the Theme Builder tripped "unsaved changes"** even when the user hadn't typed anything. `CodeEditor`'s update listener fired `onChange` for *every* `docChanged` transaction — including the ones the wrapper itself dispatched to mirror a new `value` prop (file switch, mode swap). Parents saw their own hydration come back as a "user edit" and flipped the dirty flag. Now each programmatic dispatch carries a `SYNC_FROM_PROP` annotation and the listener bails when it sees one. PageEditor's HTML view and the Theme Builder both benefit; behavior on real user typing is unchanged.
+
 ## [0.0.73] — 2026-05-17
 
 ### Improved
