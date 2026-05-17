@@ -112,6 +112,31 @@ class ThemesController
             }
             \json_response(['ok' => false, 'error' => $result['error'] ?? 'Failed'], 400);
         }
+        if ($action === 'create-template') {
+            $theme   = isset($body['theme']) ? (string)$body['theme'] : null;
+            $slug    = preg_replace('/[^a-z0-9_-]/', '', strtolower((string)($body['slug'] ?? '')));
+            $ext     = ((string)($body['ext'] ?? 'twig')) === 'php' ? 'php' : 'twig';
+            $kind    = ((string)($body['kind'] ?? 'template')) === 'partial' ? 'partial' : 'template';
+            $content = (string)($body['content'] ?? '');
+            if ($slug === '' || str_starts_with($slug, '_')) {
+                \json_response(['ok' => false, 'error' => 'Invalid slug'], 400);
+            }
+            // Partials live alongside templates with a leading underscore
+            // — the `partial()` helper resolves `partial('header')` to
+            // `_header.twig`.
+            $filename = ($kind === 'partial' ? '_' : '') . $slug . '.' . $ext;
+            $path     = 'templates/' . $filename;
+            try {
+                $result = ServiceFactory::themeFiles($config)->create($theme, $path, $content);
+            } catch (\RuntimeException $e) {
+                \json_response(['ok' => false, 'error' => $e->getMessage()], 400);
+            }
+            if (!empty($result['ok'])) {
+                self::clearCache($config);
+                \json_response($result);
+            }
+            \json_response(['ok' => false, 'error' => $result['error'] ?? 'Failed'], 400);
+        }
 
         \json_response(['ok' => false, 'error' => 'Unknown theme action'], 404);
     }

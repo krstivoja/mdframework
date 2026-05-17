@@ -1,53 +1,133 @@
-// Theme Builder block parser.
-//
-// Walks a Twig source string and emits a tree of blocks for the outline.
-// Three kinds of blocks coexist:
-//
-//   - marker  : explicit author intent — wrapped in {# fp:block ... #} ...
-//               {# /fp:block #} comments. These are the *editable* blocks
-//               (reorder, drag, delete, add). The marker comment carries
-//               an id/type/label.
-//   - code    : Twig control flow — {% for %} ... {% endfor %} and
-//               {% if %} ... {% endif %}. Visible in the outline as
-//               structure; clicking jumps the code editor, but the UI
-//               never mutates these.
-//   - html    : raw HTML elements (article, section, div, ...) — same
-//               read-only role as `code`.
-//
-// The previous implementation was a line-scan with simple regexes. This
-// version tokenizes the source character-by-character with quote-awareness
-// so it survives:
-//
-//   - multi-line opening tags (`<div\n  class="x">`)
-//   - multiple elements per line (`<span>a</span><span>b</span>`)
-//   - `>` inside attribute values (`<a title="1>2">`)
-//   - HTML comments and CDATA — skipped wholesale rather than confusing
-//     the tag matcher
-//
-// The token stream is then run through a stack walker that pairs opens
-// with closes and emits the tree. Marker / code / html each track their
-// own nesting so a `</div>` doesn't accidentally close a `{% for %}`.
+import { tokenizeThemeSource } from './themeBuilderTokenizer.js';
 
+// Tags the outline surfaces as selectable blocks. Curated, not exhaustive
+// — `<span>` and most inline-only elements would drown the structure view
+// in noise. If you're missing a tag here, the rule is "is it something a
+// theme author would want to point at in the outline?" If yes, add it.
+//
+// Mirrored in `bootstrap.php`'s `inject_preview_script` so the preview's
+// click-to-select bridge resolves the same set of tags. Keep them in sync.
 const VISUAL_TAGS = new Set([
+  // Sectioning + layout
   'article', 'aside', 'div', 'footer', 'form', 'header', 'li', 'main',
-  'nav', 'ol', 'p', 'section', 'ul', 'h1', 'h2', 'h3', 'h4',
-]);
-
-const VOID_TAGS = new Set([
-  'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link',
-  'meta', 'param', 'source', 'track', 'wbr',
+  'nav', 'ol', 'section', 'ul',
+  // Headings
+  'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+  // Text content
+  'p', 'blockquote', 'pre',
+  // Media + embeds
+  'a', 'button', 'img', 'figure', 'figcaption', 'video', 'audio', 'iframe',
+  // Tables
+  'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th',
+  // Misc
+  'hr',
 ]);
 
 export function parseThemeBlocks(source) {
-  const tokens = tokenize(String(source || ''));
+  const tokens = tokenizeThemeSource(String(source || ''));
   return buildTree(tokens);
 }
 
-export function flattenBlocks(blocks, depth = 0) {
+export function flattenBlocks(blocks, depth = 0, parentId = null) {
   return blocks.flatMap((block) => [
-    { ...block, depth, children: undefined },
-    ...flattenBlocks(block.children || [], depth + 1),
+    { ...block, depth, parentId, children: undefined },
+    ...flattenBlocks(block.children || [], depth + 1, block.id),
   ]);
+}
+
+/**
+ * Move a block in the outline relative to a target block. Supports
+ * cross-parent moves: `position: 'before' | 'after' | 'inside'`
+ * specifies where to drop the moved chunk relative to `toId`.
+ *
+ * Re-indents the moved chunk to match the target context. The chunk's
+ * current leading indent (the minimum indent across its non-empty lines)
+ * is stripped, then a new indent matching the target row's indent (plus
+ * one extra step for `'inside'`) is added.
+ *
+ * Returns the new source string. No-ops (returns the original) when:
+ *   - either block can't be located,
+ *   - `toId === fromId`,
+ *   - dropping a block inside one of its own descendants (would tangle
+ *     the tree).
+ */
+export function moveBlock(source, fromId, toId, position, blocks) {
+  if (!fromId || !toId || fromId === toId) return source;
+  if (!['before', 'after', 'inside'].includes(position)) return source;
+
+  const flat = flattenBlocks(blocks);
+  const from = flat.find((b) => b.id === fromId);
+  const to   = flat.find((b) => b.id === toId);
+  if (!from || !to) return source;
+  if (!from.startLine || !from.endLine || !to.startLine || !to.endLine) return source;
+
+  // Refuse "drop a parent inside its own descendant" — that would orphan
+  // the tree. Walk down from `from` and bail if we find `to`.
+  if (isDescendant(blocks, fromId, toId)) return source;
+
+  const lines = String(source || '').split('\n');
+  const chunk = lines.slice(from.startLine - 1, from.endLine);
+
+  // Strip the chunk's current leading indent so we can re-indent fresh.
+  const currentIndent = minLeadingWhitespace(chunk);
+  const stripped = chunk.map((l) => (l.length >= currentIndent ? l.slice(currentIndent) : l));
+
+  // Target indent: the indent of the target's first line, plus one
+  // extra step for `'inside'`. We don't know the project's tab size; the
+  // codebase's existing snippets all use 2-space indent, so we match.
+  const targetLine = lines[to.startLine - 1] || '';
+  const baseIndent = targetLine.match(/^\s*/)?.[0] || '';
+  const indent = position === 'inside' ? baseIndent + '  ' : baseIndent;
+  const reindented = stripped.map((l) => (l.length ? indent + l : l));
+
+  // Remove the chunk first so subsequent line numbers line up. Then
+  // compute where to splice it back in. `to.startLine` / `to.endLine`
+  // need adjusting when the removed chunk was above them.
+  lines.splice(from.startLine - 1, chunk.length);
+  let toStart = to.startLine;
+  let toEnd   = to.endLine;
+  if (from.startLine < to.startLine) {
+    toStart -= chunk.length;
+    toEnd   -= chunk.length;
+  }
+
+  let insertAt;
+  if (position === 'before') {
+    insertAt = toStart - 1;
+  } else if (position === 'after') {
+    insertAt = toEnd;
+  } else {
+    // 'inside' — after the target's opening line. This puts the moved
+    // chunk as the first child of the target. Good enough for the
+    // common case ("drop into an empty container"); the user can
+    // re-drag among siblings to fine-tune ordering.
+    insertAt = toStart;
+  }
+  lines.splice(insertAt, 0, ...reindented);
+  return lines.join('\n');
+}
+
+function isDescendant(blocks, ancestorId, candidateId) {
+  function walk(items, foundAncestor) {
+    for (const b of items) {
+      const here = foundAncestor || b.id === ancestorId;
+      if (here && b.id === candidateId && b.id !== ancestorId) return true;
+      if (b.children && walk(b.children, here)) return true;
+    }
+    return false;
+  }
+  return walk(blocks, false);
+}
+
+function minLeadingWhitespace(lines) {
+  let min = Infinity;
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const m = line.match(/^(\s*)/);
+    const n = m ? m[1].length : 0;
+    if (n < min) min = n;
+  }
+  return min === Infinity ? 0 : min;
 }
 
 export function findBlock(blocks, id) {
@@ -82,148 +162,6 @@ export function findElementByTag(blocks, tag, occurrence) {
   }
   return walk(blocks);
 }
-
-export function canEditBlock(block) {
-  return block?.source === 'marker';
-}
-
-/* -------------------------------------------------------------------- */
-/* Tokenizer                                                            */
-/* -------------------------------------------------------------------- */
-
-// Emits a flat list of events:
-//   { kind: 'marker-open', id, type, label, line }
-//   { kind: 'marker-close', line }
-//   { kind: 'twig-open', type: 'loop'|'condition', label, line }
-//   { kind: 'twig-close', type: 'loop'|'condition', line }
-//   { kind: 'html-open', tag, line, selfClosed }
-//   { kind: 'html-close', tag, line }
-function tokenize(src) {
-  const events = [];
-  const len = src.length;
-  let i = 0;
-  let line = 1;
-
-  while (i < len) {
-    const ch = src[i];
-
-    if (ch === '\n') { line += 1; i += 1; continue; }
-
-    // Twig comment — may contain an fp:block marker or be a plain comment.
-    if (ch === '{' && src[i + 1] === '#') {
-      const end = src.indexOf('#}', i + 2);
-      if (end === -1) break;
-      const body = src.slice(i + 2, end).trim();
-      if (/^fp:block\b/.test(body)) {
-        const attrs = parseAttrs(body.replace(/^fp:block\b/, ''));
-        events.push({
-          kind: 'marker-open',
-          id: attrs.id || `marker-${line}`,
-          type: attrs.type || 'section',
-          label: attrs.label || attrs.id || `Block ${line}`,
-          line,
-        });
-      } else if (/^\/fp:block\s*$/.test(body)) {
-        events.push({ kind: 'marker-close', line });
-      }
-      line += countNewlines(src, i, end + 2);
-      i = end + 2;
-      continue;
-    }
-
-    // Twig statement — only the control-flow ones we care about.
-    if (ch === '{' && src[i + 1] === '%') {
-      const end = src.indexOf('%}', i + 2);
-      if (end === -1) break;
-      const body = src.slice(i + 2, end).trim();
-      const open = body.match(/^(for|if)\b\s*(.*)$/);
-      const close = body.match(/^end(for|if)\b/);
-      if (open) {
-        events.push({
-          kind: 'twig-open',
-          type: open[1] === 'for' ? 'loop' : 'condition',
-          label: open[1] === 'for' ? `Loop ${cleanInline(open[2])}` : `If ${cleanInline(open[2])}`,
-          line,
-        });
-      } else if (close) {
-        events.push({
-          kind: 'twig-close',
-          type: close[1] === 'for' ? 'loop' : 'condition',
-          line,
-        });
-      }
-      line += countNewlines(src, i, end + 2);
-      i = end + 2;
-      continue;
-    }
-
-    // Twig output `{{ ... }}` — skip; doesn't affect structure.
-    if (ch === '{' && src[i + 1] === '{') {
-      const end = src.indexOf('}}', i + 2);
-      if (end === -1) break;
-      line += countNewlines(src, i, end + 2);
-      i = end + 2;
-      continue;
-    }
-
-    // HTML comment.
-    if (ch === '<' && src.startsWith('!--', i + 1)) {
-      const end = src.indexOf('-->', i + 4);
-      if (end === -1) break;
-      line += countNewlines(src, i, end + 3);
-      i = end + 3;
-      continue;
-    }
-
-    // HTML tag — open, close, or self-closing.
-    if (ch === '<') {
-      const tagMatch = /^<\/?([a-zA-Z][a-zA-Z0-9:-]*)/.exec(src.slice(i));
-      if (tagMatch) {
-        const isClose = src[i + 1] === '/';
-        const tag = tagMatch[1].toLowerCase();
-        const tagStartLine = line;
-        // Walk past the rest of the opening tag, respecting quoted
-        // attribute values so `>` inside a string doesn't close the tag.
-        let j = i + tagMatch[0].length;
-        let quote = null;
-        while (j < len) {
-          const c = src[j];
-          if (quote) {
-            if (c === quote) quote = null;
-          } else if (c === '"' || c === "'") {
-            quote = c;
-          } else if (c === '>') {
-            break;
-          }
-          if (c === '\n') line += 1;
-          j += 1;
-        }
-        if (j >= len) break; // Unterminated tag — bail.
-        const selfClosed = src[j - 1] === '/' || VOID_TAGS.has(tag);
-        if (isClose) {
-          events.push({ kind: 'html-close', tag, line: tagStartLine });
-        } else {
-          events.push({ kind: 'html-open', tag, line: tagStartLine, selfClosed });
-          if (selfClosed) {
-            // Void/self-closed: emit a paired close immediately so the
-            // stack walker doesn't keep the element open across siblings.
-            events.push({ kind: 'html-close', tag, line: tagStartLine });
-          }
-        }
-        i = j + 1;
-        continue;
-      }
-    }
-
-    i += 1;
-  }
-
-  return events;
-}
-
-/* -------------------------------------------------------------------- */
-/* Stack walker — events → tree                                         */
-/* -------------------------------------------------------------------- */
 
 function buildTree(events) {
   const root = { id: 'root', children: [] };
@@ -308,115 +246,3 @@ function closeMostRecent(stack, predicate, line) {
   }
 }
 
-/* -------------------------------------------------------------------- */
-/* Source mutations — used by the outline's Add / Up / Down / Delete /  */
-/* drag-reorder. All operate on the raw source string + a parsed block, */
-/* never on the tokenized events.                                       */
-/* -------------------------------------------------------------------- */
-
-export function insertSection(source) {
-  const id = `section-${Date.now().toString(36)}`;
-  const snippet = [
-    `{# fp:block id="${id}" type="section" label="New section" #}`,
-    '<section class="section">',
-    '  <div class="container">',
-    '    <h2>New section</h2>',
-    '    <p>Section content</p>',
-    '  </div>',
-    '</section>',
-    '{# /fp:block #}',
-  ];
-  const lines = String(source || '').trimEnd().split('\n');
-
-  // Prefer to land inside `{% block content %}` ... `{% endblock %}` (the
-  // template-inheritance pattern). Fall back to just above the footer
-  // partial. If neither exists, append at the end.
-  const blockEnd = lines.findIndex((line) => /\{%\s*endblock\b/.test(line));
-  if (blockEnd >= 0) {
-    lines.splice(blockEnd, 0, ...snippet);
-    return `${lines.join('\n')}\n`;
-  }
-  const footerIndex = lines.findIndex((line) => /partial\(['"]footer['"]/.test(line));
-  if (footerIndex >= 0) {
-    lines.splice(footerIndex, 0, '', ...snippet, '');
-    return `${lines.join('\n')}\n`;
-  }
-  return `${lines.join('\n')}\n\n${snippet.join('\n')}\n`;
-}
-
-export function deleteBlock(source, block) {
-  if (!block?.endLine) return source;
-  const lines = String(source || '').split('\n');
-  lines.splice(block.startLine - 1, block.endLine - block.startLine + 1);
-  return lines.join('\n');
-}
-
-export function moveMarkedBlock(source, block, direction, blocks) {
-  const peers = flattenBlocks(blocks)
-    .filter((item) => item.source === 'marker' && item.depth === 0)
-    .sort((a, b) => a.startLine - b.startLine);
-  const index = peers.findIndex((item) => item.id === block?.id);
-  const target = peers[index + direction];
-  if (!target) return source;
-  return direction < 0
-    ? swapLineRanges(source, target, block)
-    : swapLineRanges(source, block, target);
-}
-
-export function reorderMarkedBlock(source, fromId, toId, blocks) {
-  if (!fromId || fromId === toId) return source;
-  const peers = flattenBlocks(blocks)
-    .filter((item) => item.source === 'marker' && item.depth === 0);
-  const from = peers.find((item) => item.id === fromId);
-  const to = peers.find((item) => item.id === toId);
-  if (!from || !to) return source;
-
-  const lines = String(source || '').split('\n');
-  const segment = lines.slice(from.startLine - 1, from.endLine);
-  lines.splice(from.startLine - 1, segment.length);
-  const insertAt = from.startLine < to.startLine
-    ? to.startLine - segment.length - 1
-    : to.startLine - 1;
-  lines.splice(insertAt, 0, ...segment);
-  return lines.join('\n');
-}
-
-/* -------------------------------------------------------------------- */
-/* Small helpers                                                        */
-/* -------------------------------------------------------------------- */
-
-function parseAttrs(text) {
-  const attrs = {};
-  const re = /([a-zA-Z0-9_-]+)=("([^"]*)"|'([^']*)'|([^\s]+))/g;
-  let match = re.exec(text);
-  while (match) {
-    attrs[match[1]] = match[3] || match[4] || match[5] || '';
-    match = re.exec(text);
-  }
-  return attrs;
-}
-
-function countNewlines(src, from, to) {
-  let n = 0;
-  for (let k = from; k < to; k += 1) if (src[k] === '\n') n += 1;
-  return n;
-}
-
-function cleanInline(text) {
-  return String(text || '').replace(/\s+/g, ' ').trim();
-}
-
-function swapLineRanges(source, first, second) {
-  const lines = String(source || '').split('\n');
-  const aStart = first.startLine - 1;
-  const aEnd = first.endLine;
-  const bStart = second.startLine - 1;
-  const bEnd = second.endLine;
-  return [
-    ...lines.slice(0, aStart),
-    ...lines.slice(bStart, bEnd),
-    ...lines.slice(aEnd, bStart),
-    ...lines.slice(aStart, aEnd),
-    ...lines.slice(bEnd),
-  ].join('\n');
-}

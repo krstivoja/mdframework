@@ -8,6 +8,7 @@ export default function ThemeCodePanel({
   focusLine,
   onChange,
   onSelectFile,
+  onCursorChange,
 }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col border-t border-zinc-200 bg-white">
@@ -35,6 +36,7 @@ export default function ThemeCodePanel({
       <CodeEditor
         value={draft}
         onChange={onChange}
+        onCursorChange={onCursorChange}
         filename={selectedPath}
         focusLine={focusLine}
         className="min-h-0 flex-1"

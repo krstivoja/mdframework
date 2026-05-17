@@ -75,6 +75,59 @@ class ThemeFiles
         ];
     }
 
+    /**
+     * Create a new theme file. Refuses if a file already exists at the
+     * given path so callers can't silently clobber the user's edits — use
+     * `write()` for updates.
+     *
+     * @return array<string, mixed>
+     */
+    public function create(?string $theme, string $path, string $content): array
+    {
+        if (strlen($content) > 1024 * 1024) {
+            return ['ok' => false, 'error' => 'Theme files are limited to 1MB'];
+        }
+
+        $slug = $this->themeSlug($theme);
+        $rel  = $this->normalizePath($path);
+        if (!$this->isEditablePath($rel)) {
+            return ['ok' => false, 'error' => 'Theme file is not editable'];
+        }
+
+        $base = realpath($this->themesDir . '/' . $slug);
+        if (!$base) {
+            return ['ok' => false, 'error' => 'Theme not found'];
+        }
+        $full = $base . '/' . $rel;
+        if (file_exists($full)) {
+            return ['ok' => false, 'error' => 'Theme file already exists'];
+        }
+
+        $dir = dirname($full);
+        if (!is_dir($dir) && !@mkdir($dir, 0755, true)) {
+            return ['ok' => false, 'error' => 'Could not create directory'];
+        }
+
+        // Resolve the parent dir so we can verify the new path doesn't
+        // escape the theme root via symlinks before writing the file.
+        $realDir = realpath($dir);
+        if (!$realDir || !str_starts_with($realDir, $base . '/')) {
+            return ['ok' => false, 'error' => 'Invalid theme file path'];
+        }
+
+        if (file_put_contents($full, $content, LOCK_EX) === false) {
+            return ['ok' => false, 'error' => 'Could not write theme file'];
+        }
+
+        return [
+            'ok' => true,
+            'theme' => $slug,
+            'path' => $rel,
+            'language' => $this->languageFor($rel),
+            'size' => strlen($content),
+        ];
+    }
+
     /** @return array<string, mixed> */
     public function write(?string $theme, string $path, string $content): array
     {

@@ -2,18 +2,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
 import {
-  canEditBlock,
-  deleteBlock,
   findBlock,
   findElementByTag,
-  insertSection,
-  moveMarkedBlock,
   parseThemeBlocks,
-  reorderMarkedBlock,
 } from '../lib/themeBuilderBlocks.js';
-import { Alert, Button, Select } from '../components/ui/index.js';
-import ThemeBuilderOutline from '../components/ThemeBuilderOutline.jsx';
-import ThemeBuilderPreview from '../components/ThemeBuilderPreview.jsx';
+import { insertSnippet } from '../lib/themeBuilderSnippets.js';
+import { listTemplateFiles } from '../lib/themeBuilderTemplates.js';
+import { Alert } from '../components/ui/index.js';
+import TemplateAddDialog from '../components/TemplateAddDialog.jsx';
+import ThemeBuilderAddDialog from '../components/ThemeBuilderAddDialog.jsx';
+import ThemeBuilderHeader from '../components/ThemeBuilderHeader.jsx';
+import ThemeBuilderVisualPane from '../components/ThemeBuilderVisualPane.jsx';
 import ThemeCodePanel from '../components/ThemeCodePanel.jsx';
 
 export default function ThemeBuilder() {
@@ -25,6 +24,9 @@ export default function ThemeBuilder() {
   const [selectedBlockId, setSelectedBlockId] = useState('');
   const [previewKey, setPreviewKey] = useState(Date.now());
   const [previewPath, setPreviewPath] = useState('/');
+  const [addOpen, setAddOpen] = useState(false);
+  const [newTemplateOpen, setNewTemplateOpen] = useState(false);
+  const [cursorLine, setCursorLine] = useState(1);
   const previewPathTouched = useRef(false);
 
   const { data: themesData, isLoading: themesLoading } = useQuery({
@@ -144,15 +146,6 @@ export default function ThemeBuilder() {
     setPendingSelection(null);
   }, [pendingSelection, draft, blocks]);
 
-  function chooseTheme(next) {
-    if (dirty && !confirm('Discard unsaved changes?')) return;
-    setTheme(next);
-    setPath('');
-    setDraft('');
-    setDirty(false);
-    setSelectedBlockId('');
-  }
-
   function chooseFile(next) {
     if (path === next) return;
     if (dirty && !confirm('Discard unsaved changes?')) return;
@@ -173,107 +166,50 @@ export default function ThemeBuilder() {
     setSelectedBlockId(selectedId || '');
   }
 
-  const editable = canEditBlock(selectedBlock);
   const isTwig = path.endsWith('.twig');
   const busy = themesLoading || filesLoading || fileLoading;
 
+  const templates = useMemo(() => listTemplateFiles(files), [files]);
+
+  const defaultExt = path.endsWith('.php') ? 'php' : 'twig';
+  const activeThemeMeta = (themesData?.themes || []).find((t) => t.slug === theme);
+  const themeLabel = activeThemeMeta?.name || theme || '';
+
   return (
     <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-zinc-50">
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-zinc-200 bg-white px-4">
-        <div className="min-w-0">
-          <h1 className="text-sm font-semibold">Theme Builder</h1>
-          <div className="truncate text-xs text-zinc-500">{path || 'Select a file'}</div>
-        </div>
-        <Select className="ml-auto w-44" value={theme} onChange={(e) => chooseTheme(e.target.value)}>
-          {(themesData?.themes || []).map((item) => (
-            <option key={item.slug} value={item.slug}>{item.name || item.slug}</option>
-          ))}
-        </Select>
-        <Button variant="secondary" size="sm" onClick={() => setPreviewKey(Date.now())}>
-          Reload preview
-        </Button>
-        <Button size="sm" onClick={() => save.mutate()} disabled={!dirty || save.isPending || !path}>
-          {save.isPending ? 'Saving...' : dirty ? 'Save changes' : 'Saved'}
-        </Button>
-      </header>
+      <ThemeBuilderHeader
+        themeLabel={themeLabel}
+        path={path}
+        templates={templates}
+        onChooseFile={chooseFile}
+        onNewTemplate={() => setNewTemplateOpen(true)}
+        onReloadPreview={() => setPreviewKey(Date.now())}
+        onSave={() => save.mutate()}
+        canCreate={!!theme}
+        saving={save.isPending}
+        dirty={dirty}
+      />
 
       {save.error && <Alert tone="error">{save.error.message}</Alert>}
       {fileError && <Alert tone="error">{fileError.message}</Alert>}
 
       <section className="grid min-h-0 flex-1 grid-rows-[minmax(260px,1fr)_minmax(260px,1fr)]">
-        <div className="grid min-h-0 grid-cols-[280px_minmax(0,1fr)] overflow-hidden">
-          <aside className="min-h-0 overflow-y-auto border-r border-zinc-200 bg-white p-3">
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <div>
-                <div className="text-xs font-semibold text-zinc-900">Structure</div>
-                <div className="text-[11px] text-zinc-500">
-                  {isTwig ? 'Twig visual map' : 'Code editor only'}
-                </div>
-              </div>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={!isTwig}
-                onClick={() => applyBlockChange(insertSection(draft))}
-              >
-                Add
-              </Button>
-            </div>
-
-            <ThemeBuilderOutline
-              blocks={blocks}
-              selectedId={selectedBlockId}
-              onSelect={setSelectedBlockId}
-              onReorder={(fromId, toId) => applyBlockChange(
-                reorderMarkedBlock(draft, fromId, toId, blocks),
-                fromId
-              )}
-            />
-
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={!editable}
-                onClick={() => applyBlockChange(moveMarkedBlock(draft, selectedBlock, -1, blocks))}
-              >
-                Up
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={!editable}
-                onClick={() => applyBlockChange(moveMarkedBlock(draft, selectedBlock, 1, blocks))}
-              >
-                Down
-              </Button>
-              <Button
-                variant="danger-outline"
-                size="sm"
-                disabled={!editable}
-                onClick={() => applyBlockChange(deleteBlock(draft, selectedBlock), '')}
-              >
-                Delete
-              </Button>
-            </div>
-
-            {selectedBlock && !editable && (
-              <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
-                This block is selected as code. Edit its Twig or markup below.
-              </div>
-            )}
-          </aside>
-
-          <ThemeBuilderPreview
-            path={previewPath}
-            cacheBust={previewKey}
-            selectedBlock={selectedBlock}
-            onPathChange={(next) => {
-              previewPathTouched.current = true;
-              setPreviewPath(next);
-            }}
-          />
-        </div>
+        <ThemeBuilderVisualPane
+          blocks={blocks}
+          draft={draft}
+          isTwig={isTwig}
+          selectedBlock={selectedBlock}
+          selectedBlockId={selectedBlockId}
+          previewPath={previewPath}
+          previewKey={previewKey}
+          onOpenAdd={() => setAddOpen(true)}
+          onSelectBlock={setSelectedBlockId}
+          onChangeDraft={applyBlockChange}
+          onPreviewPathChange={(next) => {
+            previewPathTouched.current = true;
+            setPreviewPath(next);
+          }}
+        />
 
         <div className="flex min-h-0 flex-col">
           {busy ? (
@@ -287,10 +223,30 @@ export default function ThemeBuilder() {
               focusLine={selectedBlock?.startLine || null}
               onChange={updateDraft}
               onSelectFile={chooseFile}
+              onCursorChange={setCursorLine}
             />
           )}
         </div>
       </section>
+
+      <ThemeBuilderAddDialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onInsert={(snippet) => applyBlockChange(insertSnippet(draft, snippet, { line: cursorLine }))}
+        files={files}
+      />
+
+      <TemplateAddDialog
+        open={newTemplateOpen}
+        onClose={() => setNewTemplateOpen(false)}
+        onCreated={(newPath) => {
+          qc.invalidateQueries({ queryKey: ['theme-files', theme] });
+          chooseFile(newPath);
+        }}
+        theme={theme}
+        files={files}
+        defaultExt={defaultExt}
+      />
     </main>
   );
 }

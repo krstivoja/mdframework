@@ -21,7 +21,7 @@ if ($uri !== '/' && file_exists(__DIR__ . $uri) && !is_dir(__DIR__ . $uri)) {
 
 // /admin and /admin/* → admin SPA shell
 if (preg_match('#^/admin(/|$)#', $uri)) {
-    require __DIR__ . '/admin.php';
+    require __DIR__ . '/admin/index.php';
     return;
 }
 

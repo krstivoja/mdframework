@@ -149,6 +149,8 @@ All endpoints accept and return JSON. Mutating requests must include the CSRF to
 | `POST` | `/admin/api/themes/download` | Download a theme as `.zip` (body `{ slug }`, returns binary) |
 | `POST` | `/admin/api/themes/upload` | Install or replace a theme from an uploaded `.zip` (multipart `theme` + optional `theme_slug`) |
 | `POST` | `/admin/api/themes/delete` | Delete a non-active theme by slug |
+| `POST` | `/admin/api/themes/file` | Write an existing theme file (`{ theme, path, content }`) |
+| `POST` | `/admin/api/themes/create-template` | Create a new template or partial in a theme (`{ theme, kind, slug, ext, content }`; `kind: 'template' \| 'partial'`, default `template`); partials are saved as `_<slug>.<ext>`; fails if a file with that name already exists |
 | `GET`  | `/admin/api/backup` | Estimated archive sizes |
 | `POST` | `/admin/api/backup/download` | Download a `.zip` (returns binary) |
 | `POST` | `/admin/api/backup/restore` | Restore from uploaded `.zip` (multipart) |

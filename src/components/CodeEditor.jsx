@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import Editor, { loader } from '@monaco-editor/react';
+import { emmetHTML, emmetCSS } from 'emmet-monaco-es';
 
 // Pin Monaco to a known-good version so a Microsoft release doesn't
 // silently change behavior under us. The bundle stays tiny — only the
@@ -8,6 +9,20 @@ import Editor, { loader } from '@monaco-editor/react';
 loader.config({
   paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs' },
 });
+
+// Emmet registers globally on the Monaco instance, so once-per-process
+// is enough. Without this guard, each CodeEditor mount would stack a
+// fresh completion provider and we'd get duplicate suggestions.
+let emmetRegistered = false;
+function ensureEmmet(monaco) {
+  if (emmetRegistered || !monaco) return;
+  emmetRegistered = true;
+  // `html` covers .html and .twig (both register as Monaco 'html').
+  // Passing the language list explicitly keeps us in control if Monaco
+  // ever ships another HTML-flavored id we don't want Emmet on.
+  emmetHTML(monaco, ['html']);
+  emmetCSS(monaco, ['css', 'scss']);
+}
 
 /**
  * Thin React wrapper around `@monaco-editor/react`. Public API matches
@@ -30,6 +45,7 @@ loader.config({
 export default function CodeEditor({
   value,
   onChange,
+  onCursorChange,
   language = 'html',
   filename = null,
   className = '',
@@ -42,6 +58,11 @@ export default function CodeEditor({
   function handleMount(editor, monaco) {
     editorRef.current = editor;
     monacoRef.current = monaco;
+    ensureEmmet(monaco);
+    if (onCursorChange) {
+      editor.onDidChangeCursorPosition((e) => onCursorChange(e.position.lineNumber));
+      onCursorChange(editor.getPosition()?.lineNumber || 1);
+    }
   }
 
   // Reveal + select the requested line. Bridges the outline-click in the

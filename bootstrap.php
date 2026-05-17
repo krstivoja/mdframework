@@ -232,14 +232,20 @@ function inject_preview_script(string $body): string
     }
     return null;
   }
-  // The outline only tracks "structural" tags (the same set the
-  // client-side parseThemeBlocks recognises). Clicks on text-level
-  // elements like <a>, <span>, <img> walk up to their nearest
-  // structural ancestor so we always have something to highlight.
+  // The outline tracks these tags as selectable blocks. Mirror of the
+  // VISUAL_TAGS set in src/lib/themeBuilderBlocks.js — keep the two in
+  // sync. Clicks on tags not in this list (e.g. <span>) walk up to the
+  // nearest ancestor that IS in the list so we always have something
+  // to highlight.
   var VISUAL_TAGS = {
     article: 1, aside: 1, div: 1, footer: 1, form: 1, header: 1,
-    li: 1, main: 1, nav: 1, ol: 1, p: 1, section: 1, ul: 1,
-    h1: 1, h2: 1, h3: 1, h4: 1
+    li: 1, main: 1, nav: 1, ol: 1, section: 1, ul: 1,
+    h1: 1, h2: 1, h3: 1, h4: 1, h5: 1, h6: 1,
+    p: 1, blockquote: 1, pre: 1,
+    a: 1, button: 1, img: 1, figure: 1, figcaption: 1,
+    video: 1, audio: 1, iframe: 1,
+    table: 1, thead: 1, tbody: 1, tfoot: 1, tr: 1, td: 1, th: 1,
+    hr: 1
   };
   function nearestVisual(node) {
     while (node && node.nodeType === 1) {

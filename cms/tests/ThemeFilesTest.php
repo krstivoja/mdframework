@@ -52,6 +52,26 @@ class ThemeFilesTest extends TestCase
         $this->assertSame('<main>Changed</main>', $again['content']);
     }
 
+    public function testCreateNewThemeFile(): void
+    {
+        $result = $this->files->create('blank', 'templates/landing.twig', '<main>Landing</main>');
+
+        $this->assertTrue($result['ok']);
+        $this->assertSame('templates/landing.twig', $result['path']);
+        $this->assertSame(
+            '<main>Landing</main>',
+            file_get_contents($this->appRoot . '/site/themes/blank/templates/landing.twig')
+        );
+    }
+
+    public function testCreateRefusesExistingThemeFile(): void
+    {
+        $result = $this->files->create('blank', 'templates/page.twig', '<main>Clobber</main>');
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame('Theme file already exists', $result['error']);
+    }
+
     public function testRejectsPathTraversal(): void
     {
         $this->expectException(RuntimeException::class);
