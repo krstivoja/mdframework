@@ -7,6 +7,12 @@ layout: default
 
 All notable changes to FrontPress Studio are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.77] — 2026-05-17
+
+### Improved
+- **Preview click also highlights the specific element** in the outline + code editor. Previously the click bridge resolved only to the file. Now the injected preview script also reports the clicked element's tag and its occurrence-index among same-tag visual elements that share the source file, walking up from non-structural targets (`<a>`, `<span>`, `<img>`, etc.) to the nearest "visual" ancestor first so there's always something to highlight. On the parent side a new `findElementByTag(blocks, tag, occurrence)` helper resolves the message to a specific block in the parsed source tree; ThemeBuilder sets `selectedBlockId` to that block — which the outline shows as highlighted and which the code editor's `focusLine` jumps + selects.
+- Cross-file clicks queue the selection (`pendingSelection`) and resolve it once the new file's draft has loaded; same-file clicks resolve immediately against the current block tree.
+
 ## [0.0.76] — 2026-05-17
 
 ### Added

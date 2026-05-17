@@ -206,11 +206,10 @@ function inject_preview_script(string $body): string
     $script = <<<'HTML'
 <script>(function () {
   // Walk back through previous siblings looking for the nearest
-  // `fp:src:<path>:start` marker. We need to balance any `:end`
-  // markers we cross on the way: a sibling region's end means we
-  // should step past its matching start (it belongs to that
-  // already-closed sibling, not to us). When we run out of
-  // previous siblings, move up to the parent and repeat.
+  // `fp:src:<path>:start` marker. We balance any `:end` markers we
+  // cross — a sibling region's end means we should step past its
+  // matching start (it belongs to that already-closed sibling, not
+  // to us). When we run out of siblings, move up to the parent.
   function findSrc(node) {
     while (node) {
       var sib = node.previousSibling;
@@ -233,6 +232,37 @@ function inject_preview_script(string $body): string
     }
     return null;
   }
+  // The outline only tracks "structural" tags (the same set the
+  // client-side parseThemeBlocks recognises). Clicks on text-level
+  // elements like <a>, <span>, <img> walk up to their nearest
+  // structural ancestor so we always have something to highlight.
+  var VISUAL_TAGS = {
+    article: 1, aside: 1, div: 1, footer: 1, form: 1, header: 1,
+    li: 1, main: 1, nav: 1, ol: 1, p: 1, section: 1, ul: 1,
+    h1: 1, h2: 1, h3: 1, h4: 1
+  };
+  function nearestVisual(node) {
+    while (node && node.nodeType === 1) {
+      if (VISUAL_TAGS[node.tagName.toLowerCase()]) return node;
+      node = node.parentNode;
+    }
+    return null;
+  }
+  // Count how many same-tag visual elements that ALSO live inside the
+  // same source file appear before `target` in document order. The
+  // parent window uses this index to pick the matching element in
+  // its parsed source tree — letting it highlight the exact element
+  // in the outline + jump the code editor to that source line.
+  function tagOccurrence(target, path) {
+    var tag = target.tagName.toLowerCase();
+    var all = document.body.getElementsByTagName(tag);
+    var n = 0;
+    for (var i = 0; i < all.length; i++) {
+      if (all[i] === target) return n;
+      if (findSrc(all[i]) === path) n += 1;
+    }
+    return -1;
+  }
   document.addEventListener('click', function (e) {
     var path = findSrc(e.target);
     if (!path) return;
@@ -240,8 +270,16 @@ function inject_preview_script(string $body): string
     // mode the click is a selection action, not a navigation.
     e.preventDefault();
     e.stopPropagation();
+    var resolve = nearestVisual(e.target) || e.target;
+    var tag = resolve.tagName ? resolve.tagName.toLowerCase() : null;
+    var occurrence = tag ? tagOccurrence(resolve, path) : -1;
     try {
-      parent.postMessage({ type: 'fp:select', path: path }, '*');
+      parent.postMessage({
+        type: 'fp:select',
+        path: path,
+        tag: tag,
+        occurrence: occurrence,
+      }, '*');
     } catch (_) {}
   }, true);
   // Subtle hover outline so the user can tell something is mappable.

@@ -59,6 +59,30 @@ export function findBlock(blocks, id) {
   return null;
 }
 
+/**
+ * Depth-first walk to find the Nth `element` block with a given tag.
+ * Used by the preview-click bridge: the iframe sends `{path, tag, occurrence}`
+ * for what was clicked; we resolve that to a source block here.
+ */
+export function findElementByTag(blocks, tag, occurrence) {
+  if (!tag || occurrence < 0) return null;
+  let n = 0;
+  function walk(items) {
+    for (const b of items) {
+      if (b.source === 'html' && b.tag === tag) {
+        if (n === occurrence) return b;
+        n += 1;
+      }
+      if (Array.isArray(b.children) && b.children.length) {
+        const found = walk(b.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+  return walk(blocks);
+}
+
 export function canEditBlock(block) {
   return block?.source === 'marker';
 }

@@ -5,6 +5,7 @@ import {
   canEditBlock,
   deleteBlock,
   findBlock,
+  findElementByTag,
   insertSection,
   moveMarkedBlock,
   parseThemeBlocks,
@@ -104,24 +105,44 @@ export default function ThemeBuilder() {
   }, [path]);
 
   // Iframe → parent click bridge. The public-side preview script sends
-  // `{ type: 'fp:select', path }` when the user clicks anything in the
-  // rendered preview. If the path matches an editable file in the
-  // current theme, switch to it.
+  // `{ type: 'fp:select', path, tag, occurrence }` when the user clicks
+  // anything in the rendered preview. If the path matches an editable
+  // file in the current theme, switch to it and remember the tag +
+  // occurrence so we can resolve to a specific source block once the
+  // draft for that file has loaded.
+  const [pendingSelection, setPendingSelection] = useState(null);
   useEffect(() => {
     function onMessage(e) {
       const data = e.data;
       if (!data || data.type !== 'fp:select' || typeof data.path !== 'string') return;
       if (!files.some((f) => f.path === data.path)) return;
-      if (path === data.path) return;
+      const select = { tag: data.tag || null, occurrence: data.occurrence ?? -1 };
+      if (path === data.path) {
+        // Same file already open — resolve the block immediately.
+        const match = findElementByTag(blocks, select.tag, select.occurrence);
+        if (match) setSelectedBlockId(match.id);
+        return;
+      }
       if (dirty && !confirm('Discard unsaved changes?')) return;
       setPath(data.path);
       setDraft('');
       setDirty(false);
       setSelectedBlockId('');
+      setPendingSelection(select);
     }
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [files, path, dirty]);
+  }, [files, path, dirty, blocks]);
+
+  // After a cross-file click switches files, resolve the queued tag /
+  // occurrence against the freshly-loaded draft's block tree.
+  useEffect(() => {
+    if (!pendingSelection) return;
+    if (!draft) return;
+    const match = findElementByTag(blocks, pendingSelection.tag, pendingSelection.occurrence);
+    if (match) setSelectedBlockId(match.id);
+    setPendingSelection(null);
+  }, [pendingSelection, draft, blocks]);
 
   function chooseTheme(next) {
     if (dirty && !confirm('Discard unsaved changes?')) return;
