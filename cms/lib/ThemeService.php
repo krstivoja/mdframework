@@ -74,23 +74,7 @@ class ThemeService
         return $this->themesDir . '/' . $this->active() . '/templates';
     }
 
-    /**
-     * Returns a safe template name if it exists for the active theme, else null.
-     * Used to validate per-post template overrides from front matter.
-     */
-    /**
-     * Lists user-selectable templates in the active theme.
-     *
-     * Excludes:
-     *   - Partials (filenames starting with `_`)
-     *   - System templates that are wired up by route, not by per-post choice
-     *     (`archive`, `taxonomy`, `feed`, `404`)
-     *
-     * Both `.php` and `.twig` are scanned; same-named pairs collapse to one
-     * entry (PHP wins per `bootstrap.php::render()` resolution rules).
-     *
-     * @return string[] Sorted, deduped template names without extension.
-     */
+    /** @return string[] Sorted, deduped template names without extension. */
     public function listTemplates(): array
     {
         $dir = $this->templateDir();

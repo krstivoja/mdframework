@@ -14,6 +14,7 @@ use FrontPress\ContentRepository;
 use FrontPress\Index;
 use FrontPress\MediaService;
 use FrontPress\PathResolver;
+use FrontPress\ThemeFiles;
 use FrontPress\ThemeService;
 use FrontPress\Trash;
 
@@ -76,6 +77,12 @@ final class ServiceFactory
     public static function themes(array $config): ThemeService
     {
         return new ThemeService($config['appRoot'], $config['config']);
+    }
+
+    /** @param array<string, mixed> $config */
+    public static function themeFiles(array $config): ThemeFiles
+    {
+        return new ThemeFiles($config['appRoot'], $config['config']);
     }
 
     /** @param array<string, mixed> $config */

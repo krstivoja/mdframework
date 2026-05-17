@@ -18,7 +18,13 @@ import {
  * are applied via dispatch only when they differ from the current document,
  * so React-driven re-renders don't blow away cursor/selection state.
  */
-export default function CodeEditor({ value, onChange, language = 'html', className = '' }) {
+export default function CodeEditor({
+  value,
+  onChange,
+  language = 'html',
+  className = '',
+  focusLine = null,
+}) {
   const hostRef    = useRef(null);
   const viewRef    = useRef(null);
   const onChangeRef = useRef(onChange);
@@ -74,6 +80,18 @@ export default function CodeEditor({ value, onChange, language = 'html', classNa
       changes: { from: 0, to: current.length, insert: value ?? '' },
     });
   }, [value]);
+
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view || !focusLine) return;
+    const lineNo = Math.max(1, Math.min(focusLine, view.state.doc.lines));
+    const line = view.state.doc.line(lineNo);
+    view.dispatch({
+      selection: { anchor: line.from, head: line.to },
+      effects: EditorView.scrollIntoView(line.from, { y: 'center' }),
+    });
+    view.focus();
+  }, [focusLine]);
 
   return <div ref={hostRef} className={`cm-host text-[13px] ${className}`} />;
 }

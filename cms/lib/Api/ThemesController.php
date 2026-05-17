@@ -29,6 +29,15 @@ class ThemesController
         if ($method === 'GET' && $action === 'templates') {
             \json_response(['ok' => true, 'templates' => $themes->listTemplates()]);
         }
+        if ($method === 'GET' && $action === 'files') {
+            $theme = isset($_GET['theme']) ? (string)$_GET['theme'] : null;
+            self::themeFileResponse(fn () => ServiceFactory::themeFiles($config)->list($theme));
+        }
+        if ($method === 'GET' && $action === 'file') {
+            $theme = isset($_GET['theme']) ? (string)$_GET['theme'] : null;
+            $path = (string)($_GET['path'] ?? '');
+            self::themeFileResponse(fn () => ServiceFactory::themeFiles($config)->read($theme, $path));
+        }
 
         Router::requireCsrf();
 
@@ -75,8 +84,33 @@ class ThemesController
             }
             \json_response(['ok' => false, 'error' => $result['error'] ?? 'Failed'], 400);
         }
+        if ($action === 'file') {
+            $theme = isset($body['theme']) ? (string)$body['theme'] : null;
+            $path = (string)($body['path'] ?? '');
+            $content = (string)($body['content'] ?? '');
+            try {
+                $result = ServiceFactory::themeFiles($config)->write($theme, $path, $content);
+            } catch (\RuntimeException $e) {
+                \json_response(['ok' => false, 'error' => $e->getMessage()], 400);
+            }
+            if (!empty($result['ok'])) {
+                self::clearCache($config);
+                \json_response($result);
+            }
+            \json_response(['ok' => false, 'error' => $result['error'] ?? 'Failed'], 400);
+        }
 
         \json_response(['ok' => false, 'error' => 'Unknown theme action'], 404);
+    }
+
+    /** @param callable(): array<string, mixed> $fn */
+    private static function themeFileResponse(callable $fn): void
+    {
+        try {
+            \json_response($fn());
+        } catch (\RuntimeException $e) {
+            \json_response(['ok' => false, 'error' => $e->getMessage()], 400);
+        }
     }
 
     /** @param array<string, mixed> $config */

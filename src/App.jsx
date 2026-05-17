@@ -17,6 +17,7 @@ const Settings     = lazy(() => import('./screens/Settings/index.jsx'));
 const SiteSettings = lazy(() => import('./screens/Settings/SiteSettings.jsx'));
 const Fields       = lazy(() => import('./screens/Settings/Fields/index.jsx'));
 const Themes       = lazy(() => import('./screens/Settings/Themes.jsx'));
+const ThemeBuilder = lazy(() => import('./screens/ThemeBuilder.jsx'));
 const Security     = lazy(() => import('./screens/Settings/Security.jsx'));
 const ThemeReference = lazy(() => import('./screens/Settings/ThemeReference.jsx'));
 const SeoSettings    = lazy(() => import('./screens/Settings/SeoSettings.jsx'));
@@ -59,6 +60,7 @@ export default function App() {
           <Route path="/:folder/:slug" element={<PostTypeShell />}>
             <Route index element={<Lazy><KeyedPageEditor /></Lazy>} />
           </Route>
+          <Route path="/theme-builder" element={<Lazy><ThemeBuilder /></Lazy>} />
         </Route>
       </Route>
     </Routes>

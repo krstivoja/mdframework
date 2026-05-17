@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api.js';
 import { Alert, Badge, Button, Card } from '../../components/ui/index.js';
@@ -33,7 +34,15 @@ export default function Themes() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-base font-semibold">Themes</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-base font-semibold">Themes</h2>
+        <Link
+          to="/theme-builder"
+          className="inline-flex h-8 items-center justify-center rounded-md border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-900 transition-colors hover:bg-zinc-100"
+        >
+          Open theme builder
+        </Link>
+      </div>
 
       {error && <Alert tone="error">{error}</Alert>}
 

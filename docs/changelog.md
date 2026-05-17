@@ -7,6 +7,15 @@ layout: default
 
 All notable changes to FrontPress Studio are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.73] — 2026-05-17
+
+### Improved
+- **Theme Builder polish on top of the marker-based outline:**
+  - **Cmd/Ctrl+S** anywhere in the screen saves the open file (no-op when nothing to save).
+  - **Editable preview URL.** The preview header now has a `/path` input next to the title — type a URL and the iframe reloads against that route. So when you're editing `templates/post.twig` you can preview an actual post (`/blog/some-post`) instead of being stuck on `/`.
+  - **HTML parser rewrite in `lib/themeBuilderBlocks.js`.** Replaced the per-line regex scan with a character-stream tokenizer that's quote-aware. Now correctly handles: multi-line opening tags (`<div\n  class="x">`), multiple elements on one line (`{% if meta.date %}<p>…</p>{% endif %}` — the `<p>` nests inside the condition), `>` inside attribute values, HTML comments, and self-closing/void tags. Marker / Twig / HTML still each track their own nesting so a `</div>` can't close an `{% if %}`.
+  - **`insertSection`** now prefers to land inside `{% block content %} … {% endblock %}` (the inheritance pattern) before falling back to "just above `partial('footer')`", and finally to appending at the end.
+
 ## [0.0.72] — 2026-05-17
 
 ### Fixed

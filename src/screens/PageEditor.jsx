@@ -42,14 +42,6 @@ export default function PageEditor() {
   const [template, setTemplate] = useState('');
   const [taxValues, setTaxValues] = useState({});
 
-  // Editor view: 'wysiwyg' | 'markdown' | 'html'.
-  // `markdown` and `wysiwyg` are Toast UI's native modes (toggled via
-  // `editor.changeMode`). `html` is our addition — we hide the Toast UI
-  // surface and show a textarea seeded from `editor.getHTML()`. Switching
-  // back from `html` calls `editor.setHTML(htmlValue)`, which Toast UI
-  // converts back to markdown internally so saves stay markdown-native.
-  // Persist the editor surface across reloads — reading the same post tomorrow
-  // shouldn't yank you back to WYSIWYG if you spent the day in HTML mode.
   const [editorMode, setEditorMode] = useState(() => {
     try {
       const saved = localStorage.getItem('mdframework:editor-mode');
@@ -59,35 +51,20 @@ export default function PageEditor() {
     }
   });
   useEffect(() => {
-    // Files is a transient surface (per-post), not a preferred editing
-    // mode — don't persist it so refreshing the page or opening a new
-    // post lands the user back in their actual editor of choice.
     if (editorMode === 'files') return;
     try { localStorage.setItem('mdframework:editor-mode', editorMode); } catch { /* private mode etc. */ }
   }, [editorMode]);
 
-  // /new/* has no folder yet → Files view would render an empty grid +
-  // dropzone with nowhere to upload to. Force back to an editor surface.
   useEffect(() => {
     if (isNew && editorMode === 'files') setEditorMode('wysiwyg');
   }, [isNew, editorMode]);
 
   const [htmlValue, setHtmlValue] = useState('');
 
-  // Media picker — opened from the editor's toolbar Image button (Toast UI's
-  // built-in URL/file dialog is replaced with our two-tab Library/Upload modal).
-  // When `replacingImage` is set, the next pick swaps that image's src in the
-  // current markdown body instead of inserting a new image at the caret.
   const [pickerOpen, setPickerOpen] = useState(false);
   const [replacingImage, setReplacingImage] = useState(null); // { url, alt } | null
 
-  // Holds the body string used as Toast UI's `initialValue`. Captured once
-  // from the first `data` payload, then frozen — refetches that follow a
-  // save must NOT tear the editor down and remount it (that would dump
-  // cursor focus back to the top of the document).
   const initialBodyRef = useRef('');
-  // `bodyReady` flips once on first load so the init effect can re-run when
-  // the page query resolves; subsequent refetches don't change it.
   const [bodyReady, setBodyReady] = useState(isNew);
   useEffect(() => {
     if (bodyReady || isNew) return;
@@ -132,10 +109,6 @@ export default function PageEditor() {
     onOpenMediaPicker: () => setPickerOpen(true),
   });
 
-  // If the user reloaded while in HTML mode, seed htmlValue from the
-  // mounted editor — switchEditorMode's "entering html" branch only fires
-  // on an interactive transition, not on initial mount, so without this
-  // the textarea renders empty and saving would wipe the post body.
   useEffect(() => {
     if (!bodyReady || editorMode !== 'html' || htmlValue !== '') return;
     const ed = edRef.current;
@@ -150,8 +123,6 @@ export default function PageEditor() {
         max_preserve_newlines: 1,
       }));
     } catch { /* ignore */ }
-    // Only fires on the first body-ready render — subsequent mode switches
-    // route through switchEditorMode which owns the htmlValue lifecycle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bodyReady]);
 
@@ -160,9 +131,6 @@ export default function PageEditor() {
     setter(value);
   };
 
-  // Caret position will reset on these because Toast UI's `setMarkdown`
-  // rebuilds the document — acceptable: the user just took a deliberate
-  // "replace/delete this image" action, they're not mid-typing.
   function replaceImageInBody(oldUrl, newUrl, newAlt) {
     if (editorMode === 'html') {
       setHtmlValue((v) => replaceImageUrl(v, oldUrl, newUrl, newAlt));
@@ -197,10 +165,6 @@ export default function PageEditor() {
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1">
-      {/* Column laid out as a flex stack so the editor wrapper can claim
-          every leftover pixel via `flex-1 min-h-0`. `min-h-0` is load-bearing
-          — without it the flex child refuses to shrink below its intrinsic
-          content height and the editor gets pushed past the viewport. */}
       <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 p-8">
         <Input
           value={title}
@@ -240,10 +204,6 @@ export default function PageEditor() {
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white">
-          {/* Toast UI surface stays mounted in every mode so its internal
-              markdown/HTML state survives mode switches. We just hide it
-              with display: none when the user is on a non-editor surface
-              (raw HTML or the Files grid). */}
           <div
             ref={editorElRef}
             className="min-h-0 flex-1"
@@ -290,19 +250,12 @@ export default function PageEditor() {
         pagePath={path}
         onClose={() => { setPickerOpen(false); setReplacingImage(null); }}
         onPick={({ url, alt }) => {
-          // Replacement flow: swap the previously-clicked image's src in the
-          // current markdown body. Falls back to insert if the old URL has
-          // already been edited away by hand.
           if (replacingImage) {
             replaceImageInBody(replacingImage.url, url, alt);
             setReplacingImage(null);
             setPickerOpen(false);
             return;
           }
-          // `addImage` is Toast UI's built-in command; works in both markdown
-          // and WYSIWYG modes. In our HTML view we instead inject an <img>
-          // tag into the textarea at the current caret position by appending
-          // — keeping the path simple and matching the way drag-drop works.
           if (editorMode === 'html') {
             const tag = `<img src="${url}" alt="${alt || ''}">`;
             setHtmlValue((v) => (v ? `${v}\n${tag}` : tag));
@@ -317,9 +270,6 @@ export default function PageEditor() {
         }}
       />
 
-      {/* Floating Replace/Delete bubble over images in the WYSIWYG surface.
-          Hidden in HTML mode — that view edits raw HTML directly so the
-          underlying CodeMirror handles the same operations. */}
       <EditorImageMenu
         containerRef={editorElRef}
         enabled={editorMode !== 'html'}
@@ -332,4 +282,3 @@ export default function PageEditor() {
     </div>
   );
 }
-
