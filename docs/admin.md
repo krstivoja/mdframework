@@ -84,7 +84,6 @@ It does not dismiss — the only way to clear it is to rotate the password under
 - **Create / edit / delete** any `.md` file
 - **Media library** — shared `site/uploads/` pool with previews, alt/caption sidecars; per-post uploads land in `site/content/<pagePath>/` next to the post's `.md` file. Empty state shows a labelled dropzone with allowed types (JPG · PNG · GIF · WebP · SVG · PDF · ZIP) and the live `uploads.max_mb` limit; dropping files there hands them straight to the upload dialog so the first upload is a single gesture.
 - **Settings** — site name, base path, taxonomies, upload limits
-- **Theme editor** — CodeMirror 6 on the left, live preview iframe on the right. Edits save to disk; the preview reloads with the new bundle on save. Same editor for every file extension (`.twig`, `.php`, `.html`, `.css`, etc.).
 - **Themes** — list installed themes, activate one, delete non-active ones, install from a starter. Each theme/starter card shows an **engine badge** (`twig` / `php`) sourced from `theme.json:engine` or auto-detected by [`ThemeService::detectEngine`](app/cms/lib/ThemeService.php) (counts top-level `.twig` vs `.php` files in the theme's `templates/` dir). Two starters ship by default: **Blank (Twig)** and **Blank (PHP)** — same look, different engine.
 - **Backup** — download/restore Full / Content / Settings ZIP archives
 - CSRF-protected on all state-changing requests (`X-CSRF-Token` header)

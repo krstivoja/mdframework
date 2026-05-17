@@ -7,6 +7,13 @@ layout: default
 
 All notable changes to FrontPress Studio are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.71] — 2026-05-17
+
+### Removed
+- **The Theme editor screen.** `/admin/theme-editor` route, sidebar link, `screens/ThemeEditor.jsx`, `components/ThemeEditor/` (FileTree / EditorPane / PreviewPane / `blockLibrary.js`), `cms/lib/Api/ThemeEditorController.php`, the `/admin/api/theme/*` endpoints, and `ThemeEditorTest`. Theme files (`.twig`/`.php`/`.html`/`.css`) are now edited on disk only — there is no in-admin editor for them. The Themes screen under Settings (activate, install starter, delete non-active themes) is unaffected; only the per-file editing surface is gone.
+- Reasons: the editor's value was small relative to its surface (FileTree + buffer state + preview-cache-bust + per-extension routing). For one-off tweaks `vim` / VS Code is faster; for ongoing theme work the local file is the canonical source anyway.
+- Test suite: 148 → 139 tests.
+
 ## [0.0.70] — 2026-05-17
 
 ### Removed

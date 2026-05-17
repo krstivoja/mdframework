@@ -20,7 +20,6 @@ const Themes       = lazy(() => import('./screens/Settings/Themes.jsx'));
 const Security     = lazy(() => import('./screens/Settings/Security.jsx'));
 const ThemeReference = lazy(() => import('./screens/Settings/ThemeReference.jsx'));
 const SeoSettings    = lazy(() => import('./screens/Settings/SeoSettings.jsx'));
-const ThemeEditor    = lazy(() => import('./screens/ThemeEditor.jsx'));
 
 export default function App() {
   const { status, user } = useAuth();
@@ -38,9 +37,6 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route element={<Protected user={user} />}>
         <Route element={<Shell />}>
-          {/* Theme editor renders its own 3-column layout, full-bleed. */}
-          <Route path="/theme-editor" element={<Lazy><ThemeEditor /></Lazy>} />
-
           <Route element={<PaddedOutlet />}>
             <Route path="/"          element={<PagesList />} />
             <Route path="/media"     element={<Lazy><Media /></Lazy>} />
