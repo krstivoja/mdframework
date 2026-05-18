@@ -2,6 +2,8 @@
 
 Flat-file CMS in PHP. No database. Markdown files on disk for content, a React admin at `/admin`, themes that are plain `.twig` / `.php` files.
 
+> **Working on the docs?** This folder is the authoring source — nested by category for browsing. The published site at `frontpress.studio/docs/` is a flat rendering with specific front-matter conventions. **Always follow [AUTHORING.md](AUTHORING.md) when adding or porting a doc to the site.**
+
 ## Where to start
 
 If you've never touched the project before, read these in order:
