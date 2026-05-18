@@ -4,6 +4,30 @@
 
 # FrontPress Studio
 
+<img width="1000" height="688" alt="frontpress studio" src="https://github.com/user-attachments/assets/9cb7a9c5-058a-466d-921d-6ed4725f0ce2" />
+
+## Global website settings
+<img width="5120" height="2880" alt="Global settings" src="https://github.com/user-attachments/assets/9dd66759-901c-443f-ac08-61a356f98424" />
+
+## Media library
+This is global. There is also have per post media as well.
+<img width="5120" height="2880" alt="Global media library" src="https://github.com/user-attachments/assets/68e5cc72-252e-4414-87b7-456121d9acec" />
+
+## Theme editor
+<img width="5120" height="2880" alt="Theme Editor" src="https://github.com/user-attachments/assets/70ec5ec5-e16d-4dbe-9c03-b39b81c6300a" />
+
+## Fields
+In wordpress you would need to use ACF or Metabox to get this
+<img width="5120" height="2880" alt="Fields" src="https://github.com/user-attachments/assets/1991ed9c-63d0-484d-9a08-79588b248cd6" />
+
+## Markdown editor
+<img width="5120" height="2880" alt="Editor" src="https://github.com/user-attachments/assets/15af6302-ef06-4295-aa16-d9d2b3aeeba6" />
+
+## Backup
+<img width="5120" height="2880" alt="backup" src="https://github.com/user-attachments/assets/03626f7a-0706-4b5b-bd88-a917aa64a83c" />
+
+
+
 Ultralight flat-file CMS built in PHP. No database. Content is Markdown files on disk; the admin is a browser UI at `/admin`.
 
 - **Docs:** https://krstivoja.github.io/mdframework/
