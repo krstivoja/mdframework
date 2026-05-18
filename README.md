@@ -3,7 +3,7 @@
 Ultralight flat-file CMS built in PHP. No database. Content is Markdown files on disk; the admin is a browser UI at `/admin`.
 
 - **Docs:** https://krstivoja.github.io/mdframework/
-- **Releases:** https://github.com/krstivoja/mdframework/releases
+- **Releases:** https://github.com/krstivoja/frontpress-studio/releases
 
 ## Requirements
 
@@ -15,12 +15,12 @@ Ultralight flat-file CMS built in PHP. No database. Content is Markdown files on
 
 ### Shared hosting (zip)
 
-Download `frontpress-studio-<version>.zip` from [Releases](https://github.com/krstivoja/mdframework/releases) and unzip its contents into your domain's document root. Visit `/admin` and sign in with **`fpsadmin`** / **`fpspass`** — a persistent banner will nag you until you set a real password under **Settings → Security**.
+Download `frontpress-studio-<version>.zip` from [Releases](https://github.com/krstivoja/frontpress-studio/releases) and unzip its contents into your domain's document root. Visit `/admin` and sign in with **`fpsadmin`** / **`fpspass`** — a persistent banner will nag you until you set a real password under **Settings → Security**.
 
 ### Source install (development)
 
 ```bash
-git clone https://github.com/krstivoja/mdframework.git
+git clone https://github.com/krstivoja/frontpress-studio.git
 cd mdframework/app
 composer install --working-dir=cms
 
@@ -31,7 +31,7 @@ npm run dev    # HMR on localhost:5173 — visit /admin/ on your PHP host
 npm run build  # production assets to ../admin/assets/
 ```
 
-See the [full docs](https://krstivoja.github.io/mdframework/) for directory layout, theming, caching, and the extending guide.
+See the [full docs](https://frontpress.studio/docs) for directory layout, theming, caching, and the extending guide.
 
 ## Sponsor
 
