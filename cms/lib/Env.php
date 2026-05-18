@@ -143,4 +143,49 @@ class Env
         $hash = password_hash($newPlaintext, PASSWORD_BCRYPT);
         return self::upgradePlaintextPassword($file, $hash);
     }
+
+    /**
+     * Rewrite `config.php` so `MD_ADMIN_USER` holds the new username.
+     * Mirrors `upgradePlaintextPassword`'s atomic-write + in-memory-cache
+     * pattern. Validation (allowed character set, length) is the caller's
+     * job — this is a low-level write.
+     *
+     * Returns true on success, false if config.php is missing or the file
+     * couldn't be written.
+     */
+    public static function changeUsername(string $file, string $newUsername): bool
+    {
+        if (!is_file($file)) {
+            return false;
+        }
+
+        $src      = (string)file_get_contents($file);
+        $userLine = "define('MD_ADMIN_USER', '" . addslashes($newUsername) . "');";
+        $count    = 0;
+
+        // Replace any existing MD_ADMIN_USER define. Value side is "anything
+        // up to the closing paren" so the getenv-fallback form
+        // `getenv('MD_ADMIN_USER') ?: '…'` is recognised alongside a plain
+        // string literal. preg_replace_callback (vs preg_replace) avoids
+        // backreference traps if the username ever contains `$1` etc.
+        $out = preg_replace_callback(
+            '/define\(\s*[\'"]MD_ADMIN_USER[\'"]\s*,\s*[^)]*(?:\([^)]*\))?[^)]*\);/',
+            fn() => $userLine,
+            $src,
+            1,
+            $count,
+        );
+        if (!is_string($out)) {
+            return false;
+        }
+        if ($count === 0) {
+            $out = rtrim($out) . "\n" . $userLine . "\n";
+        }
+
+        // Mirror to the in-memory cache so the rest of this request sees
+        // the new value without re-reading the file.
+        self::$loaded['ADMIN_USER'] = $newUsername;
+
+        return Fs::atomicWrite($file, $out);
+    }
 }
