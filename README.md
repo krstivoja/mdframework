@@ -50,3 +50,7 @@ Sponsors are credited in the changelog and on the docs site (opt-in).
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+[version]: https://img.shields.io/github/v/release/krstivoja/frontpress-studio?style=flat-square
+[commit]: https://img.shields.io/github/last-commit/krstivoja/frontpress-studio?style=flat-square
+[stars]: https://img.shields.io/github/stars/krstivoja/frontpress-studio?style=flat-square
