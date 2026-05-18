@@ -46,6 +46,10 @@ Cards for each folder under `cms/starters/`. Click **Install** to copy one into 
 ```
 site/themes/<slug>/
 ├── theme.json
+├── .claude/
+│   └── skills/
+│       └── frontpress-theme/
+│           └── SKILL.md       # AI agent context — ships with starters
 ├── templates/
 │   ├── _layout.twig       # twig themes only — shared HTML shell
 │   ├── _header.twig
@@ -89,6 +93,14 @@ Use `asset_url('style.css')` in templates rather than hardcoding `/assets/` — 
 ```twig
 <link rel="stylesheet" href="{{ asset_url('style.css') }}">
 ```
+
+## Claude skills (AI assistance)
+
+Both bundled starters ship with a `.claude/skills/frontpress-theme/SKILL.md` — a ~300-line reference card covering theme layout, the required layout pattern, every template helper with its signature, what variables each route hands the template, SCSS auto-compile rules, image defaults, and the `{# fp:block #}` marker convention.
+
+When you install a starter, the skill copies into your new theme's directory. When you edit the theme with Claude Code (or any agent that reads Claude skills), the skill auto-loads into the agent's context — Claude knows your framework's conventions without you explaining them.
+
+The skill survives every theme-transport path: starter install, theme zip download, drag-drop install, backup, restore. Author your own theme-specific skills alongside it. See [Claude skills in themes](../advanced/claude-skills.md) for the full reference.
 
 ## Editing in-place
 

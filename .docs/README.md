@@ -46,6 +46,7 @@ If you've never touched the project before, read these in order:
 | [API reference](advanced/api-reference.md) | All `/admin/api/*` endpoints and shapes. |
 | [Extending](advanced/extending.md) | Custom front matter, template helpers, hooks. |
 | [Theme Builder internals](advanced/theme-builder-internals.md) | Marker convention, parser, preview chrome, postMessage bridge. |
+| [Claude skills in themes](advanced/claude-skills.md) | Themes ship `.claude/skills/` — AI agents get auto-context on theme conventions. |
 | [Release process](advanced/release-process.md) | Build, tag, GH Actions, what ships in the zip. |
 
 ## Project layout
